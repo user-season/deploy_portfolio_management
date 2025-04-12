@@ -38,7 +38,7 @@ Hệ thống bao gồm các bảng chính:
 ## Hướng Dẫn Cài Đặt
 ### 1. Clone repository
 ```bash
-$ git clone https://github.com/iuh-application-development/portfolio_management.git
+$ git clone https://github.com/iuh-application-development/Portfolio_Management_PTUD.git
 ```
 ### 2. Cài đặt App
 ```bash
@@ -47,9 +47,9 @@ $ ./run.bat
 ### 4. Cấu hình PostgreSQL
 Cập nhật file `.env` với thông tin database:
 ```
-DATABASE_NAME=your_db_name
-DATABASE_USER=your_db_user
-DATABASE_PASSWORD=your_db_password
+DATABASE_NAME=db_for_pm
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
 ```
