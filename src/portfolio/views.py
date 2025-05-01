@@ -16,3 +16,8 @@ def login_view(request):
 def register(request):
     return render(request, 'portfolio/register.html')
 
+def portfolio_list(request):
+    return render(request, 'portfolio/portfolio_list.html')
+
+def asset_list(request):
+    return render(request, 'portfolio/asset_list.html')
