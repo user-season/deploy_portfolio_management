@@ -63,13 +63,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # }
 
 from decouple import config
+ENVI = config('ENVI', default='local')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': config('DATABASE_NAME'),
         'USER': config('DATABASE_USER'),
         'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST_DOCKER_COMPOSE'),
+        'HOST': config('DATABASE_HOST_DOCKER_COMPOSE') if ENVI=='docker' else config('DATABASE_HOST_LOCAL'),
         'PORT': config('DATABASE_PORT'),
     }
 }

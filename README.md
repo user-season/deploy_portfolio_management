@@ -27,9 +27,9 @@ Yêu cầu:
 - PostgresSQL
 - Python 3 trở lên
 
-**- Windows:** Chạy file `run.bat` bằng cách click vào file
-**- Linux/MacOS:** Chạy file `run.sh` bằng cách chạy lệnh `bash run.sh`
-**- Docker:**
-    - Chạy lệnh: `dos2unix entrypoint.sh` để chuyển định dạng file entrypoint.sh thành định dạng Unix
-    - Chạy lệnh: `docker-compose up --build` để build các Image
-    - Truy cập trình duyệt ở địa chỉ: http://localhost:8000/
+**- Windows:** Chạy file `run.bat` bằng cách click vào file \
+**- Linux/MacOS:** Chạy file `run.sh` bằng cách chạy lệnh `bash run.sh` \
+**- Docker:** Chạy trên các hệ điều hành \
+    Chạy lệnh: `dos2unix entrypoint.sh` để chuyển định dạng file entrypoint.sh thành định dạng Unix \
+    Chạy lệnh: `docker-compose up --build` để build các Image \
+    Truy cập trình duyệt ở địa chỉ: http://localhost:8000/

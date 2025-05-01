@@ -25,10 +25,8 @@ COPY . .
 # 6. Làm cho entrypoint.sh có quyền thực thi
 RUN chmod +x ./entrypoint.sh
 
-
 # 7. Sử dụng entrypoint.sh
 ENTRYPOINT ["./entrypoint.sh"]
 
 # 8. Chạy server
-
 CMD ["gunicorn", "--chdir", "/app/src", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
