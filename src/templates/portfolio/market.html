@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load humanize %}
+
+{% block title %}Thị trường - Portfolio Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'userLogin/css/market.css' %}">
+<style>
+    .table-container {
+        margin-top: 20px;
+        max-height: 600px;
+        overflow-y: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .price-ceiling { color: #9C27B0; font-weight: bold; }
+    .price-floor { color: #2196F3; font-weight: bold; }
+    .price-reference { color: #FFC107; }
+    .price-up { color: #4CAF50; font-weight: bold; }
+    .price-down { color: #F44336; font-weight: bold; }
+    .stock-search {
+        padding: 12px;
+        border-radius: 25px;
+        border: 1px solid #ddd;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .loading-container {
+        text-align: center;
+        padding: 20px;
+        font-size: 18px;
+    }
+    .error-message {
+        color: #F44336;
+        text-align: center;
+        padding: 20px;
+        font-size: 18px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="market-content container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-3">Thị trường chứng khoán</h2>
+            <div class="search-container mb-3 d-flex justify-content-between">
+                <div class="search-box flex-grow-1 me-3">
+                    <input type="text" id="stockSearch" placeholder="Tìm kiếm cổ phiếu..." class="form-control stock-search">
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="refreshData">
+                        <i class="fas fa-sync-alt me-1"></i> Làm mới dữ liệu
+                    </button>
+                </div>
+            </div>
+            
+            {% if messages %}
+            <div class="messages mb-3">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="table-container table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th rowspan="2">CK</th>
+                    <th rowspan="2">Trần</th>
+                    <th rowspan="2">Sàn</th>
+                    <th rowspan="2">TC</th>
+                    <th colspan="2">Khớp lệnh</th>
+                </tr>
+                <tr>
+                    <th>Giá</th>
+                    <th>Khối lượng</th>
+                </tr>
+            </thead>
+            <tbody id="marketTableBody">
+                <tr>
+                    <td colspan="6">
+                        <div class="loading-container">
+                            <span>Đang tải dữ liệu thị trường...</span>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Chart Modal -->
+    <div id="chartModal" class="chart-modal">
+        <div class="chart-modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="chartTitle">Biểu đồ giá cổ phiếu <span id="stockSymbol"></span></h2>
+            <div id="chart-container" class="chart-container"></div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, setting up sample price board data...');
+        const tableBody = document.getElementById('marketTableBody');
+        
+        // Sample price board data
+        const samplePriceBoard = {
+            columns: ["symbol", "ceiling", "floor", "ref_price", "match_price", "match_vol"],
+            data: [
+                ["VNM", 56000, 51000, 53500, 54200, 1250000],
+                ["FPT", 112000, 102000, 107000, 111500, 823400],
+                ["VIC", 48500, 44200, 46300, 45000, 542600],
+                ["HPG", 27200, 24800, 26000, 26800, 3548200],
+                ["MWG", 63200, 57600, 60400, 58200, 654320],
+                ["BID", 30500, 27800, 29150, 30400, 942600],
+                ["VCB", 88600, 80800, 84700, 86200, 421500],
+                ["MSN", 72300, 65900, 69100, 70400, 328600],
+                ["VHM", 42100, 38400, 40250, 41800, 624700],
+                ["VRE", 22600, 20600, 21600, 21900, 875300]
+            ]
+        };
+        
+        function loadSampleData() {
+            try {
+                // Format functions
+                function formatPrice(price) {
+                    if (!price || isNaN(parseFloat(price))) return 'N/A';
+                    return parseFloat(price/1000).toFixed(2);
+                }
+                
+                function formatVolume(volume) {
+                    if (!volume || isNaN(parseFloat(volume))) return 'N/A';
+                    return parseFloat(volume).toLocaleString('en-US');
+                }
+                
+                function getPriceClass(matchPrice, refPrice, ceiling, floor) {
+                    if (!matchPrice || !refPrice) return '';
+                    if (matchPrice === ceiling) return 'price-ceiling';
+                    if (matchPrice === floor) return 'price-floor';
+                    if (matchPrice === refPrice) return 'price-reference';
+                    if (matchPrice > refPrice) return 'price-up';
+                    if (matchPrice < refPrice) return 'price-down';
+                    return '';
+                }
+                
+                const columns = samplePriceBoard.columns;
+                const data = samplePriceBoard.data;
+                
+                // Find column indices
+                const columnIndices = {
+                    symbol: columns.indexOf('symbol'),
+                    ceiling: columns.indexOf('ceiling'),
+                    floor: columns.indexOf('floor'),
+                    ref_price: columns.indexOf('ref_price'),
+                    match_price: columns.indexOf('match_price'),
+                    match_vol: columns.indexOf('match_vol')
+                };
+                
+                let tableHTML = '';
+                for (let i = 0; i < data.length; i++) {
+                    const symbol = data[i][columnIndices.symbol];
+                    const ceiling = data[i][columnIndices.ceiling];
+                    const floor = data[i][columnIndices.floor];
+                    const refPrice = data[i][columnIndices.ref_price];
+                    const matchPrice = data[i][columnIndices.match_price];
+                    const matchVol = data[i][columnIndices.match_vol];
+                    
+                    tableHTML += `<tr title='Click để xem biểu đồ giá'>
+                        <td>${symbol}</td>
+                        <td class="price-ceiling">${formatPrice(ceiling)}</td>
+                        <td class="price-floor">${formatPrice(floor)}</td>
+                        <td class="price-reference">${formatPrice(refPrice)}</td>
+                        <td class="${getPriceClass(matchPrice, refPrice, ceiling, floor)}">${formatPrice(matchPrice)}</td>
+                        <td>${formatVolume(matchVol)}</td>
+                    </tr>`;
+                }
+                
+                tableBody.innerHTML = tableHTML;
+                
+                // Add search functionality
+                const searchInput = document.getElementById('stockSearch');
+                searchInput.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                    const searchText = this.value;
+                    const rows = tableBody.querySelectorAll('tr');
+                    
+                    rows.forEach(row => {
+                        if (row.cells && row.cells.length > 0) {
+                            const stockSymbol = row.cells[0].textContent;
+                            if (stockSymbol.toUpperCase().includes(searchText)) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    });
+                });
+                
+                // Add click event to stock symbols to show chart
+                const rows = tableBody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    if (row.cells && row.cells.length > 0) {
+                        row.addEventListener('click', function() {
+                            if (this.cells && this.cells.length > 0) {
+                                const stockSymbol = this.cells[0].textContent;
+                                console.log('Clicked stock:', stockSymbol);
+                                showChart(stockSymbol);
+                            }
+                        });
+                        row.style.cursor = 'pointer';
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error processing price board data:', error);
+                tableBody.innerHTML = `<tr><td colspan="6"><div class="error-message">
+                    Không thể tải dữ liệu thị trường. Vui lòng thử lại sau.<br>
+                    <small>Chi tiết lỗi: ${error.message}</small>
+                    </div></td></tr>`;
+            }
+        }
+        
+        // Load the sample data initially
+        loadSampleData();
+        
+        // Add refresh button functionality
+        document.getElementById('refreshData').addEventListener('click', function() {
+            tableBody.innerHTML = `<tr>
+                <td colspan="6">
+                    <div class="loading-container">
+                        <span>Đang tải dữ liệu thị trường...</span>
+                    </div>
+                </td>
+            </tr>`;
+            
+            setTimeout(() => {
+                loadSampleData();
+            }, 800);
+        });
+
+        // -------------- Chart Modal Functionality
+        const modal = document.getElementById("chartModal");
+        const closeBtn = document.querySelector(".close-modal");
+        
+        closeBtn.onclick = function() {
+            modal.style.display = "none";
+            if (typeof chart !== 'undefined' && chart !== null) {
+                chart.remove();
+                chart = null;
+                candleSeries = null;
+            }
+        }
+        
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+                if (typeof chart !== 'undefined' && chart !== null) {
+                    chart.remove();
+                    chart = null;
+                    candleSeries = null;
+                }
+            }
+        }
+        
+        let chart = null;
+        let candleSeries = null;
+        
+        function showChart(stockCode) {
+            console.log('Opening chart for:', stockCode);
+            document.getElementById('stockSymbol').textContent = stockCode;
+            modal.style.display = "block";
+            
+            createChart();
+            loadSampleChartData(stockCode);
+        }
+        
+        function createChart() {
+            console.log('Creating chart...');
+            const chartContainer = document.getElementById('chart-container');
+            chartContainer.innerHTML = '<div class="loading-container">Đang tải dữ liệu biểu đồ...</div>';
+            
+            chart = LightweightCharts.createChart(chartContainer, {
+                width: chartContainer.clientWidth,
+                height: 400,
+                layout: { 
+                    backgroundColor: '#ffffff',
+                    textColor: '#333',
+                },
+                grid: {
+                    vertLines: { color: '#f0f0f0' },
+                    horzLines: { color: '#f0f0f0' }
+                },
+                timeScale: {
+                    timeVisible: true,
+                    secondsVisible: false,
+                    borderColor: '#D6DCDE',
+                },
+                rightPriceScale: {
+                    borderColor: '#D6DCDE',
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                },
+            });
+            
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#2e7d32',
+                downColor: '#c62828',
+                borderVisible: false,
+                wickUpColor: '#2e7d32',
+                wickDownColor: '#c62828'
+            });
+
+            console.log('Chart created successfully');
+        }
+        
+        function loadSampleChartData(stockCode) {
+            console.log('Loading sample data for:', stockCode);
+            
+            // Generate 30 days of sample data
+            const sampleData = generateSampleChartData(stockCode);
+            
+            setTimeout(() => {
+                try {
+                    candleSeries.setData(sampleData);
+                } catch (error) {
+                    console.error('Error setting chart data:', error);
+                    document.getElementById('chart-container').innerHTML = 
+                        '<div class="error-message">Không thể tải dữ liệu biểu đồ. Vui lòng thử lại sau.</div>';
+                }
+            }, 700);
+        }
+        
+        function generateSampleChartData(symbol) {
+            // Get base price from the table for this symbol
+            let basePrice = 50000; // default
+            const rows = tableBody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                if (row.cells && row.cells.length > 0 && row.cells[0].textContent === symbol) {
+                    const priceText = row.cells[4].textContent;
+                    if (priceText) {
+                        const parsedPrice = parseFloat(priceText) * 1000;
+                        if (!isNaN(parsedPrice)) {
+                            basePrice = parsedPrice;
+                        }
+                    }
+                }
+            });
+            
+            const data = [];
+            const now = new Date();
+            
+            // Generate candle data for the past 30 days
+            for (let i = 30; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(now.getDate() - i);
+                
+                // Add some randomness to prices
+                const multiplier = 0.02; // 2% daily variation
+                const dailyVariation = basePrice * multiplier;
+                
+                // Generate random price movements with some trend
+                const trend = Math.sin(i / 10) * 0.5; // Create a sine wave pattern
+                const open = basePrice * (1 + (Math.random() - 0.5) * multiplier + trend * 0.01);
+                const close = open * (1 + (Math.random() - 0.5) * multiplier);
+                const high = Math.max(open, close) * (1 + Math.random() * multiplier * 0.5);
+                const low = Math.min(open, close) * (1 - Math.random() * multiplier * 0.5);
+                
+                // Update the base price for the next day
+                basePrice = close;
+                
+                data.push({
+                    time: Math.floor(date.getTime() / 1000),
+                    open: open,
+                    high: high,
+                    low: low,
+                    close: close
+                });
+            }
+            
+            return data;
+        }
+    });
+</script>
+{% endblock %}
+
