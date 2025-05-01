@@ -5,7 +5,10 @@ services:
     build: .
     ports:
       - 8000:8000
+    env_file:
+      - .env
     environment:
+      ENVI            : docker
       DB_NAME         : ${DATABASE_NAME}
       DB_USER         : ${DATABASE_USER}
       DB_PASSWORD     : ${DATABASE_PASSWORD}
