@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Đăng ký tài khoản | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="text-center mb-4">
+                <i class="fas fa-user-plus text-primary fa-3x mb-3"></i>
+                <h2 class="fw-bold">Tạo tài khoản mới</h2>
+                <p class="text-muted">Đăng ký để bắt đầu quản lý danh mục đầu tư của bạn</p>
+            </div>
+            
+            <div class="card border-0 shadow-sm rounded-4" data-aos="fade-up">
+                <div class="card-body p-4 p-sm-5">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
+                            <label class="form-check-label" for="termsCheck">
+                                Tôi đồng ý với <a href="#" class="text-primary">Điều khoản sử dụng</a> và <a href="#" class="text-primary">Chính sách bảo mật</a>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 btn-rounded py-3 mb-4">
+                            <i class="fas fa-user-plus me-2"></i>Đăng ký tài khoản
+                        </button>
+                        
+                        <p class="text-center mb-0">
+                            Đã có tài khoản? <a href="{% url 'login' %}" class="text-primary fw-medium">Đăng nhập</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <p class="text-muted small">Bằng cách đăng ký, bạn đồng ý nhận email về các cập nhật và thông tin liên quan đến tài khoản của bạn.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  web:
+    build: .
+    ports:
+      - 8000:8000
+    env_file:
+      - .env
+    environment:
+      ENVI            : docker
+      DB_NAME         : ${DATABASE_NAME}
+      DB_USER         : ${DATABASE_USER}
+      DB_PASSWORD     : ${DATABASE_PASSWORD}
+      DB_HOST         : ${DATABASE_HOST}
+      DB_PORT         : ${DATABASE_PORT}
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - static_volume:/app/src/staticfiles
+      - media_volume:/app/src/media
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB         : ${DATABASE_NAME}
+      POSTGRES_USER       : ${DATABASE_USER}
+      POSTGRES_PASSWORD   : ${DATABASE_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
