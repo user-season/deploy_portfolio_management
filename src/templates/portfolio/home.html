@@ -17,10 +17,10 @@
                     </a>
                     {% else %}
                     <div class="d-flex gap-3">
-                        <a href="#" class="btn btn-light btn-lg btn-rounded text-primary shadow-lg">
+                        <a href="{% url 'register' %}" class="btn btn-light btn-lg btn-rounded text-primary shadow-lg">
                             <i class="fas fa-user-plus me-2"></i>Đăng ký ngay
                         </a>
-                        <a href="#" class="btn btn-outline-light btn-lg btn-rounded shadow">
+                        <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg btn-rounded shadow">
                             <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
                         </a>
                     </div>
