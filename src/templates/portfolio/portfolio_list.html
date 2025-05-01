@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Danh mục đầu tư | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div class="card-heading mb-3 mb-md-0">
+            <div class="card-heading-icon">
+                <i class="fas fa-folder"></i>
+            </div>
+            <h2 class="fw-bold mb-0">Danh mục đầu tư của tôi</h2>
+        </div>
+        <a href="#" class="btn btn-primary btn-rounded" data-aos="fade-left">
+            <i class="fas fa-plus me-2"></i>Tạo danh mục mới
+        </a>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <!-- Sample Portfolio 1 -->
+        <div class="col" data-aos="fade-up" data-aos-delay="100">
+            <div class="card h-100 border-0 shadow-sm rounded-4 hover-lift">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="icon-circle">
+                            <i class="fas fa-folder text-primary"></i>
+                        </div>
+                        <span class="badge bg-danger rounded-pill">
+                            Rủi ro cao
+                        </span>
+                    </div>
+                    
+                    <h5 class="card-title mb-2 mt-3">Danh mục đầu tư tăng trưởng</h5>
+                    
+                    <p class="text-muted small mb-4">
+                        <i class="fas fa-bullseye me-1"></i> Đầu tư cổ phiếu tăng trưởng dài hạn
+                    </p>
+                    
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar bg-primary" role="progressbar" 
+                            style="width: 75%;" 
+                            aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted small">Giá trị hiện tại</span>
+                        <span class="fw-medium">75,000,000 VNĐ</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="text-muted small">Giá trị mục tiêu</span>
+                        <span class="fw-medium">100,000,000 VNĐ</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between text-muted small mt-auto">
+                        <span>Ngày tạo:</span>
+                        <span>15/04/2024</span>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-4">
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-outline-primary flex-grow-1 btn-sm btn-rounded">
+                            <i class="fas fa-eye me-1"></i> Chi tiết
+                        </a>
+                        <a href="#" class="btn btn-warning btn-sm btn-rounded">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sample Portfolio 2 -->
+        <div class="col" data-aos="fade-up" data-aos-delay="200">
+            <div class="card h-100 border-0 shadow-sm rounded-4 hover-lift">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="icon-circle">
+                            <i class="fas fa-folder text-primary"></i>
+                        </div>
+                        <span class="badge bg-warning rounded-pill">
+                            Rủi ro trung bình
+                        </span>
+                    </div>
+                    
+                    <h5 class="card-title mb-2 mt-3">Danh mục đầu tư cân bằng</h5>
+                    
+                    <p class="text-muted small mb-4">
+                        <i class="fas fa-bullseye me-1"></i> Tạo thu nhập thụ động
+                    </p>
+                    
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar bg-primary" role="progressbar" 
+                            style="width: 40%;" 
+                            aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted small">Giá trị hiện tại</span>
+                        <span class="fw-medium">20,000,000 VNĐ</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="text-muted small">Giá trị mục tiêu</span>
+                        <span class="fw-medium">50,000,000 VNĐ</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between text-muted small mt-auto">
+                        <span>Ngày tạo:</span>
+                        <span>20/03/2024</span>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-4">
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-outline-primary flex-grow-1 btn-sm btn-rounded">
+                            <i class="fas fa-eye me-1"></i> Chi tiết
+                        </a>
+                        <a href="#" class="btn btn-warning btn-sm btn-rounded">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sample Portfolio 3 -->
+        <div class="col" data-aos="fade-up" data-aos-delay="300">
+            <div class="card h-100 border-0 shadow-sm rounded-4 hover-lift">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="icon-circle">
+                            <i class="fas fa-folder text-primary"></i>
+                        </div>
+                        <span class="badge bg-success rounded-pill">
+                            Rủi ro thấp
+                        </span>
+                    </div>
+                    
+                    <h5 class="card-title mb-2 mt-3">Danh mục tiết kiệm</h5>
+                    
+                    <p class="text-muted small mb-4">
+                        <i class="fas fa-bullseye me-1"></i> Tiết kiệm cho mục tiêu ngắn hạn
+                    </p>
+                    
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar bg-primary" role="progressbar" 
+                            style="width: 90%;" 
+                            aria-valuenow="90" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted small">Giá trị hiện tại</span>
+                        <span class="fw-medium">45,000,000 VNĐ</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="text-muted small">Giá trị mục tiêu</span>
+                        <span class="fw-medium">50,000,000 VNĐ</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between text-muted small mt-auto">
+                        <span>Ngày tạo:</span>
+                        <span>05/01/2024</span>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-4">
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-outline-primary flex-grow-1 btn-sm btn-rounded">
+                            <i class="fas fa-eye me-1"></i> Chi tiết
+                        </a>
+                        <a href="#" class="btn btn-warning btn-sm btn-rounded">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- You can add more sample portfolios here if needed -->
+    </div>
+</div>
+{% endblock %}

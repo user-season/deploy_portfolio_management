@@ -16,3 +16,15 @@ def login_view(request):
 def register(request):
     return render(request, 'portfolio/register.html')
 
+def portfolio_list(request):
+    return render(request, 'portfolio/portfolio_list.html')
+
+def asset_list(request):
+    return render(request, 'portfolio/asset_list.html')
+
+def transaction_list(request):
+    return render(request, 'portfolio/transaction_list.html')
+
+def wallet(request):
+    return render(request, 'portfolio/wallet.html')
+
