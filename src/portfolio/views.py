@@ -18,6 +18,9 @@ def register(request):
 
 def portfolio_list(request):
     return render(request, 'portfolio/portfolio_list.html')
+    
+def portfolio_create(request):
+    return render(request, 'portfolio/portfolio_form.html')
 
 def asset_list(request):
     return render(request, 'portfolio/asset_list.html')
