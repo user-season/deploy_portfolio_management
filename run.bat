@@ -1,96 +1,117 @@
 @echo off
 SETLOCAL EnableDelayedExpansion
 
-echo === Kiem tra PostgreSQL ===
-psql --version > nul 2>&1
+echo === CHECK PYTHON VERSION ===
+python --version 2>&1 | findstr "Python 3" >nul
 if errorlevel 1 (
-    echo Loi: PostgreSQL chua duoc cai dat hoac chua duoc them vao PATH
-    echo Vui long cai dat PostgreSQL va dam bao no duoc them vao PATH
+    echo ERROR: Python 3 is required!
     pause
     exit /b 1
 )
+echo === PYTHON VERSION CHECKED ===
 
-REM Kiem tra ket noi PostgreSQL truoc khi tiep tuc
-echo === Kiem tra ket noi PostgreSQL ===
-set PGPASSWORD=admin123
-psql -U postgres -c "SELECT 1;" > nul 2>&1
-if errorlevel 1 (
-    echo Loi: Khong the ket noi toi PostgreSQL server
-    echo Vui long kiem tra lai server PostgreSQL va thong tin dang nhap
+echo === LOAD ENVIRONMENT VARIABLES ===
+if not exist .env (
+    echo ERROR: .env file not found!
     pause
     exit /b 1
 )
+for /f "usebackq tokens=1,* delims==" %%A in (.env) do (
+    rem Skip lines starting with #
+    echo %%A | findstr /b /r /c:"#.*" >nul
+    if errorlevel 1 (
+        set "%%A=%%B"
+    )
+)
+echo === LOAD ENVIRONMENT VARIABLES COMPLETELY ===
 
-echo === Khoi tao moi truong ===
+echo === CHECK POSTGRES DATABASE ===
+psql --version >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: PostgreSQL is not installed!
+    pause
+    exit /b 1
+)
+echo === POSTGRES DATABASE IS INSTALLED ===
 
-REM Xoa moi truong ao cu neu ton tai
+echo === CONNECT TO DATABASE ===
+set PGPASSWORD=!DATABASE_PASSWORD!
+psql -U !DATABASE_USER! -c "SELECT 1;" >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: Cannot connect to PostgreSQL!
+    echo Check PostgreSQL server and sign-in information!
+    pause
+    exit /b 1
+)
+echo === DATABASE IS READY ===
+
+echo === UPDATE METADATA OF DATABASE ===
+psql -U !DATABASE_USER! -c "ALTER DATABASE !DATABASE_NAME! REFRESH COLLATION VERSION;"
+echo === UPDATE METADATA OF DATABASE COMPLETELY ===
+
+echo === CREATE VIRTUAL ENVIRONMENT ===
 if exist venv (
     rmdir /s /q venv
     timeout /t 2 /nobreak >nul
 )
-
-REM Tao va kich hoat moi truong ao moi
 python -m venv venv
 call venv\Scripts\activate.bat
-
-REM Cap nhat pip va cai dat cac goi co ban
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: Failed to activate virtual environment!
+    pause
+    exit /b 1
+)
 python -m pip install --upgrade pip
 python -m pip install wheel setuptools
-
-REM Cai dat cac goi tu requirements.txt
-python -m pip install -r requirements.txt
-
-REM Di chuyen vao thu muc src
-cd src
-
-REM Xoa database cu neu co
-if exist db.sqlite3 (
-    del db.sqlite3
+if not exist requirements.txt (
+    echo ERROR: requirements.txt not found!
+    pause
+    exit /b 1
 )
+python -m pip install -r requirements.txt
+echo === CREATE VIRTUAL ENVIRONMENT COMPLETELY ===
 
-@REM REM Tao cac thu muc can thiet
-@REM if not exist static mkdir static
-@REM if not exist media mkdir media
-@REM if not exist ..\data\stock_data mkdir ..\data\stock_data
+if not exist src (
+    echo ERROR: src directory not found!
+    pause
+    exit /b 1
+)
+cd src
+if not exist static mkdir static
+if not exist media mkdir media
 
+echo === CREATE DATABASE ===
+set PGPASSWORD=!DATABASE_PASSWORD!
+psql -U !DATABASE_USER! -c "DROP DATABASE IF EXISTS !DATABASE_NAME!;"
+psql -U !DATABASE_USER! -c "CREATE DATABASE !DATABASE_NAME! WITH ENCODING='UTF8' TEMPLATE=template0;"
+echo === CREATE DATABASE COMPLETELY ===
 
-REM Tao database PostgreSQL
-echo === Tao database PostgreSQL ===
-set PGPASSWORD=admin123
-psql -U postgres -c "DROP DATABASE IF EXISTS db_for_pm;"
-psql -U postgres -c "CREATE DATABASE db_for_pm WITH ENCODING='UTF8' TEMPLATE=template0;"
-
-REM Xoa migrations cu
+echo === CREATE MIGRATIONS ===
 rmdir /s /q portfolio\migrations
 mkdir portfolio\migrations
 type nul > portfolio\migrations\__init__.py
-
-REM Tao migrations moi va ap dung
 python manage.py makemigrations
 if errorlevel 1 (
-    echo Loi: Khong the tao migrations
+    echo ERROR: Cannot create migrations
     pause
     exit /b 1
 )
-
 python manage.py migrate
 if errorlevel 1 (
-    echo Loi: Khong the ap dung migrations
-    echo Kiem tra lai ket noi PostgreSQL
+    echo ERROR: Cannot apply migrations
+    echo Check PostgreSQL connection
     pause
     exit /b 1
 )
+echo === CREATE MIGRATIONS COMPLETELY ===
 
-REM Tao superuser
-echo.
-echo === Tao tai khoan admin ===
-python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('admin', 'admin@example.com', 'admin123') if not User.objects.filter(username='admin').exists() else print('Admin da ton tai')"
+echo === CREATE ADMIN ACCOUNT ===
+python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('!admin_username!', 'admin@example.com', '!admin_password!') if not User.objects.filter(username='!admin_username!').exists() else print('Admin already exists!!!')"
+echo === CREATE ADMIN ACCOUNT COMPLETELY ===
 
-REM Mo trinh duyet
-start http://127.0.0.1:8000
-
-REM Chay server
-echo === Khoi dong server ===
+echo === RUN SERVER ===
+start http://127.0.0.1:8000 || echo WARNING: Could not open browser
 python manage.py runserver
 
 ENDLOCAL
