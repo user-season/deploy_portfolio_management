@@ -15,5 +15,6 @@ urlpatterns = [
     path('portfolios/', views.portfolio_list, name='portfolio_list'),
     path('transactions/', views.transaction_list, name='transaction_list'),
     path('wallet/', views.wallet, name='wallet'),
+    path('market/', views.market, name='market'),
     
 ]

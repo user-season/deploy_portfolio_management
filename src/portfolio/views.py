@@ -28,3 +28,5 @@ def transaction_list(request):
 def wallet(request):
     return render(request, 'portfolio/wallet.html')
 
+def market(request):
+    return render(request, 'portfolio/market.html')
