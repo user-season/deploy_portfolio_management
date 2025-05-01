@@ -21,3 +21,6 @@ def portfolio_list(request):
 
 def asset_list(request):
     return render(request, 'portfolio/asset_list.html')
+
+def transaction_list(request):
+    return render(request, 'portfolio/transaction_list.html')
