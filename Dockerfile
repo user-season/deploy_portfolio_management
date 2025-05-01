@@ -25,7 +25,6 @@ COPY . .
 # 6. Làm cho entrypoint.sh có quyền thực thi
 RUN chmod +x ./entrypoint.sh
 
-
 # 7. Sử dụng entrypoint.sh
 ENTRYPOINT ["./entrypoint.sh"]
 
