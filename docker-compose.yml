@@ -8,7 +8,6 @@ services:
     env_file:
       - .env
     environment:
-      ENVI            : docker
       DB_NAME         : ${DATABASE_NAME}
       DB_USER         : ${DATABASE_USER}
       DB_PASSWORD     : ${DATABASE_PASSWORD}
@@ -16,7 +15,7 @@ services:
       DB_PORT         : ${DATABASE_PORT}
     volumes:
       - ./src:/app/src
-      - ./data:/app/data
+      # - ./data:/app/data
       - static_volume:/app/src/staticfiles
       - media_volume:/app/src/media
     depends_on:

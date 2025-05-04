@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "portfolio/base.html" %}
 
 {% load static %}
 {% load humanize %}
@@ -50,9 +50,9 @@
                     <input type="text" id="stockSearch" placeholder="Tìm kiếm cổ phiếu..." class="form-control stock-search">
                 </div>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" id="refreshData">
-                        <i class="fas fa-sync-alt me-1"></i> Làm mới dữ liệu
-                    </button>
+                    <a href="{% url 'sync_assets' %}" class="btn btn-primary">
+                        <i class="fas fa-sync-alt me-1"></i> Đồng bộ cổ phiếu
+                    </a>
                 </div>
             </div>
             
@@ -65,6 +65,10 @@
                 </div>
                 {% endfor %}
             </div>
+            {% endif %}
+            
+            {% if request.user.is_staff %}
+            <div id="debugInfo" class="mb-3"></div>
             {% endif %}
         </div>
     </div>
@@ -112,70 +116,107 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, setting up sample price board data...');
+        console.log('DOM loaded, parsing price board data...');
         const tableBody = document.getElementById('marketTableBody');
         
-        // Sample price board data
-        const samplePriceBoard = {
-            columns: ["symbol", "ceiling", "floor", "ref_price", "match_price", "match_vol"],
-            data: [
-                ["VNM", 56000, 51000, 53500, 54200, 1250000],
-                ["FPT", 112000, 102000, 107000, 111500, 823400],
-                ["VIC", 48500, 44200, 46300, 45000, 542600],
-                ["HPG", 27200, 24800, 26000, 26800, 3548200],
-                ["MWG", 63200, 57600, 60400, 58200, 654320],
-                ["BID", 30500, 27800, 29150, 30400, 942600],
-                ["VCB", 88600, 80800, 84700, 86200, 421500],
-                ["MSN", 72300, 65900, 69100, 70400, 328600],
-                ["VHM", 42100, 38400, 40250, 41800, 624700],
-                ["VRE", 22600, 20600, 21600, 21900, 875300]
-            ]
-        };
-        
-        function loadSampleData() {
-            try {
-                // Format functions
-                function formatPrice(price) {
-                    if (!price || isNaN(parseFloat(price))) return 'N/A';
-                    return parseFloat(price/1000).toFixed(2);
+        try {
+            // Log raw data for debugging
+            console.log('Raw price_board_json:', '{{ price_board_json|escapejs }}');
+            
+            const price_board = JSON.parse('{{ price_board_json|escapejs }}');
+            console.log('Parsed price_board:', price_board);
+            
+            if (!price_board || !price_board.data || !price_board.columns) {
+                throw new Error('Invalid price board data structure');
+            }
+            
+            // Add debugging info to the page for admins
+            if (document.getElementById('debugInfo')) {
+                const debugInfo = `
+                    <div class="card mb-3">
+                        <div class="card-header bg-info text-white">Debug Information</div>
+                        <div class="card-body">
+                            <p>Data columns: ${JSON.stringify(price_board.columns)}</p>
+                            <p>First row: ${JSON.stringify(price_board.data[0])}</p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('debugInfo').innerHTML = debugInfo;
+            }
+            
+            // Format functions
+            function formatPrice(price) {
+                if (!price || isNaN(parseFloat(price))) return 'N/A';
+                return parseFloat(price/1000).toFixed(2);
+            }
+            
+            function formatVolume(volume) {
+                if (!volume || isNaN(parseFloat(volume))) return 'N/A';
+                return parseFloat(volume).toLocaleString('en-US');
+            }
+            
+            function getPriceClass(matchPrice, refPrice, ceiling, floor) {
+                if (!matchPrice || !refPrice) return '';
+                if (matchPrice === ceiling) return 'price-ceiling';
+                if (matchPrice === floor) return 'price-floor';
+                if (matchPrice === refPrice) return 'price-reference';
+                if (matchPrice > refPrice) return 'price-up';
+                if (matchPrice < refPrice) return 'price-down';
+                return '';
+            }
+            
+            const data = price_board.data;
+            const columns = price_board.columns;
+            
+            // Find column indices
+            let columnIndices = {};
+            
+            // Search for each column index dynamically with multiple possible names
+            const columnMappings = {
+                'symbol': ['symbol', 'listing_symbol', 'ticker', '0'],
+                'ceiling': ['ceiling', 'listing_ceiling', '1'],
+                'floor': ['floor', 'listing_floor', '2'],
+                'ref_price': ['ref_price', 'listing_ref_price', '3'],
+                'match_price': ['match_price', 'match_match_price', 'match', '4'],
+                'match_vol': ['match_vol', 'match_match_vol', 'match_qtty', 'volume', '5']
+            };
+            
+            for (let targetCol in columnMappings) {
+                for (let i = 0; i < columns.length; i++) {
+                    const colName = String(columns[i]).toLowerCase();
+                    if (columnMappings[targetCol].some(name => colName.includes(name))) {
+                        columnIndices[targetCol] = i;
+                        break;
+                    }
                 }
                 
-                function formatVolume(volume) {
-                    if (!volume || isNaN(parseFloat(volume))) return 'N/A';
-                    return parseFloat(volume).toLocaleString('en-US');
+                // If column not found by name, try index as fallback
+                if (columnIndices[targetCol] === undefined) {
+                    // Get the numeric index from the list
+                    const indexStr = columnMappings[targetCol].find(name => !isNaN(parseInt(name)));
+                    if (indexStr) {
+                        columnIndices[targetCol] = parseInt(indexStr);
+                    }
                 }
-                
-                function getPriceClass(matchPrice, refPrice, ceiling, floor) {
-                    if (!matchPrice || !refPrice) return '';
-                    if (matchPrice === ceiling) return 'price-ceiling';
-                    if (matchPrice === floor) return 'price-floor';
-                    if (matchPrice === refPrice) return 'price-reference';
-                    if (matchPrice > refPrice) return 'price-up';
-                    if (matchPrice < refPrice) return 'price-down';
-                    return '';
-                }
-                
-                const columns = samplePriceBoard.columns;
-                const data = samplePriceBoard.data;
-                
-                // Find column indices
-                const columnIndices = {
-                    symbol: columns.indexOf('symbol'),
-                    ceiling: columns.indexOf('ceiling'),
-                    floor: columns.indexOf('floor'),
-                    ref_price: columns.indexOf('ref_price'),
-                    match_price: columns.indexOf('match_price'),
-                    match_vol: columns.indexOf('match_vol')
-                };
-                
-                let tableHTML = '';
-                for (let i = 0; i < data.length; i++) {
+            }
+            
+            console.log('Column indices:', columnIndices);
+            
+            // If symbol column is still not found, try using the first column as a fallback
+            if (columnIndices.symbol === undefined) {
+                columnIndices.symbol = 0; // Default to first column
+                console.log('Symbol column not found, using first column as fallback');
+            }
+            
+            let tableHTML = '';
+            for (let i = 0; i < data.length; i++) {
+                if (data[i][columnIndices.symbol]) {
                     const symbol = data[i][columnIndices.symbol];
-                    const ceiling = data[i][columnIndices.ceiling];
-                    const floor = data[i][columnIndices.floor];
-                    const refPrice = data[i][columnIndices.ref_price];
-                    const matchPrice = data[i][columnIndices.match_price];
-                    const matchVol = data[i][columnIndices.match_vol];
+                    const ceiling = columnIndices.ceiling ? data[i][columnIndices.ceiling] : 0;
+                    const floor = columnIndices.floor ? data[i][columnIndices.floor] : 0;
+                    const refPrice = columnIndices.ref_price ? data[i][columnIndices.ref_price] : 0;
+                    const matchPrice = columnIndices.match_price ? data[i][columnIndices.match_price] : 0;
+                    const matchVol = columnIndices.match_vol ? data[i][columnIndices.match_vol] : 0;
                     
                     tableHTML += `<tr title='Click để xem biểu đồ giá'>
                         <td>${symbol}</td>
@@ -186,69 +227,56 @@
                         <td>${formatVolume(matchVol)}</td>
                     </tr>`;
                 }
-                
+
+            }
+            
+            if (tableHTML) {
                 tableBody.innerHTML = tableHTML;
-                
-                // Add search functionality
-                const searchInput = document.getElementById('stockSearch');
-                searchInput.addEventListener('input', function() {
-                    this.value = this.value.toUpperCase();
-                    const searchText = this.value;
-                    const rows = tableBody.querySelectorAll('tr');
-                    
-                    rows.forEach(row => {
-                        if (row.cells && row.cells.length > 0) {
-                            const stockSymbol = row.cells[0].textContent;
-                            if (stockSymbol.toUpperCase().includes(searchText)) {
-                                row.style.display = '';
-                            } else {
-                                row.style.display = 'none';
-                            }
-                        }
-                    });
-                });
-                
-                // Add click event to stock symbols to show chart
+            } else {
+                throw new Error('No valid stock data found');
+            }
+            
+            // Add search functionality
+            const searchInput = document.getElementById('stockSearch');
+            searchInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+                const searchText = this.value;
                 const rows = tableBody.querySelectorAll('tr');
+                
                 rows.forEach(row => {
                     if (row.cells && row.cells.length > 0) {
-                        row.addEventListener('click', function() {
-                            if (this.cells && this.cells.length > 0) {
-                                const stockSymbol = this.cells[0].textContent;
-                                console.log('Clicked stock:', stockSymbol);
-                                showChart(stockSymbol);
-                            }
-                        });
-                        row.style.cursor = 'pointer';
+                        const stockSymbol = row.cells[0].textContent;
+                        if (stockSymbol.toUpperCase().includes(searchText)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
                     }
                 });
-                
-            } catch (error) {
-                console.error('Error processing price board data:', error);
-                tableBody.innerHTML = `<tr><td colspan="6"><div class="error-message">
-                    Không thể tải dữ liệu thị trường. Vui lòng thử lại sau.<br>
-                    <small>Chi tiết lỗi: ${error.message}</small>
-                    </div></td></tr>`;
-            }
-        }
-        
-        // Load the sample data initially
-        loadSampleData();
-        
-        // Add refresh button functionality
-        document.getElementById('refreshData').addEventListener('click', function() {
-            tableBody.innerHTML = `<tr>
-                <td colspan="6">
-                    <div class="loading-container">
-                        <span>Đang tải dữ liệu thị trường...</span>
-                    </div>
-                </td>
-            </tr>`;
+            });
             
-            setTimeout(() => {
-                loadSampleData();
-            }, 800);
-        });
+            // Add click event to stock symbols to show chart
+            const rows = tableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                if (row.cells && row.cells.length > 0) {
+                    row.addEventListener('click', function() {
+                        if (this.cells && this.cells.length > 0) {
+                            const stockSymbol = this.cells[0].textContent;
+                            console.log('Clicked stock:', stockSymbol);
+                            showChart(stockSymbol);
+                        }
+                    });
+                    row.style.cursor = 'pointer';
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error processing price board data:', error);
+            tableBody.innerHTML = `<tr><td colspan="6"><div class="error-message">
+                Không thể tải dữ liệu thị trường. Vui lòng thử lại sau.<br>
+                <small>Chi tiết lỗi: ${error.message}</small>
+                </div></td></tr>`;
+        }
 
         // -------------- Chart Modal Functionality
         const modal = document.getElementById("chartModal");
@@ -283,7 +311,7 @@
             modal.style.display = "block";
             
             createChart();
-            loadSampleChartData(stockCode);
+            loadChartData(stockCode);
         }
         
         function createChart() {
@@ -326,73 +354,32 @@
             console.log('Chart created successfully');
         }
         
-        function loadSampleChartData(stockCode) {
-            console.log('Loading sample data for:', stockCode);
+        function loadChartData(stockCode) {
+            console.log('Loading data for:', stockCode);
             
-            // Generate 30 days of sample data
-            const sampleData = generateSampleChartData(stockCode);
-            
-            setTimeout(() => {
-                try {
-                    candleSeries.setData(sampleData);
-                } catch (error) {
-                    console.error('Error setting chart data:', error);
+            fetch(`/api/historical-data/${stockCode}/`)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data count:', data.length);
+                    if (Array.isArray(data) && data.length > 0) {
+                        candleSeries.setData(data);
+                    } else {
+                        throw new Error('Invalid data format or empty data');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading chart data:', error);
                     document.getElementById('chart-container').innerHTML = 
                         '<div class="error-message">Không thể tải dữ liệu biểu đồ. Vui lòng thử lại sau.</div>';
-                }
-            }, 700);
-        }
-        
-        function generateSampleChartData(symbol) {
-            // Get base price from the table for this symbol
-            let basePrice = 50000; // default
-            const rows = tableBody.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                if (row.cells && row.cells.length > 0 && row.cells[0].textContent === symbol) {
-                    const priceText = row.cells[4].textContent;
-                    if (priceText) {
-                        const parsedPrice = parseFloat(priceText) * 1000;
-                        if (!isNaN(parsedPrice)) {
-                            basePrice = parsedPrice;
-                        }
-                    }
-                }
-            });
-            
-            const data = [];
-            const now = new Date();
-            
-            // Generate candle data for the past 30 days
-            for (let i = 30; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(now.getDate() - i);
-                
-                // Add some randomness to prices
-                const multiplier = 0.02; // 2% daily variation
-                const dailyVariation = basePrice * multiplier;
-                
-                // Generate random price movements with some trend
-                const trend = Math.sin(i / 10) * 0.5; // Create a sine wave pattern
-                const open = basePrice * (1 + (Math.random() - 0.5) * multiplier + trend * 0.01);
-                const close = open * (1 + (Math.random() - 0.5) * multiplier);
-                const high = Math.max(open, close) * (1 + Math.random() * multiplier * 0.5);
-                const low = Math.min(open, close) * (1 - Math.random() * multiplier * 0.5);
-                
-                // Update the base price for the next day
-                basePrice = close;
-                
-                data.push({
-                    time: Math.floor(date.getTime() / 1000),
-                    open: open,
-                    high: high,
-                    low: low,
-                    close: close
                 });
-            }
-            
-            return data;
         }
     });
 </script>
-{% endblock %}
+{% endblock %} 
+

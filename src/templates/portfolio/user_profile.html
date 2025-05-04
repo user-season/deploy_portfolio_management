@@ -1,4 +1,5 @@
-{% extends 'base.html' %}
+{% extends 'portfolio/base.html' %}
+{% load crispy_forms_tags %}
 
 {% block title %}Thông tin cá nhân | {{ block.super }}{% endblock %}
 
@@ -9,39 +10,38 @@
             <div class="card shadow-sm border-0 rounded-4 mb-4" data-aos="fade-up">
                 <div class="card-body text-center py-5">
                     <div class="mb-4 position-relative">
-                        <!-- Sample user with avatar -->
-                        <img src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=0D8ABC&color=fff" alt="Nguyễn Văn A" 
-                             class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
-                        
-                        <!-- Sample user without avatar (uncomment to use)
-                        <div class="icon-circle bg-primary text-white mx-auto" style="width: 150px; height: 150px; font-size: 60px; line-height: 150px;">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        -->
+                        {% if user.get_profile_picture %}
+                            <img src="{{ user.get_profile_picture }}" alt="{{ user.get_full_name|default:user.username }}" 
+                                 class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                            <div class="icon-circle bg-primary text-white mx-auto" style="width: 150px; height: 150px; font-size: 60px; line-height: 150px;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        {% endif %}
                     </div>
-                    <h4 class="fw-bold mb-1">Nguyễn Văn A</h4>
-                    <p class="text-muted">nguyenvana@example.com</p>
+                    <h4 class="fw-bold mb-1">{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted">{{ user.email }}</p>
                     <hr class="my-4">
                     <div class="text-start">
                         <div class="mb-3">
                             <p class="mb-1 d-flex align-items-center">
                                 <i class="fas fa-phone text-primary me-3"></i>
                                 <span class="fw-medium">Số điện thoại:</span>
-                                <span class="ms-2">0912345678</span>
+                                <span class="ms-2">{{ user.phone|default:"Chưa cập nhật" }}</span>
                             </p>
                         </div>
                         <div class="mb-3">
                             <p class="mb-1 d-flex align-items-center">
                                 <i class="fas fa-venus-mars text-primary me-3"></i>
                                 <span class="fw-medium">Giới tính:</span>
-                                <span class="ms-2">Nam</span>
+                                <span class="ms-2">{{ user.get_gender_display|default:"Chưa cập nhật" }}</span>
                             </p>
                         </div>
                         <div>
                             <p class="mb-1 d-flex">
                                 <i class="fas fa-map-marker-alt text-primary me-3 mt-1"></i>
                                 <span class="fw-medium mt-1">Địa chỉ:</span>
-                                <span class="ms-2">123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM</span>
+                                <span class="ms-2">{{ user.address|default:"Chưa cập nhật" }}</span>
                             </p>
                         </div>
                     </div>
@@ -60,51 +60,40 @@
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="id_first_name" class="form-label">Tên</label>
-                                <input type="text" name="first_name" id="id_first_name" class="form-control" value="Văn A" required>
+                                {{ form.first_name|as_crispy_field }}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="id_last_name" class="form-label">Họ và tên đệm</label>
-                                <input type="text" name="last_name" id="id_last_name" class="form-control" value="Nguyễn" required>
+                                {{ form.last_name|as_crispy_field }}
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="id_email" class="form-label">Email</label>
-                            <input type="email" name="email" id="id_email" class="form-control" value="nguyenvana@example.com" required>
+                            {{ form.email|as_crispy_field }}
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="id_phone" class="form-label">Số điện thoại</label>
-                                <input type="text" name="phone" id="id_phone" class="form-control" value="0912345678">
+                                {{ form.phone|as_crispy_field }}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="id_gender" class="form-label">Giới tính</label>
-                                <select name="gender" id="id_gender" class="form-select">
-                                    <option value="">Chọn giới tính</option>
-                                    <option value="M" selected>Nam</option>
-                                    <option value="F">Nữ</option>
-                                    <option value="O">Khác</option>
-                                </select>
+                                {{ form.gender|as_crispy_field }}
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="id_address" class="form-label">Địa chỉ</label>
-                            <textarea name="address" id="id_address" rows="3" class="form-control">123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM</textarea>
+                            {{ form.address|as_crispy_field }}
                         </div>
                         
                         <div class="mb-4">
-                            <label for="id_profile_picture" class="form-label">Ảnh đại diện</label>
+                            <label for="profilePictureInput" class="form-label">Ảnh đại diện</label>
                             <div class="input-group">
-                                <input type="file" name="profile_picture" id="id_profile_picture" class="form-control" accept="image/jpeg,image/png">
+                                {{ form.profile_picture }}
                             </div>
                             <div class="form-text">Tải lên ảnh đại diện mới. Định dạng hỗ trợ: JPG, PNG. Kích thước tối đa: 5MB.</div>
                         </div>
                         
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary" onclick="showSuccessAlert(event)">
+                            <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Lưu thay đổi
                             </button>
                         </div>
@@ -114,31 +103,4 @@
         </div>
     </div>
 </div>
-
-<!-- Success Alert for demo purposes -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
-    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body">
-                <i class="fas fa-check-circle me-2"></i> Cập nhật thông tin thành công!
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    </div>
-</div>
-
-<script>
-function showSuccessAlert(event) {
-    event.preventDefault();
-    // Create toast notification
-    var toastEl = document.getElementById('successToast');
-    var toast = new bootstrap.Toast(toastEl);
-    toast.show();
-    
-    // For demo purposes, you can redirect after a delay
-    // setTimeout(() => {
-    //     window.location.href = "#";
-    // }, 2000);
-}
-</script>
-{% endblock %}
+{% endblock %} 

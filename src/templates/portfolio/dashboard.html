@@ -1,7 +1,9 @@
-{% extends 'base.html' %}
+{% extends 'portfolio/base.html' %}
+{% load humanize %}
+{% load currency_filters %}
 {% load static %}
 
-{% block title %}Bảng điều khiển | something{% endblock %}
+{% block title %}Bảng điều khiển | {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
@@ -18,7 +20,7 @@
                                 <div class="d-flex align-items-center mb-3">
                                     <div class="avatar-container me-3">
                                         {% if user.get_profile_picture %}
-                                        <img src="#" alt="user-name" 
+                                        <img src="{{ user.get_profile_picture }}" alt="{{ user.username }}" 
                                              class="rounded-circle" style="width: 54px; height: 54px; object-fit: cover; border: 3px solid #7e57c2;">
                                         {% else %}
                                         <div class="profile-avatar-circle">
@@ -28,15 +30,15 @@
                                     </div>
                                     <div>
                                         <span class="badge bg-primary-soft text-primary mb-2">Chào mừng trở lại</span>
-                                        <h2 class="fw-bold mb-0">Xin chào, user-name!</h2>
+                                        <h2 class="fw-bold mb-0">Xin chào, {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}!</h2>
                                     </div>
                                 </div>
                                 <p class="text-muted mb-4">Đây là tổng quan danh mục đầu tư của bạn hôm nay. Hãy theo dõi và tối ưu hóa đầu tư của bạn.</p>
                                 <div class="d-flex flex-wrap gap-2">
-                                    <a href="#" class="btn btn-primary btn-lg rounded-pill">
+                                    <a href="{% url 'portfolio_create' %}" class="btn btn-primary btn-lg rounded-pill">
                                         <i class="fas fa-plus me-2"></i>Tạo danh mục
                                     </a>
-                                    <a href="#" class="btn btn-outline-primary btn-lg rounded-pill">
+                                    <a href="{% url 'market' %}" class="btn btn-outline-primary btn-lg rounded-pill">
                                         <i class="fas fa-chart-line me-2"></i>Xem thị trường
                                     </a>
                                 </div>
@@ -45,10 +47,10 @@
                                 <div class="welcome-illustration">
                                     <div class="activity-chart">
                                         {% if user.get_profile_picture %}
-                                        <img src="" alt="user name" class="img-fluid rounded-circle profile-image" style="width: 200px; height: 200px; object-fit: cover; border: 5px solid var(--primary-color); box-shadow: 0 10px 25px rgba(126, 87, 194, 0.3);">
+                                        <img src="{{ user.get_profile_picture }}" alt="{{ user.username }}" class="img-fluid rounded-circle profile-image" style="width: 200px; height: 200px; object-fit: cover; border: 5px solid var(--primary-color); box-shadow: 0 10px 25px rgba(126, 87, 194, 0.3);">
                                         {% else %}
                                         <div class="user-avatar-placeholder rounded-circle d-flex align-items-center justify-content-center" style="width: 200px; height: 200px; background: linear-gradient(135deg, var(--primary-light), var(--primary-color)); border: 5px solid var(--primary-color); box-shadow: 0 10px 25px rgba(126, 87, 194, 0.3);">
-                                            <span style="font-size: 72px; color: white;">something</span>
+                                            <span style="font-size: 72px; color: white;">{{ user.username.0|upper }}</span>
                                         </div>
                                         {% endif %}
                                         <div class="profile-glow"></div>
@@ -70,7 +72,7 @@
                     </h4>
                     <div class="date-picker-wrapper">
                         <span class="badge bg-primary-soft text-primary px-3 py-2">
-                            <i class="far fa-calendar-alt me-2"></i>something
+                            <i class="far fa-calendar-alt me-2"></i>{{ today|date:"d/m/Y" }}
                         </span>
                     </div>
                 </div>
@@ -85,11 +87,11 @@
                         </div>
                         <div class="stat-card-info">
                             <span class="stat-card-title">Tổng giá trị danh mục</span>
-                            <div class="stat-card-value">100,000,000 VND</div>
+                            <div class="stat-card-value">{{ total_value|default:"0"|dinh_dang_tien }} VND</div>
                             <div class="stat-card-progress">
                                 <span class="badge {% if total_profit > 0 %}bg-success-soft text-success{% elif total_profit < 0 %}bg-danger-soft text-danger{% else %}bg-secondary-soft text-secondary{% endif %}">
                                     <i class="fas {% if total_profit > 0 %}fa-arrow-up{% elif total_profit < 0 %}fa-arrow-down{% else %}fa-minus{% endif %} me-1"></i>
-                                    {% if total_profit > 0 %}+{% endif %}something %
+                                    {% if total_profit > 0 %}+{% endif %}{{ total_profit|default:"0"|floatformat:2 }}%
                                 </span>
                             </div>
                         </div>
@@ -105,9 +107,9 @@
                         </div>
                         <div class="stat-card-info">
                             <span class="stat-card-title">Số dư ví điện tử</span>
-                            <div class="stat-card-value">15,000,000 VND</div>
+                            <div class="stat-card-value">{{ wallet.balance|default:"0"|dinh_dang_tien }} VND</div>
                             <div class="stat-card-progress">
-                                <a href="#" class="btn btn-sm btn-outline-primary rounded-pill btn-link">Quản lý ví</a>
+                                <a href="{% url 'wallet' %}" class="btn btn-sm btn-outline-primary rounded-pill btn-link">Quản lý ví</a>
                             </div>
                         </div>
                     </div>
@@ -122,7 +124,7 @@
                         </div>
                         <div class="stat-card-info">
                             <span class="stat-card-title">Số danh mục</span>
-                            <div class="stat-card-value">250,000,000</div>
+                            <div class="stat-card-value">{{ portfolios.count }}</div>
                             <div class="stat-card-progress">
                                 <span class="text-muted">Danh mục đang quản lý</span>
                             </div>
@@ -139,7 +141,7 @@
                         </div>
                         <div class="stat-card-info">
                             <span class="stat-card-title">Tổng số tài sản</span>
-                            <div class="stat-card-value">300,000,000</div>
+                            <div class="stat-card-value">{{ total_assets|default:"0" }}</div>
                             <div class="stat-card-progress">
                                 <span class="text-muted">Cổ phiếu đang nắm giữ</span>
                             </div>
@@ -182,6 +184,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for portfolio in portfolios %}
                                     <tr class="portfolio-row">
                                         <td class="ps-4">
                                             <div class="d-flex align-items-center">
@@ -189,24 +192,26 @@
                                                     <i class="fas fa-folder"></i>
                                                 </div>
                                                 <div>
-                                                    <h6 class="mb-0">Danh mục 1</h6>
-                                                    <small class="text-muted">Mục tiêu lãi 100,000,000 VND</small>
+                                                    <h6 class="mb-0">{{ portfolio.name }}</h6>
+                                                    <small class="text-muted">{{ portfolio.investment_goal|default:"Chưa có mục tiêu" }}</small>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="portfolio-value">something VND</span>
+                                            <span class="portfolio-value">{{ portfolio.total_value|default:"0"|dinh_dang_tien }} VND</span>
                                         </td>
                                         <td>
+                                            {% with profit=portfolio.profit_loss_percentage %}
                                             <div class="profit-badge-wrapper">
                                                 <span class="profit-badge {% if profit > 0 %}profit-up{% elif profit < 0 %}profit-down{% else %}profit-neutral{% endif %}">
-                                                    {% if profit > 0 %}<i class="fas fa-caret-up me-1"></i>+{% elif profit < 0 %}<i class="fas fa-caret-down me-1"></i>{% else %}<i class="fas fa-minus me-1"></i>{% endif %}something%
+                                                    {% if profit > 0 %}<i class="fas fa-caret-up me-1"></i>+{% elif profit < 0 %}<i class="fas fa-caret-down me-1"></i>{% else %}<i class="fas fa-minus me-1"></i>{% endif %}{{ profit|default:"0"|dinh_dang_tien }}%
                                                 </span>
                                             </div>
+                                            {% endwith %}
                                         </td>
                                         <td>
                                             <span class="risk-badge risk-{% if portfolio.risk_tolerance == 'high' %}high{% elif portfolio.risk_tolerance == 'medium' %}medium{% else %}low{% endif %}">
-                                                <i class="fas fa-circle me-1"></i>something
+                                                <i class="fas fa-circle me-1"></i>{{ portfolio.get_risk_tolerance_display }}
                                             </span>
                                         </td>
                                         <td class="pe-4 text-end">
@@ -220,6 +225,7 @@
                                             </div>
                                         </td>
                                     </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -231,7 +237,7 @@
                             </div>
                             <h5 class="fw-bold mb-2">Chưa có danh mục đầu tư nào</h5>
                             <p class="text-muted mb-4">Hãy tạo danh mục đầu tư đầu tiên của bạn để theo dõi hiệu suất</p>
-                            <a href="#" class="btn btn-primary btn-lg rounded-pill px-4 pulse-btn">
+                            <a href="{% url 'portfolio_create' %}" class="btn btn-primary btn-lg rounded-pill px-4 pulse-btn">
                                 <i class="fas fa-plus me-2"></i>Tạo danh mục mới
                             </a>
                         </div>
@@ -262,7 +268,7 @@
                         </div>
                         <h5 class="feature-card-title">Nạp tiền</h5>
                         <p class="feature-card-text">Nạp tiền vào tài khoản của bạn để thực hiện giao dịch mua cổ phiếu</p>
-                        <a href="#" class="btn btn-success btn-lg btn-rounded feature-btn">
+                        <a href="{% url 'deposit_money' %}" class="btn btn-success btn-lg btn-rounded feature-btn">
                             <i class="fas fa-plus-circle me-2"></i>Nạp tiền
                         </a>
                         <div class="feature-bg-shape"></div>
@@ -278,7 +284,7 @@
                         </div>
                         <h5 class="feature-card-title">Rút tiền</h5>
                         <p class="feature-card-text">Rút tiền từ tài khoản về tài khoản ngân hàng của bạn</p>
-                        <a href="#" class="btn btn-primary btn-lg btn-rounded feature-btn">
+                        <a href="{% url 'withdraw_money' %}" class="btn btn-primary btn-lg btn-rounded feature-btn">
                             <i class="fas fa-minus-circle me-2"></i>Rút tiền
                         </a>
                         <div class="feature-bg-shape"></div>
@@ -294,7 +300,7 @@
                         </div>
                         <h5 class="feature-card-title">Tài khoản ngân hàng</h5>
                         <p class="feature-card-text">Quản lý các tài khoản ngân hàng liên kết với tài khoản của bạn</p>
-                        <a href="#" class="btn btn-outline-primary btn-lg btn-rounded feature-btn">
+                        <a href="{% url 'bank_account_list' %}" class="btn btn-outline-primary btn-lg btn-rounded feature-btn">
                             <i class="fas fa-university me-2"></i>Quản lý
                         </a>
                         <div class="feature-bg-shape"></div>
@@ -317,7 +323,7 @@
                                 </div>
                                 <h5 class="fw-bold mb-0">Giao dịch gần đây</h5>
                             </div>
-                            <a href="#" class="btn btn-link text-decoration-none text-primary">
+                            <a href="{% url 'transaction_list' %}" class="btn btn-link text-decoration-none text-primary">
                                 Xem tất cả <i class="fas fa-arrow-right ms-1"></i>
                             </a>
                         </div>
@@ -345,29 +351,29 @@
                                                     <i class="fas fa-chart-line"></i>
                                                 </div>
                                                 <div>
-                                                    <h6 class="mb-0">something</h6>
-                                                    <small class="text-muted">something</small>
+                                                    <h6 class="mb-0">{{ transaction.asset.symbol }}</h6>
+                                                    <small class="text-muted">{{ transaction.asset.name }}</small>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
                                             <span class="transaction-badge {% if transaction.transaction_type == 'buy' %}transaction-buy{% else %}transaction-sell{% endif %}">
                                                 {% if transaction.transaction_type == 'buy' %}<i class="fas fa-arrow-alt-circle-down me-1"></i>{% else %}<i class="fas fa-arrow-alt-circle-up me-1"></i>{% endif %}
-                                                something
+                                                {{ transaction.get_transaction_type_display }}
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="transaction-quantity">something</span>
+                                            <span class="transaction-quantity">{{ transaction.quantity }}</span>
                                         </td>
                                         <td>
-                                            <span class="transaction-price">something VND</span>
+                                            <span class="transaction-price">{{ transaction.price|default:"0"|dinh_dang_tien }} VND</span>
                                         </td>
                                         <td>
-                                            <span class="transaction-total">something VND</span>
+                                            <span class="transaction-total">{{ transaction.total_amount|default:"0"|dinh_dang_tien }} VND</span>
                                         </td>
                                         <td class="pe-4">
                                             <span class="transaction-date">
-                                                <i class="far fa-clock me-1"></i>something
+                                                <i class="far fa-clock me-1"></i>{{ transaction.transaction_date|date:"d/m/Y H:i" }}
                                             </span>
                                         </td>
                                     </tr>
