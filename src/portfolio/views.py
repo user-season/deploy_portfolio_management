@@ -10,11 +10,16 @@ def home(request):
 def dashboard(request):
     return render(request, 'portfolio/dashboard.html')
 
+
 def login_view(request):
     return render(request, 'portfolio/login.html')
 
 def register(request):
     return render(request, 'portfolio/register.html')
+
+def user_profile(request):
+    return render(request, 'portfolio/user_profile.html')
+
 
 def portfolio_list(request):
     return render(request, 'portfolio/portfolio_list.html')
