@@ -10,6 +10,7 @@ urlpatterns = [
 
     path('register/', views.register, name='register'),
     path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
     path('profile/', views.user_profile, name='user_profile'),
 
     path('assets/', views.asset_list, name='asset_list'),
@@ -21,7 +22,6 @@ urlpatterns = [
     path('transactions/create/', views.transaction_create, name='transaction_create'),
 
     path('wallet/', views.wallet, name='wallet'),
-    path('wallet/transactions/', views.wallet_transactions, name='wallet_transactions'),
     path('wallet/deposit/', views.deposit_money, name='deposit_money'),
     path('wallet/withdraw/', views.withdraw_money, name='withdraw_money'),
     path('wallet/transactions/', views.wallet_transactions, name='wallet_transactions'),

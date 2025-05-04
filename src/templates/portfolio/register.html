@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
 {% block title %}Đăng ký tài khoản | {{ block.super }}{% endblock %}
 
@@ -22,6 +23,7 @@
                     
                     <form method="post">
                         {% csrf_token %}
+                        {{ form|crispy }}
                         
                         <div class="form-check mb-4">
                             <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
