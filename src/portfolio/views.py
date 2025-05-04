@@ -18,6 +18,9 @@ def register(request):
 
 def portfolio_list(request):
     return render(request, 'portfolio/portfolio_list.html')
+    
+def portfolio_create(request):
+    return render(request, 'portfolio/portfolio_form.html')
 
 def asset_list(request):
     return render(request, 'portfolio/asset_list.html')
@@ -25,8 +28,18 @@ def asset_list(request):
 def transaction_list(request):
     return render(request, 'portfolio/transaction_list.html')
 
+def wallet_transactions(request):
+    return render(request, 'portfolio/wallet_transactions.html')
+
+
 def wallet(request):
     return render(request, 'portfolio/wallet.html')
+
+def deposit_money(request):
+    return render(request, 'portfolio/deposit.html')
+
+def withdraw_money(request):
+    return render(request, 'portfolio/withdraw.html')
 
 def market(request):
     return render(request, 'portfolio/market.html')

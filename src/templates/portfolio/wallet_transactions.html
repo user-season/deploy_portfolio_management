@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lịch sử giao dịch | {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .icon-circle {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+    }
+    .bg-success-light {
+        background-color: rgba(40, 167, 69, 0.15);
+    }
+    .bg-danger-light {
+        background-color: rgba(220, 53, 69, 0.15);
+    }
+    .text-monospace {
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    .form-control-sm, .form-select-sm {
+        height: calc(1.5em + 0.5rem + 2px);
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 0.2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div class="card-heading mb-3 mb-md-0">
+            <div class="card-heading-icon">
+                <i class="fas fa-history"></i>
+            </div>
+            <h2 class="fw-bold mb-0">Lịch sử giao dịch ví</h2>
+        </div>
+        <div>
+            <a href="#" class="btn btn-outline-primary btn-rounded">
+                <i class="fas fa-wallet me-2"></i>Quay lại ví
+            </a>
+        </div>
+    </div>
+    
+    <!-- Sample success message for demonstration -->
+    <div class="alert alert-success rounded-4 mb-4">
+        <div class="d-flex">
+            <div class="me-3">
+                <i class="fas fa-check-circle fa-2x"></i>
+            </div>
+            <div>
+                <h6 class="alert-heading">Thông báo</h6>
+                <p class="mb-0">Giao dịch đã hoàn tất thành công!</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bộ lọc -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4" data-aos="fade-up">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small">Loại giao dịch</label>
+                    <select name="type" class="form-select form-select-sm">
+                        <option value="">Tất cả loại</option>
+                        <option value="deposit">Nạp tiền</option>
+                        <option value="withdraw">Rút tiền</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small">Trạng thái</label>
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="completed">Hoàn thành</option>
+                        <option value="pending">Đang xử lý</option>
+                        <option value="failed">Thất bại</option>
+                        <option value="canceled">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label small">Từ ngày</label>
+                    <input type="date" name="from_date" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label small">Đến ngày</label>
+                    <input type="date" name="to_date" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-2 d-flex">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-filter me-1"></i> Lọc
+                    </button>
+                    <a href="#" class="btn btn-light btn-sm ms-2">
+                        <i class="fas fa-redo me-1"></i> Đặt lại
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Danh sách giao dịch -->
+    <div class="card border-0 shadow-sm rounded-4" data-aos="fade-up">
+        <div class="card-header bg-transparent border-0 p-4">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0">Danh sách giao dịch</h5>
+                <span class="badge bg-primary rounded-pill ms-2">5</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Ngày</th>
+                            <th>Loại</th>
+                            <th>Số tiền</th>
+                            <th>Phí</th>
+                            <th>Phương thức</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-4">Mã giao dịch</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Sample transaction 1 -->
+                        <tr>
+                            <td class="ps-4">15/06/2024 10:25</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle bg-success-light text-success me-2" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </div>
+                                    <span>Nạp tiền</span>
+                                </div>
+                            </td>
+                            <td class="fw-medium text-success">+2,000,000 VNĐ</td>
+                            <td><span class="text-success">Miễn phí</span></td>
+                            <td>Ví điện tử</td>
+                            <td>
+                                <span class="badge bg-success rounded-pill">
+                                    Hoàn thành
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <span class="text-monospace small">TX24061500001</span>
+                            </td>
+                        </tr>
+                        
+                        <!-- Sample transaction 2 -->
+                        <tr>
+                            <td class="ps-4">10/06/2024 14:10</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle bg-danger-light text-danger me-2" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </div>
+                                    <span>Rút tiền</span>
+                                </div>
+                            </td>
+                            <td class="fw-medium text-danger">-1,500,000 VNĐ</td>
+                            <td>15,000 VNĐ</td>
+                            <td>Chuyển khoản ngân hàng</td>
+                            <td>
+                                <span class="badge bg-success rounded-pill">
+                                    Hoàn thành
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <span class="text-monospace small">TX24061000002</span>
+                            </td>
+                        </tr>
+                        
+                        <!-- Sample transaction 3 -->
+                        <tr>
+                            <td class="ps-4">05/06/2024 09:45</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle bg-success-light text-success me-2" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </div>
+                                    <span>Nạp tiền</span>
+                                </div>
+                            </td>
+                            <td class="fw-medium text-success">+5,000,000 VNĐ</td>
+                            <td><span class="text-success">Miễn phí</span></td>
+                            <td>Thẻ tín dụng</td>
+                            <td>
+                                <span class="badge bg-success rounded-pill">
+                                    Hoàn thành
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <span class="text-monospace small">TX24060500003</span>
+                            </td>
+                        </tr>
+                        
+                        <!-- Sample transaction 4 -->
+                        <tr>
+                            <td class="ps-4">01/06/2024 16:30</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle bg-danger-light text-danger me-2" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </div>
+                                    <span>Rút tiền</span>
+                                </div>
+                            </td>
+                            <td class="fw-medium text-danger">-2,500,000 VNĐ</td>
+                            <td>25,000 VNĐ</td>
+                            <td>Chuyển khoản ngân hàng</td>
+                            <td>
+                                <span class="badge bg-warning rounded-pill">
+                                    Đang xử lý
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <span class="text-monospace small">TX24060100004</span>
+                            </td>
+                        </tr>
+                        
+                        <!-- Sample transaction 5 -->
+                        <tr>
+                            <td class="ps-4">25/05/2024 11:15</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle bg-danger-light text-danger me-2" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </div>
+                                    <span>Rút tiền</span>
+                                </div>
+                            </td>
+                            <td class="fw-medium text-danger">-1,000,000 VNĐ</td>
+                            <td>10,000 VNĐ</td>
+                            <td>Ví điện tử</td>
+                            <td>
+                                <span class="badge bg-danger rounded-pill">
+                                    Thất bại
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <span class="text-monospace small">TX24052500005</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Sample pagination -->
+            <div class="d-flex justify-content-center py-3 border-top">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0">
+                        <li class="page-item">
+                            <a class="page-link" href="#" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Empty state (hidden by default, uncomment to show) -->
+    <!-- 
+    <div class="card border-0 shadow-sm rounded-4" data-aos="fade-up">
+        <div class="card-header bg-transparent border-0 p-4">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0">Danh sách giao dịch</h5>
+                <span class="badge bg-primary rounded-pill ms-2">0</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="text-center py-5">
+                <img src="{% static 'images/no-transactions.png' %}" alt="No transactions" class="img-fluid mb-4" style="max-width: 150px; opacity: 0.7;">
+                <h5>Chưa có giao dịch nào</h5>
+                <p class="text-muted">Các giao dịch nạp/rút tiền sẽ được hiển thị tại đây</p>
+                <div class="mt-3">
+                    <a href="#" class="btn btn-success btn-rounded mx-2">
+                        <i class="fas fa-plus-circle me-2"></i>Nạp tiền
+                    </a>
+                    <a href="#" class="btn btn-primary btn-rounded mx-2">
+                        <i class="fas fa-minus-circle me-2"></i>Rút tiền
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    -->
+</div>
+{% endblock %}
