@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block title %}Ví điện tử | {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table td, .table th {
+        vertical-align: middle;
+    }
+    .icon-circle {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+    }
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #4e73df 0%, #2e59d9 100%);
+    }
+    .bg-success-light {
+        background-color: rgba(40, 167, 69, 0.15);
+    }
+    .bg-danger-light {
+        background-color: rgba(220, 53, 69, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div class="card-heading mb-3 mb-md-0">
+            <div class="card-heading-icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <h2 class="fw-bold mb-0">Ví điện tử</h2>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-success btn-rounded" data-aos="fade-left" data-aos-delay="100">
+                <i class="fas fa-plus-circle me-2"></i>Nạp tiền
+            </button>
+            <button class="btn btn-primary btn-rounded" data-aos="fade-left" data-aos-delay="200">
+                <i class="fas fa-minus-circle me-2"></i>Rút tiền
+            </button>
+        </div>
+    </div>
+    
+    <div class="alert alert-success rounded-4 mb-4">
+        <div class="d-flex">
+            <div class="me-3">
+                <i class="fas fa-check-circle fa-2x"></i>
+            </div>
+            <div>
+                <h6 class="alert-heading">Thông báo</h6>
+                <p class="mb-0">Đây là một thông báo mẫu từ hệ thống.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thẻ số dư -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-gradient-primary text-white">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-circle bg-white text-primary me-3">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <h5 class="mb-0">Số dư hiện tại</h5>
+                    </div>
+                    <h2 class="display-6 fw-bold mb-0">1,500,000 VNĐ</h2>
+                    <p class="mt-2 mb-0 opacity-75">Cập nhật lúc: 15:30 20/08/2024</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-circle bg-success-light text-success me-3">
+                            <i class="fas fa-arrow-down"></i>
+                        </div>
+                        <h5 class="mb-0">Tổng nạp</h5>
+                    </div>
+                    <h2 class="display-6 fw-bold mb-0">3,000,000 VNĐ</h2>
+                    <p class="text-muted mt-2 mb-0">Trong 30 ngày qua: 1,000,000 VNĐ</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-circle bg-danger-light text-danger me-3">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <h5 class="mb-0">Tổng rút</h5>
+                    </div>
+                    <h2 class="display-6 fw-bold mb-0">1,500,000 VNĐ</h2>
+                    <p class="text-muted mt-2 mb-0">Trong 30 ngày qua: 500,000 VNĐ</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tài khoản ngân hàng liên kết -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4" data-aos="fade-up">
+        <div class="card-header bg-transparent border-0 p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="card-heading">
+                    <div class="card-heading-icon">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <h5 class="mb-0">Tài khoản ngân hàng liên kết</h5>
+                </div>
+                <button class="btn btn-primary btn-sm btn-rounded">
+                    <i class="fas fa-plus me-1"></i> Thêm tài khoản
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Ngân hàng</th>
+                            <th>Chủ tài khoản</th>
+                            <th>Số tài khoản</th>
+                            <th>Chi nhánh</th>
+                            <th class="text-center">Mặc định</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bank-logo me-3">
+                                        <div class="icon-circle">
+                                            <i class="fas fa-university text-primary"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Vietcombank</h6>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Nguyễn Văn A</td>
+                            <td class="text-monospace fw-medium">1234567890</td>
+                            <td>TP.HCM</td>
+                            <td class="text-center">
+                                <span class="badge bg-success rounded-pill">Mặc định</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-light" title="Chỉnh sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light text-danger" title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bank-logo me-3">
+                                        <div class="icon-circle">
+                                            <i class="fas fa-university text-primary"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Techcombank</h6>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Nguyễn Văn A</td>
+                            <td class="text-monospace fw-medium">0987654321</td>
+                            <td>Hà Nội</td>
+                            <td class="text-center">
+                                <button type="submit" class="btn btn-sm btn-light" title="Đặt làm mặc định">
+                                    <i class="far fa-star"></i>
+                                </button>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-light" title="Chỉnh sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light text-danger" title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-3 text-end border-top">
+                <button class="btn btn-link text-decoration-none">
+                    Xem tất cả <i class="fas fa-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lịch sử giao dịch -->
+    <div class="card border-0 shadow-sm rounded-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="card-header bg-transparent border-0 p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="card-heading">
+                    <div class="card-heading-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h5 class="mb-0">Lịch sử giao dịch</h5>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-link text-decoration-none">
+                        Xem tất cả <i class="fas fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Ngày</th>
+                            <th>Loại</th>
+                            <th>Số tiền</th>
+                            <th>Phương thức</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-4">Mã giao dịch</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="ps-4">15/08/2024 10:30</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle bg-success-light text-success me-2" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </div>
+                                    <span>Nạp tiền</span>
+                                </div>
+                            </td>
+                            <td class="fw-medium text-success">+500,000 VNĐ</td>
+                            <td>Chuyển khoản ngân hàng</td>
+                            <td>
+                                <span class="badge bg-success rounded-pill">Hoàn thành</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <span class="text-monospace small">TX12345678</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4">10/08/2024 15:45</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle bg-danger-light text-danger me-2" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-arrow-up"></i>
+                                    </div>
+                                    <span>Rút tiền</span>
+                                </div>
+                            </td>
+                            <td class="fw-medium text-danger">-200,000 VNĐ</td>
+                            <td>Chuyển khoản ngân hàng</td>
+                            <td>
+                                <span class="badge bg-success rounded-pill">Hoàn thành</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <span class="text-monospace small">TX12345677</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4">05/08/2024 09:15</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle bg-success-light text-success me-2" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </div>
+                                    <span>Nạp tiền</span>
+                                </div>
+                            </td>
+                            <td class="fw-medium text-success">+1,000,000 VNĐ</td>
+                            <td>Chuyển khoản ngân hàng</td>
+                            <td>
+                                <span class="badge bg-success rounded-pill">Hoàn thành</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <span class="text-monospace small">TX12345676</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="d-flex justify-content-center py-3 border-top">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0">
+                        <li class="page-item">
+                            <button class="page-link" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </button>
+                        </li>
+                        <li class="page-item active"><button class="page-link">1</button></li>
+                        <li class="page-item"><button class="page-link">2</button></li>
+                        <li class="page-item"><button class="page-link">3</button></li>
+                        <li class="page-item">
+                            <button class="page-link" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

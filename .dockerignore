@@ -1,0 +1,6 @@
+.gitignore
+run.bat
+README.md
+venv/
+.git/
+.dockerignore
