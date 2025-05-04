@@ -1,7 +1,11 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
+<<<<<<< HEAD
 from .models import User, Portfolio, Transaction, Asset
+=======
+from .models import User
+>>>>>>> 3d7ba86286e9c7f9b28202db2aea1c02c4da0240
 
 
 
@@ -10,6 +14,7 @@ class UserRegistrationForm(UserCreationForm):
     
     class Meta:
         model = User
+<<<<<<< HEAD
         fields = ['username', 'email', 'password1', 'password2']
 
 
@@ -104,3 +109,6 @@ class AssetForm(forms.ModelForm):
     class Meta:
         model = Asset
         fields = ['symbol', 'name', 'type', 'sector', 'description', 'current_price']
+=======
+        fields = ['username', 'email', 'password1', 'password2']
+>>>>>>> 3d7ba86286e9c7f9b28202db2aea1c02c4da0240

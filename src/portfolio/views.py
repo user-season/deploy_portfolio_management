@@ -3,10 +3,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.shortcuts import render, redirect
 from django.contrib import messages
+<<<<<<< HEAD
 from django.utils import timezone
 
 from .forms import UserRegistrationForm, PortfolioForm, TransactionForm, AssetForm
 from .models import Portfolio, PortfolioAsset, Transaction, Asset
+=======
+
+from .forms import UserRegistrationForm
+>>>>>>> 3d7ba86286e9c7f9b28202db2aea1c02c4da0240
 
 
 
@@ -43,6 +48,18 @@ def register(request):
     else:
         form = UserRegistrationForm()
     return render(request, 'portfolio/register.html', {'form': form})
+<<<<<<< HEAD
+=======
+
+def logout_view(request):
+    logout(request)
+    return redirect('home')
+
+
+def user_profile(request):
+    return render(request, 'portfolio/user_profile.html')
+
+>>>>>>> 3d7ba86286e9c7f9b28202db2aea1c02c4da0240
 
 def logout_view(request):
     logout(request)
