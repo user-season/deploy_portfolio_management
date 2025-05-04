@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 .git/
 .sqlite3
+erd.img
