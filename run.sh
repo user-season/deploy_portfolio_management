@@ -2,27 +2,18 @@
 
 echo "=== CHECK PYTHON VERSION ==="
 if ! python --version 2>&1 | grep -q "Python 3"; then
-    echo "ERROR: Python 3 is required!"
+    echo "ERROR: Python3 is required!"
     read -p "Press Enter to continue..."
     exit 1
 fi
 echo "=== PYTHON VERSION CHECKED ==="
 
 echo "=== LOAD ENVIRONMENT VARIABLES ==="
-if [ ! -f .env ]; then
-    echo "ERROR: .env file not found!"
-    read -p "Press Enter to continue..."
-    exit 1
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | grep -E '^[A-Za-z_][A-Za-z0-9_]*=.*$' | sed 's/[[:space:]]*$//' | xargs)
+else
+    echo "WARNING: .env file not found, relying on Docker environment variables"
 fi
-while IFS='=' read -r key value; do
-    # Skip empty lines and lines starting with #
-    if [[ -n "$key" && ! "$key" =~ ^# ]]; then
-        # Remove leading/trailing whitespace
-        key=$(echo "$key" | xargs)
-        value=$(echo "$value" | xargs)
-        export "$key=$value"
-    fi
-done < .env
 echo "=== LOAD ENVIRONMENT VARIABLES COMPLETELY ==="
 
 echo "=== CHECK POSTGRES DATABASE ==="
@@ -35,7 +26,7 @@ echo "=== POSTGRES DATABASE IS INSTALLED ==="
 
 echo "=== CONNECT TO DATABASE ==="
 export PGPASSWORD="$DATABASE_PASSWORD"
-psql -U "$DATABASE_USER" -c "SELECT 1;" >/dev/null 2>&1
+psql -U "$DATABASE_USER" -h "$DATABASE_HOST" -p "$DATABASE_PORT" -c "SELECT 1;" >/dev/null 2>&1
 if [ $? -ne 0 ]; then
     echo "ERROR: Cannot connect to PostgreSQL!"
     echo "Check PostgreSQL server and sign-in information!"
@@ -53,8 +44,13 @@ if [ -d "venv" ]; then
     rm -rf venv
     sleep 2
 fi
-python -m venv venv
-source venv/bin/activate
+python -m venv venv || { echo "❌ Failed to create venv"; exit 1; }
+if [ -f "venv/Scripts/activate" ]; then
+    source venv/Scripts/activate
+else
+    echo ""❌ Activate script not found! venv creation may have failed.""
+    exit 1
+fi
 if ! python --version >/dev/null 2>&1; then
     echo "ERROR: Failed to activate virtual environment!"
     read -p "Press Enter to continue..."
@@ -75,14 +71,15 @@ if [ ! -d src ]; then
     read -p "Press Enter to continue..."
     exit 1
 fi
+
+echo "=== NAVIGATE TO PROJECT DIRECTORY ==="
 cd src
 mkdir -p static
 mkdir -p media
 
 echo "=== CREATE DATABASE ==="
-export PGPASSWORD="$DATABASE_PASSWORD"
-psql -U "$DATABASE_USER" -c "DROP DATABASE IF EXISTS $DATABASE_NAME;"
-psql -U "$DATABASE_USER" -c "CREATE DATABASE $DATABASE_NAME WITH ENCODING='UTF8' TEMPLATE=template0;"
+psql -h "$DATABASE_HOST" -U "$DATABASE_USER" -p "$DATABASE_PORT" -c "DROP DATABASE IF EXISTS $DATABASE_NAME;"
+psql -h "$DATABASE_HOST" -U "$DATABASE_USER" -p "$DATABASE_PORT" -c "CREATE DATABASE $DATABASE_NAME WITH ENCODING='UTF8' TEMPLATE=template0;"
 echo "=== CREATE DATABASE COMPLETELY ==="
 
 echo "=== CREATE MIGRATIONS ==="

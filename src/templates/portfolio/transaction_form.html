@@ -1,6 +1,7 @@
-{% extends 'base.html' %}
+{% extends 'portfolio/base.html' %}
+{% load crispy_forms_tags %}
 
-{% block title %}{% if transaction_type == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %} | {{ block.super }}{% endblock %}
+{% block title %}{% if form.transaction_type.value == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %} | {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -9,25 +10,38 @@
             <!-- Breadcrumb -->
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb bg-transparent p-0">
-                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none"><i class="fas fa-home me-1"></i>Trang chủ</a></li>
-                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Danh mục</a></li>
-                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Danh mục của tôi</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{% if transaction_type == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %}</li>
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-decoration-none"><i class="fas fa-home me-1"></i>Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'portfolio_list' %}" class="text-decoration-none">Danh mục</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'portfolio_detail' pk=portfolio.pk %}" class="text-decoration-none">{{ portfolio.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% if form.transaction_type.value == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %}</li>
                 </ol>
             </nav>
 
+            <!-- DEBUG INFO -->
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <h4 class="alert-heading">Lỗi form!</h4>
+                <p>Form có các lỗi sau:</p>
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        <li>{{ field }}: {{ errors }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
             <!-- Card chính -->
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div class="card-header p-4 {% if transaction_type == 'buy' %}bg-success-subtle{% else %}bg-danger-subtle{% endif %} border-bottom-0">
+                <div class="card-header p-4 {% if form.transaction_type.value == 'buy' %}bg-success-subtle{% else %}bg-danger-subtle{% endif %} border-bottom-0">
                     <div class="d-flex align-items-center">
-                        <div class="rounded-circle p-3 me-3 {% if transaction_type == 'buy' %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
-                            <i class="fas fa-{% if transaction_type == 'buy' %}cart-plus{% else %}cart-arrow-down{% endif %} fa-lg"></i>
+                        <div class="rounded-circle p-3 me-3 {% if form.transaction_type.value == 'buy' %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+                            <i class="fas fa-{% if form.transaction_type.value == 'buy' %}cart-plus{% else %}cart-arrow-down{% endif %} fa-lg"></i>
                         </div>
                         <div>
-                            <h4 class="card-title mb-0 {% if transaction_type == 'buy' %}text-success{% else %}text-danger{% endif %}">
-                                {% if transaction_type == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %}
+                            <h4 class="card-title mb-0 {% if form.transaction_type.value == 'buy' %}text-success{% else %}text-danger{% endif %}">
+                                {% if form.transaction_type.value == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %}
                             </h4>
-                            <p class="text-muted mb-0">Danh mục của tôi</p>
+                            <p class="text-muted mb-0">{{ portfolio.name }}</p>
                         </div>
                     </div>
                 </div>
@@ -37,16 +51,16 @@
                         {% csrf_token %}
                         
                         <!-- Hidden fields -->
-                        <input type="hidden" name="transaction_type" value="{{ transaction_type }}">
-                        <input type="hidden" name="portfolio" value="1">
+                        <input type="hidden" name="transaction_type" value="{{ form.transaction_type.value }}">
+                        <input type="hidden" name="portfolio" value="{{ portfolio.id }}">
                         <input type="hidden" id="id_total_amount" name="total_amount">
-                        <input type="hidden" id="id_transaction_date" name="transaction_date" value="{{ transaction_date|default:'' }}">
+                        <input type="hidden" id="id_transaction_date" name="transaction_date" value="{{ form.transaction_date.value|date:'Y-m-d' }}">
                         
                         <!-- Mã cổ phiếu -->
                         <div class="mb-4">
                             <label for="id_symbol" class="form-label fw-medium">Mã cổ phiếu <span class="text-danger">*</span></label>
                             
-                            {% if transaction_type == 'buy' %}
+                            {% if form.transaction_type.value == 'buy' %}
                             <!-- Input tìm kiếm khi MUA cổ phiếu -->
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0">
@@ -79,10 +93,14 @@
                                 </span>
                                 <select class="form-select border-start-0 shadow-none" id="id_symbol" name="symbol" required>
                                     <option value="">Chọn cổ phiếu để bán</option>
-                                    <option value="FPT" data-quantity="1000" data-average-price="75000" data-current-price="85000">FPT (1000 CP)</option>
-                                    <option value="VNM" data-quantity="500" data-average-price="65000" data-current-price="70000">VNM (500 CP)</option>
-                                    <option value="HPG" data-quantity="800" data-average-price="25000" data-current-price="30000">HPG (800 CP)</option>
-                                    <option value="VIC" data-quantity="200" data-average-price="80000" data-current-price="75000">VIC (200 CP)</option>
+                                    {% for asset in portfolio_assets %}
+                                    <option value="{{ asset.asset.symbol }}" 
+                                            data-quantity="{{ asset.quantity }}" 
+                                            data-average-price="{{ asset.average_price }}"
+                                            data-current-price="{{ asset.asset.current_price }}">
+                                        {{ asset.asset.symbol }} ({{ asset.quantity }} CP)
+                                    </option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div id="stockInfo" class="mt-2 d-none">
@@ -114,7 +132,7 @@
                                                name="quantity" 
                                                min="1" 
                                                max="1000000"
-                                               value="100"
+                                               value="{{ form.quantity.value|default:'100' }}"
                                                required>
                                         <button type="button" class="btn btn-outline-secondary quantity-btn" data-action="increase">
                                             <i class="fas fa-plus"></i>
@@ -138,7 +156,7 @@
                                                name="price" 
                                                min="0" 
                                                step="100"
-                                               value="0"
+                                               value="{{ form.price.value|default:'0' }}"
                                                required>
                                         <span class="input-group-text bg-light">VNĐ</span>
                                     </div>
@@ -153,23 +171,23 @@
                         <!-- Ghi chú -->
                         <div class="mt-4">
                             <label for="id_notes" class="form-label fw-medium">Ghi chú (không bắt buộc)</label>
-                            <textarea class="form-control shadow-none" id="id_notes" name="notes" rows="2" placeholder="Thêm ghi chú về giao dịch này"></textarea>
+                            <textarea class="form-control shadow-none" id="id_notes" name="notes" rows="2" placeholder="Thêm ghi chú về giao dịch này">{{ form.notes.value|default:'' }}</textarea>
                         </div>
 
                         <!-- Tổng tiền -->
-                        <div class="mt-4 p-3 rounded-3 {% if transaction_type == 'buy' %}bg-success-subtle{% else %}bg-danger-subtle{% endif %}">
+                        <div class="mt-4 p-3 rounded-3 {% if form.transaction_type.value == 'buy' %}bg-success-subtle{% else %}bg-danger-subtle{% endif %}">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="mb-0">Tổng tiền {% if transaction_type == 'buy' %}mua{% else %}bán{% endif %}</h6>
+                                    <h6 class="mb-0">Tổng tiền {% if form.transaction_type.value == 'buy' %}mua{% else %}bán{% endif %}</h6>
                                     <small class="text-muted">Số lượng × Giá</small>
                                 </div>
                                 <div class="text-end">
-                                    <h4 class="mb-0 {% if transaction_type == 'buy' %}text-success{% else %}text-danger{% endif %}" id="totalAmountDisplay">0 VNĐ</h4>
+                                    <h4 class="mb-0 {% if form.transaction_type.value == 'buy' %}text-success{% else %}text-danger{% endif %}" id="totalAmountDisplay">0 VNĐ</h4>
                                 </div>
                             </div>
                         </div>
 
-                        {% if transaction_type == 'sell' %}
+                        {% if form.transaction_type.value == 'sell' %}
                         <!-- Thông tin lợi nhuận dự kiến khi bán -->
                         <div class="mt-3 p-3 rounded-3 bg-light">
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -202,12 +220,12 @@
 
                         <!-- Buttons -->
                         <div class="d-flex justify-content-between mt-4">
-                            <a href="#" class="btn btn-outline-secondary px-4">
+                            <a href="{% url 'portfolio_detail' pk=portfolio.pk %}" class="btn btn-outline-secondary px-4">
                                 <i class="fas fa-arrow-left me-2"></i>Quay lại
                             </a>
-                            <button type="submit" class="btn btn-{% if transaction_type == 'buy' %}success{% else %}danger{% endif %} px-4">
-                                <i class="fas fa-{% if transaction_type == 'buy' %}cart-plus{% else %}cart-arrow-down{% endif %} me-2"></i>
-                                {% if transaction_type == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %}
+                            <button type="submit" class="btn btn-{% if form.transaction_type.value == 'buy' %}success{% else %}danger{% endif %} px-4">
+                                <i class="fas fa-{% if form.transaction_type.value == 'buy' %}cart-plus{% else %}cart-arrow-down{% endif %} me-2"></i>
+                                {% if form.transaction_type.value == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %}
                             </button>
                         </div>
                     </form>
@@ -223,19 +241,19 @@
                     </h5>
                     <div class="small">
                         <p class="mb-2">
-                            <i class="fas fa-circle me-2 text-{% if transaction_type == 'buy' %}success{% else %}danger{% endif %} small"></i>
-                            {% if transaction_type == 'buy' %}
+                            <i class="fas fa-circle me-2 text-{% if form.transaction_type.value == 'buy' %}success{% else %}danger{% endif %} small"></i>
+                            {% if form.transaction_type.value == 'buy' %}
                             Khi mua cổ phiếu, số tiền sẽ được trừ vào giá trị danh mục của bạn.
                             {% else %}
                             Khi bán cổ phiếu, số tiền sẽ được cộng vào giá trị danh mục của bạn.
                             {% endif %}
                         </p>
                         <p class="mb-2">
-                            <i class="fas fa-circle me-2 text-{% if transaction_type == 'buy' %}success{% else %}danger{% endif %} small"></i>
+                            <i class="fas fa-circle me-2 text-{% if form.transaction_type.value == 'buy' %}success{% else %}danger{% endif %} small"></i>
                             Giá cổ phiếu sẽ được tự động cập nhật theo giá thị trường.
                         </p>
                         <p class="mb-0">
-                            <i class="fas fa-circle me-2 text-{% if transaction_type == 'buy' %}success{% else %}danger{% endif %} small"></i>
+                            <i class="fas fa-circle me-2 text-{% if form.transaction_type.value == 'buy' %}success{% else %}danger{% endif %} small"></i>
                             Các giao dịch sẽ được ghi nhận ngay lập tức vào danh mục của bạn.
                         </p>
                     </div>
@@ -301,37 +319,31 @@ $(document).ready(function() {
         `)
         .appendTo("head");
 
-    // Mẫu dữ liệu cổ phiếu
-    var stockData = {
-        'FPT': { price: 85000, name: 'Công ty Cổ phần FPT' },
-        'VNM': { price: 70000, name: 'Công ty Cổ phần Sữa Việt Nam' },
-        'HPG': { price: 30000, name: 'Công ty Cổ phần Tập đoàn Hòa Phát' },
-        'VIC': { price: 75000, name: 'Tập đoàn Vingroup' },
-        'MSN': { price: 90000, name: 'Tập đoàn Masan' },
-        'VCB': { price: 95000, name: 'Ngân hàng TMCP Ngoại Thương Việt Nam' },
-        'MWG': { price: 45000, name: 'Công ty Cổ phần Thế Giới Di Động' },
-        'SSI': { price: 28000, name: 'Công ty Cổ phần Chứng khoán SSI' }
-    };
-
-    {% if transaction_type == 'buy' %}
+    {% if form.transaction_type.value == 'buy' %}
     // Khởi tạo autocomplete cho trường tìm kiếm mã cổ phiếu khi MUA
     $("#id_symbol").autocomplete({
         source: function(request, response) {
-            var results = [];
-            var term = request.term.toUpperCase();
-            
-            if (term) {
-                for (var symbol in stockData) {
-                    if (symbol.indexOf(term) !== -1) {
-                        results.push({
-                            value: symbol,
-                            label: symbol + " - " + stockData[symbol].name
-                        });
-                    }
+            $.ajax({
+                url: "{% url 'get_stock_symbols' %}",
+                dataType: "json",
+                data: {
+                    term: request.term
+                },
+                success: function(data) {
+                    // Chuyển đổi dữ liệu thành mảng các object có value và label
+                    var results = $.map(data, function(item) {
+                        return {
+                            value: item,
+                            label: item
+                        };
+                    });
+                    response(results);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Lỗi khi tìm kiếm mã cổ phiếu:', error);
+                    response([]);
                 }
-            }
-            
-            response(results);
+            });
         },
         minLength: 1,
         select: function(event, ui) {
@@ -341,7 +353,6 @@ $(document).ready(function() {
             
             // Hiển thị thông tin cổ phiếu
             $(".stock-symbol").text(symbol);
-            $(".stock-name").text(stockData[symbol].name);
             $("#stockInfo").removeClass("d-none").addClass("animate__animated animate__fadeIn");
             
             // Lấy giá hiện tại của cổ phiếu
@@ -356,7 +367,7 @@ $(document).ready(function() {
     }).autocomplete("instance")._renderItem = function(ul, item) {
         // Hiển thị mã cổ phiếu trong dropdown
         return $("<li>")
-            .append("<div><span class='fw-medium'>" + item.value + "</span> - " + stockData[item.value].name + "</div>")
+            .append("<div><span class='fw-medium'>" + item.label + "</span></div>")
             .appendTo(ul);
     };
     {% else %}
@@ -375,7 +386,7 @@ $(document).ready(function() {
             $(".stock-name").html(`<span class="badge bg-primary">Đang sở hữu: ${quantity} CP</span>`);
             $("#stockInfo").removeClass("d-none").addClass("animate__animated animate__fadeIn");
             
-            // Lấy giá hiện tại từ dữ liệu mẫu
+            // Lấy giá hiện tại từ API
             getStockPrice(symbol);
             
             // Cập nhật số lượng tối đa
@@ -394,41 +405,42 @@ $(document).ready(function() {
     });
     {% endif %}
     
-    // Hàm lấy giá cổ phiếu (sử dụng dữ liệu mẫu)
+    // Hàm lấy giá cổ phiếu
     function getStockPrice(symbol) {
         // Show loading indicator
         $(".stock-price-box").html('<i class="fas fa-spinner fa-spin me-1"></i> Đang tải...');
 
-        // Mô phỏng API call bằng setTimeout
-        setTimeout(function() {
-            if (stockData[symbol]) {
-                var price = stockData[symbol].price;
-                
-                // Update the price field in the form
-                $("#id_price").val(price);
+        // Call the API to fetch stock price
+        $.ajax({
+            url: "/api/stock-price/" + symbol + "/",
+            dataType: "json",
+            success: function(data) {
+                if (data && data.price) {
+                    // Update the price field in the form
+                    $("#id_price").val(data.price);
 
-                // Display the price
-                $(".stock-price-box").html(
-                    '<i class="fas fa-tag me-1"></i> ' + 
-                    new Intl.NumberFormat('vi-VN').format(price) + ' VNĐ'
-                );
+                    // Display the price
+                    $(".stock-price-box").html(
+                        '<i class="fas fa-tag me-1"></i> ' + 
+                        new Intl.NumberFormat('vi-VN').format(data.price) + ' VNĐ'
+                    );
 
-                // Calculate the total amount
-                calculateTotal();
-            } else {
-                $(".stock-price-box").html('<i class="fas fa-exclamation-circle me-1 text-warning"></i> Không có giá');
+                    // Calculate the total amount
+                    calculateTotal();
+                } else {
+                    $(".stock-price-box").html('<i class="fas fa-exclamation-circle me-1 text-warning"></i> Không có giá');
+                }
+            },
+            error: function() {
+                $(".stock-price-box").html('<i class="fas fa-exclamation-circle me-1 text-danger"></i> Lỗi');
             }
-        }, 500); // Giả lập độ trễ 500ms
+        });
     }
 
     // Refresh button for fetching the latest price
     $("#refreshPrice").on("click", function() {
         var symbol = $("#id_symbol").val();
         if (symbol) {
-            // Thêm biến động ngẫu nhiên cho giá
-            var randomChange = Math.floor(Math.random() * 1000) - 500; // -500 to 500
-            stockData[symbol].price = Math.max(100, stockData[symbol].price + randomChange);
-            
             getStockPrice(symbol);
             $(this).addClass("fa-spin");
             setTimeout(() => {
@@ -451,15 +463,15 @@ $(document).ready(function() {
         $("#totalAmountDisplay").text(formatted + " VNĐ");
         $("#id_total_amount").val(total);
         
-        {% if transaction_type == 'sell' %}
+        {% if form.transaction_type.value == 'sell' %}
         // Tính lợi nhuận khi bán cổ phiếu
         var selectedOption = $("#id_symbol").find("option:selected");
         if (selectedOption.val()) {
-            var averagePrice = selectedOption.data("averagePrice");
+            var averagePrice = selectedOption.data("avgPrice");
             
-            // Nếu không có averagePrice, thử lấy theo attribute
-            if (averagePrice === undefined) {
-                averagePrice = parseFloat(selectedOption.attr("data-average-price"));
+            // Nếu data-avg-price không hoạt động, thử đúng tên thuộc tính
+            if (!averagePrice) {
+                averagePrice = parseFloat(selectedOption.attr("data-avg-price"));
             }
             
             var totalInvested = quantity * averagePrice;
@@ -544,15 +556,10 @@ $(document).ready(function() {
         if (!$("#id_transaction_date").val()) {
             $("#id_transaction_date").val(new Date().toISOString().split('T')[0]);
         }
-        
-        // Demo purposes only - prevent actual submission
-        e.preventDefault();
-        alert("Form gửi thành công (chế độ demo).\n\nChi tiết giao dịch:\nMã: " + assetId + "\nSố lượng: " + quantity + "\nGiá: " + price.toLocaleString('vi-VN') + " VNĐ\nThành tiền: " + totalAmount.toLocaleString('vi-VN') + " VNĐ");
-        return false;
     });
     
     // Tính toán ban đầu
     calculateTotal();
 });
 </script>
-{% endblock %}
+{% endblock %} 

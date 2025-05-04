@@ -2,9 +2,7 @@ from datetime import datetime
 from vnstock import Vnstock
 from .models import Asset
 import pandas as pd
-
-
-
+import os
 
 # Khởi tạo Vnstock
 vnstock_instance = Vnstock()
@@ -21,6 +19,33 @@ def get_list_stock_market():
     except Exception as e:
         print(f"Error in get_list_stock_market: {str(e)}")
         return []
+
+def get_ticker_companyname():
+    """Lấy mã cổ phiếu và tên công ty"""
+    try:
+        symbols_df = stock.listing.all_symbols()
+        if symbols_df.empty:
+            print("WARNING: No stock data in get_ticker_companyname")
+            return []
+        return [
+            {"ticker": row[0], "organ_name": row[1]}
+            for row in symbols_df.itertuples(index=False, name=None)
+        ]
+    except Exception as e:
+        print(f"Error in get_ticker_companyname: {str(e)}")
+        return []
+
+def get_refer_price(stock_code):
+    """Lấy giá tham chiếu của cổ phiếu"""
+    try:
+        data = stock.trading.price_board(symbols_list=[stock_code])
+        if data.empty:
+            return f'Không tìm thấy mã cổ phiếu {stock_code}!'
+        ref_price = int(data[('listing', 'ref_price')].iloc[0])
+        return ref_price
+    except Exception as e:
+        print(f"Error in get_refer_price for {stock_code}: {str(e)}")
+        return f'Không tìm thấy mã cổ phiếu {stock_code}!'
 
 def get_price_board():
     """Lấy bảng giá thị trường"""
@@ -101,6 +126,20 @@ def get_price_board():
             'match_match_vol': [10000, 5000, 3000]
         })
 
+def get_historical_data(symbol):
+    """Lấy giá lịch sử của cổ phiếu"""
+    try:
+        today = datetime.now().strftime('%Y-%m-%d')
+        data = stock.quote.history(symbol=symbol, start='2000-01-01', end=today)
+        if 'time' not in data.columns and data.index.name != 'time':
+            data = data.reset_index().rename(columns={'index': 'time'})
+        print(f"Data columns for {symbol}: {data.columns}")
+        print(f"Sample data:\n{data.head()}")
+        return data
+    except Exception as e:
+        print(f"Error in get_historical_data for {symbol}: {str(e)}")
+        raise Exception(f"Không thể lấy dữ liệu lịch sử cho mã {symbol}: {str(e)}")
+
 def sync_vnstock_to_assets():
     """Đồng bộ dữ liệu từ vnstock vào model Asset"""
     try:
@@ -156,3 +195,69 @@ def sync_vnstock_to_assets():
     except Exception as e:
         print(f"Error syncing VNStock data: {str(e)}")
         return {'created': 0, 'updated': 0, 'errors': 1, 'total': 0}
+
+def fetch_stock_prices_snapshot(output_file=None):
+    """Lấy snapshot giá cổ phiếu hiện tại"""
+    try:
+        symbols_df = stock.listing.all_symbols()
+        if symbols_df.empty:
+            print("ERROR: No stock symbols retrieved")
+            return None
+        symbols = symbols_df['ticker'].tolist()
+
+        print(f"Fetching prices for {len(symbols)} symbols...")
+        price_board = stock.trading.price_board(symbols_list=symbols)
+        if isinstance(price_board.columns, pd.MultiIndex):
+            price_board.columns = ['_'.join(map(str, col)).strip() for col in price_board.columns.values]
+
+        price_column = None
+        for col in ['match_match_price', 'match_price', 'price', 'trading_match_price', 'listing_reference_price']:
+            if col in price_board.columns:
+                price_column = col
+                break
+        if not price_column:
+            price_cols = [col for col in price_board.columns if 'price' in col.lower()]
+            price_column = price_cols[0] if price_cols else None
+        if not price_column:
+            raise ValueError("Could not find price column in price board data")
+
+        symbol_column = None
+        for col in ['listing_symbol', 'symbol', 'ticker']:
+            if col in price_board.columns:
+                symbol_column = col
+                break
+        if not symbol_column:
+            raise ValueError("Could not find symbol column in price board data")
+
+        snapshot = {'time': datetime.now().isoformat()}
+        for symbol in symbols:
+            try:
+                row = price_board[price_board[symbol_column] == symbol]
+                snapshot[symbol] = float(row[price_column].values[0]) if not row.empty and pd.notnull(row[price_column].values[0]) else None
+            except Exception as e:
+                print(f"Error getting price for {symbol}: {str(e)}")
+                snapshot[symbol] = None
+
+        snapshot_df = pd.DataFrame([snapshot])
+        update_count = 0
+        for symbol, price in snapshot.items():
+            if symbol != 'time' and price is not None:
+                try:
+                    asset = Asset.objects.filter(symbol=symbol).first()
+                    if asset:
+                        asset.current_price = price
+                        asset.save(update_fields=['current_price'])
+                        update_count += 1
+                except Exception as e:
+                    print(f"Error updating asset {symbol}: {str(e)}")
+
+        print(f"Updated prices for {update_count} assets in the database")
+        if output_file:
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            snapshot_df.to_csv(output_file, mode='a', header=not os.path.exists(output_file), index=False)
+            print(f"Saved data to {output_file}")
+            return None
+        return snapshot_df
+    except Exception as e:
+        print(f"Error in fetch_stock_prices_snapshot: {str(e)}")
+        return None

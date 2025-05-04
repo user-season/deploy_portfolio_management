@@ -1,9 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-
-from .models import User, Portfolio, Transaction, Asset, BankAccount, WalletTransaction
-
-
+from .models import User, Portfolio, Asset, Transaction, BankAccount, WalletTransaction, Wallet
+from django.utils import timezone
+from django.core.validators import MinValueValidator
+from decimal import Decimal
 
 class UserRegistrationForm(UserCreationForm):
     email = forms.EmailField()
@@ -12,6 +12,40 @@ class UserRegistrationForm(UserCreationForm):
         model = User
         fields = ['username', 'email', 'password1', 'password2']
 
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone', 'address', 'gender', 'profile_picture']
+        widgets = {
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập tên của bạn'
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập họ của bạn'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập email của bạn'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập số điện thoại của bạn'
+            }),
+            'address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Nhập địa chỉ của bạn'
+            }),
+            'gender': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'profile_picture': forms.FileInput(attrs={
+                'class': 'form-control',
+                'id': 'profilePictureInput'
+            }),
+        }
 
 class PortfolioForm(forms.ModelForm):
     class Meta:
@@ -52,7 +86,11 @@ class PortfolioForm(forms.ModelForm):
         if len(name) < 3:
             raise forms.ValidationError("Tên danh mục phải có ít nhất 3 ký tự")
         return name
-    
+
+class AssetForm(forms.ModelForm):
+    class Meta:
+        model = Asset
+        fields = ['symbol', 'name', 'type', 'sector', 'description', 'current_price']
 
 class TransactionForm(forms.ModelForm):
     class Meta:
@@ -98,12 +136,54 @@ class TransactionForm(forms.ModelForm):
             raise forms.ValidationError('Giá phải lớn hơn 0')
         
         return cleaned_data
-    
 
-class AssetForm(forms.ModelForm):
+# ===== Forms cho ví điện tử =====
+class BankAccountForm(forms.ModelForm):
     class Meta:
-        model = Asset
-        fields = ['symbol', 'name', 'type', 'sector', 'description', 'current_price']
+        model = BankAccount
+        fields = ['bank_name', 'other_bank_name', 'account_name', 'account_number', 'branch', 'is_default']
+        widgets = {
+            'bank_name': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'bankName'
+            }),
+            'other_bank_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'id': 'otherBankName',
+                'placeholder': 'Nhập tên ngân hàng'
+            }),
+            'account_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập tên chủ tài khoản'
+            }),
+            'account_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập số tài khoản'
+            }),
+            'branch': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập chi nhánh (không bắt buộc)'
+            }),
+            'is_default': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+        
+    def clean_account_number(self):
+        account_number = self.cleaned_data.get('account_number')
+        if not account_number.isdigit():
+            raise forms.ValidationError("Số tài khoản chỉ được chứa các chữ số")
+        return account_number
+        
+    def clean(self):
+        cleaned_data = super().clean()
+        bank_name = cleaned_data.get('bank_name')
+        other_bank_name = cleaned_data.get('other_bank_name')
+        
+        if bank_name == 'other' and not other_bank_name:
+            raise forms.ValidationError({'other_bank_name': "Vui lòng nhập tên ngân hàng"})
+            
+        return cleaned_data
 
 class DepositForm(forms.Form):
     amount = forms.DecimalField(
@@ -356,51 +436,4 @@ class WithdrawForm(forms.Form):
                 else:
                     self.add_error(None, 'Vui lòng thêm thông tin tài khoản ngân hàng')
         
-        return cleaned_data
-
-class BankAccountForm(forms.ModelForm):
-    class Meta:
-        model = BankAccount
-        fields = ['bank_name', 'other_bank_name', 'account_name', 'account_number', 'branch', 'is_default']
-        widgets = {
-            'bank_name': forms.Select(attrs={
-                'class': 'form-select',
-                'id': 'bankName'
-            }),
-            'other_bank_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'id': 'otherBankName',
-                'placeholder': 'Nhập tên ngân hàng'
-            }),
-            'account_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nhập tên chủ tài khoản'
-            }),
-            'account_number': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nhập số tài khoản'
-            }),
-            'branch': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nhập chi nhánh (không bắt buộc)'
-            }),
-            'is_default': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            })
-        }
-        
-    def clean_account_number(self):
-        account_number = self.cleaned_data.get('account_number')
-        if not account_number.isdigit():
-            raise forms.ValidationError("Số tài khoản chỉ được chứa các chữ số")
-        return account_number
-        
-    def clean(self):
-        cleaned_data = super().clean()
-        bank_name = cleaned_data.get('bank_name')
-        other_bank_name = cleaned_data.get('other_bank_name')
-        
-        if bank_name == 'other' and not other_bank_name:
-            raise forms.ValidationError({'other_bank_name': "Vui lòng nhập tên ngân hàng"})
-            
         return cleaned_data

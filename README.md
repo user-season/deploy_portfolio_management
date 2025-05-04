@@ -89,11 +89,32 @@ Hệ thống quản lý danh mục đầu tư giúp người dùng theo dõi, mu
 ## Cài đặt
 **Yêu cầu:**
 PostgresSQL
-Python 3 trở lên
+Python3 trở lên
 
-- **Windows:** Chạy file `run.bat` bằng cách click vào file \
-- **Linux/MacOS:** Chạy file `run.sh` bằng cách chạy lệnh `bash run.sh` \
-- **Docker:** Chạy trên các hệ điều hành \
-    Chạy lệnh: `dos2unix entrypoint.sh` để chuyển định dạng file entrypoint.sh thành định dạng Unix \
-    Chạy lệnh: `docker-compose up --build` để build các Image \
-    Truy cập trình duyệt ở địa chỉ: http://localhost:8000/
+### Local
+**Chú ý:** trong file `.env` khi chạy trên môi trường máy local thì mở file và đặt
+```
+DATABASE_HOST=localhost
+```
+- **Windows:** \
+    Chạy file `run.bat` bằng cách click vào file
+- **Linux/MacOS:** \
+    Cấp quyền thực với file `run.bat` bằng lệnh
+    ```bash
+    chmod +x run.sh
+    ``` 
+    Sau đó chạy file `run.sh` bằng cách chạy lệnh 
+    ```bash
+    bash run.sh
+    ```
+- **Truy cập trình duyệt ở địa chỉ: http://localhost:8000/**
+### Docker
+**Chú ý:** trong file `.env` khi chạy trên môi trường máy docker-compose thì mở file và đặt
+```
+DATABASE_HOST=db
+```
+
+Chạy lệnh: `dos2unix entrypoint.sh` để chuyển định dạng file entrypoint.sh thành định dạng Unix \
+Chạy lệnh: `docker-compose up --build` để build các Image \
+
+- **Truy cập trình duyệt ở địa chỉ: http://localhost:8000/**
