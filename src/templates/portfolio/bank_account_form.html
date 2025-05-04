@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Thêm tài khoản ngân hàng | Quản lý tài chính{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'portfolio/js/wallet.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-right">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="index.html">Bảng điều khiển</a></li>
+            <li class="breadcrumb-item"><a href="wallet.html">Ví điện tử</a></li>
+            <li class="breadcrumb-item"><a href="bank_accounts.html">Tài khoản ngân hàng</a></li>
+            <li class="breadcrumb-item active">Thêm tài khoản ngân hàng</li>
+        </ol>
+    </nav>
+
+    <div class="alert alert-success rounded-4 mb-4">
+        <div class="d-flex">
+            <div class="me-3">
+                <i class="fas fa-check-circle fa-2x"></i>
+            </div>
+            <div>
+                <h6 class="alert-heading">Thông báo</h6>
+                <p class="mb-0">Đây là trang demo. Các dữ liệu được hiển thị là dữ liệu mẫu.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4" data-aos="fade-up">
+                <div class="card-header border-0 p-4">
+                    <div class="card-heading">
+                        <div class="card-heading-icon">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <h4 class="mb-0">Thêm tài khoản ngân hàng</h4>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" id="bankAccountForm" action="">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label for="id_bank_name" class="form-label">Ngân hàng <span class="text-danger">*</span></label>
+                            <select name="bank_name" id="id_bank_name" class="form-select">
+                                <option value="">-- Chọn ngân hàng --</option>
+                                <option value="vietcombank">Vietcombank</option>
+                                <option value="techcombank">Techcombank</option>
+                                <option value="mbbank">MB Bank</option>
+                                <option value="tpbank">TPBank</option>
+                                <option value="acb">ACB</option>
+                                <option value="other">Ngân hàng khác</option>
+                            </select>
+                            <div class="form-text">Chọn ngân hàng của bạn từ danh sách</div>
+                        </div>
+                        
+                        <div class="mb-4 d-none" id="otherBankGroup">
+                            <label for="id_other_bank_name" class="form-label">Tên ngân hàng khác <span class="text-danger">*</span></label>
+                            <input type="text" name="other_bank_name" id="id_other_bank_name" class="form-control" placeholder="Nhập tên ngân hàng">
+                            <div class="form-text">Nhập tên ngân hàng nếu không có trong danh sách</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_account_name" class="form-label">Chủ tài khoản <span class="text-danger">*</span></label>
+                            <input type="text" name="account_name" id="id_account_name" class="form-control" placeholder="Nguyễn Văn A">
+                            <div class="form-text">Nhập tên chủ tài khoản (như trên thẻ/sổ)</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_account_number" class="form-label">Số tài khoản <span class="text-danger">*</span></label>
+                            <input type="text" name="account_number" id="id_account_number" class="form-control" placeholder="1234567890">
+                            <div class="form-text">Nhập số tài khoản ngân hàng của bạn</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_branch" class="form-label">Chi nhánh</label>
+                            <input type="text" name="branch" id="id_branch" class="form-control" placeholder="Chi nhánh Hồ Chí Minh">
+                            <div class="form-text">Nhập chi nhánh ngân hàng (không bắt buộc)</div>
+                        </div>
+                        
+                        <div class="form-check mb-4">
+                            <input type="checkbox" name="is_default" id="id_is_default" class="form-check-input">
+                            <label class="form-check-label" for="id_is_default">
+                                Đặt làm tài khoản mặc định
+                            </label>
+                            <div class="form-text">Tài khoản này sẽ được chọn mặc định khi giao dịch</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="bank_accounts.html" class="btn btn-light btn-rounded">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-rounded">
+                                <i class="fas fa-save me-2"></i>Thêm tài khoản
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 mb-4 sticky-lg-top" style="top: 100px;" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-header bg-primary-light p-4 border-0">
+                    <div class="card-heading">
+                        <div class="card-heading-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <h5 class="mb-0">Hướng dẫn</h5>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info rounded-4 mb-4">
+                        <div class="d-flex">
+                            <div class="me-2">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="small">
+                                <strong>Thông tin quan trọng</strong>
+                                <p class="mb-0">Đảm bảo thông tin tài khoản ngân hàng của bạn chính xác để tránh gặp vấn đề khi giao dịch.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <h6 class="mb-3">Một số lưu ý:</h6>
+                        <ul class="text-muted small">
+                            <li class="mb-2">Thông tin chủ tài khoản phải khớp với thông tin trên thẻ/sổ ngân hàng của bạn.</li>
+                            <li class="mb-2">Số tài khoản phải nhập chính xác, không có ký tự đặc biệt hay khoảng trắng.</li>
+                            <li class="mb-2">Nếu ngân hàng của bạn không có trong danh sách, hãy chọn "Ngân hàng khác" và nhập tên ngân hàng.</li>
+                            <li>Bạn có thể đặt một tài khoản là mặc định để thuận tiện cho các giao dịch sau này.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
