@@ -35,6 +35,10 @@ def wallet_transactions(request):
 def wallet(request):
     return render(request, 'portfolio/wallet.html')
 
+def bank_account_list(request):
+    return render(request, 'portfolio/bank_account_list.html')
+    
+
 def deposit_money(request):
     return render(request, 'portfolio/deposit.html')
 
