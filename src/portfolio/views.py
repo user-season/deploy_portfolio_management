@@ -28,11 +28,25 @@ def asset_list(request):
 def transaction_list(request):
     return render(request, 'portfolio/transaction_list.html')
 
+def wallet_transactions(request):
+    return render(request, 'portfolio/wallet_transactions.html')
+
+
 def wallet(request):
     return render(request, 'portfolio/wallet.html')
-  
+
+def bank_account_list(request):
+    return render(request, 'portfolio/bank_account_list.html')
+
+def bank_account_create(request):
+    return render(request, 'portfolio/bank_account_form.html')
+    
+
 def deposit_money(request):
     return render(request, 'portfolio/deposit.html')
+
+def withdraw_money(request):
+    return render(request, 'portfolio/withdraw.html')
 
 def market(request):
     return render(request, 'portfolio/market.html')

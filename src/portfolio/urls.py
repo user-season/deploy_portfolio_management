@@ -16,8 +16,14 @@ urlpatterns = [
     path('portfolios/create/', views.portfolio_create, name='portfolio_create'),
 
     path('transactions/', views.transaction_list, name='transaction_list'),
+
     path('wallet/', views.wallet, name='wallet'),
+    path('wallet/transactions/', views.wallet_transactions, name='wallet_transactions'),
     path('wallet/deposit/', views.deposit_money, name='deposit_money'),
+    path('wallet/withdraw/', views.withdraw_money, name='withdraw_money'),
+    path('wallet/bank-accounts/', views.bank_account_list, name='bank_account_list'),
+    path('wallet/bank-accounts/create/', views.bank_account_create, name='bank_account_create'),
+
     path('market/', views.market, name='market'),
 
 ]
