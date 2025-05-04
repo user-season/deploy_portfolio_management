@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load currency_filters %}
 
 {% block title %}Quản lý tài sản | {{ block.super }}{% endblock %}
 
@@ -38,7 +39,7 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" href="#">
+                                <a class="dropdown-item" href="{% url 'asset_create' %}">
                                     <i class="fas fa-plus text-primary"></i>
                                     <span>Thêm mã cổ phiếu mới</span>
                                 </a>
@@ -60,7 +61,7 @@
                     </div>
                     <div class="card-info">
                         <h3 class="info-title">Tổng giá trị tài sản</h3>
-                        <div class="info-value">{{ total_current_value|default:"125,750,000" }} <span class="currency">VND</span></div>
+                        <div class="info-value">{{ total_current_value|default:"0"|dinh_dang_tien }} <span class="currency">VND</span></div>
                         <div class="progress-bar">
                             <div class="progress-fill" style="width: 100%;"></div>
                         </div>
@@ -68,17 +69,17 @@
                 </div>
                 
                 <div class="analytics-card" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card-icon profit-loss positive">
-                        <i class="fas fa-chart-line"></i>
+                    <div class="card-icon profit-loss {% if total_profit_loss > 0 %}positive{% elif total_profit_loss < 0 %}negative{% else %}neutral{% endif %}">
+                        <i class="fas {% if total_profit_loss > 0 %}fa-chart-line{% elif total_profit_loss < 0 %}fa-chart-line-down{% else %}fa-equals{% endif %}"></i>
                     </div>
                     <div class="card-info">
                         <h3 class="info-title">Lãi/Lỗ</h3>
-                        <div class="info-value text-success">
-                            +{{ total_profit_loss|default:"15,240,000" }} <span class="currency">VND</span>
+                        <div class="info-value {% if total_profit_loss > 0 %}text-success{% elif total_profit_loss < 0 %}text-danger{% endif %}">
+                            {% if total_profit_loss > 0 %}+{% endif %}{{ total_profit_loss|default:"0"|dinh_dang_tien }} <span class="currency">VND</span>
                         </div>
-                        <div class="info-percent positive">
-                            +{{ total_profit_loss_percent|floatformat:2|default:"13.78" }}%
-                            <i class="fas fa-arrow-up"></i>
+                        <div class="info-percent {% if total_profit_loss > 0 %}positive{% elif total_profit_loss < 0 %}negative{% else %}neutral{% endif %}">
+                            {% if total_profit_loss > 0 %}+{% endif %}{{ total_profit_loss_percent|floatformat:2|default:"0.00" }}%
+                            <i class="fas {% if total_profit_loss > 0 %}fa-arrow-up{% elif total_profit_loss < 0 %}fa-arrow-down{% else %}fa-minus{% endif %}"></i>
                         </div>
                     </div>
                 </div>
@@ -163,7 +164,7 @@
                     <h2>Danh mục cổ phiếu của bạn</h2>
                 </div>
                 <div class="section-actions">
-                    <a href="#" class="btn-text">
+                    <a href="{% url 'market' %}" class="btn-text">
                         <span>Xem thị trường</span>
                         <i class="fas fa-external-link-alt"></i>
                     </a>
@@ -205,22 +206,22 @@
                                     <span class="qty-value">{{ asset.quantity|default:"0"|intcomma }}</span>
                                 </td>
                                 <td class="text-end">
-                                    <div class="price-value">{{ asset.average_price|default:"0" }}</div>
+                                    <div class="price-value">{{ asset.average_price|default:"0"|dinh_dang_tien }}</div>
                                     <div class="price-unit">VND</div>
                                 </td>
                                 <td class="text-end">
-                                    <div class="price-value">{{ asset.current_price|default:"0" }}</div>
+                                    <div class="price-value">{{ asset.current_price|default:"0"|dinh_dang_tien }}</div>
                                     <div class="price-unit">VND</div>
                                 </td>
                                 <td class="text-end">
-                                    <div class="total-value">{{ asset.total_value|default:"0" }}</div>
+                                    <div class="total-value">{{ asset.total_value|default:"0"|dinh_dang_tien }}</div>
                                     <div class="price-unit">VND</div>
                                 </td>
                                 <td class="text-end">
                                     {% if asset.profit_loss %}
                                     <div class="profit-container">
                                         <div class="profit-amount {% if asset.profit_loss > 0 %}positive{% elif asset.profit_loss < 0 %}negative{% else %}neutral{% endif %}">
-                                            {% if asset.profit_loss > 0 %}+{% endif %}{{ asset.profit_loss }} VND
+                                            {% if asset.profit_loss > 0 %}+{% endif %}{{ asset.profit_loss|dinh_dang_tien }} VND
                                         </div>
                                         <div class="profit-percent {% if asset.profit_loss > 0 %}positive{% elif asset.profit_loss < 0 %}negative{% else %}neutral{% endif %}">
                                             {% if asset.profit_loss > 0 %}+{% endif %}{{ asset.profit_loss_percent|floatformat:2 }}%
@@ -253,181 +254,21 @@
                 </div>
             </div>
             {% else %}
-            <!-- Sample Data for Demonstration -->
-            <div class="assets-table-wrapper" data-aos="fade-up" data-aos-delay="100">
-                <div class="table-responsive">
-                    <table class="assets-table">
-                        <thead>
-                            <tr>
-                                <th>Mã CP</th>
-                                <th>Tên công ty</th>
-                                <th class="text-end">Số lượng</th>
-                                <th class="text-end">Giá TB</th>
-                                <th class="text-end">Giá hiện tại</th>
-                                <th class="text-end">Tổng giá trị</th>
-                                <th class="text-end">Lãi/Lỗ</th>
-                                <th class="text-center">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="asset-row">
-                                <td>
-                                    <div class="asset-symbol">
-                                        <div class="symbol-icon">V</div>
-                                        <span class="symbol-text">VNM</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="asset-name">
-                                        <span class="name-text">CTCP Sữa Việt Nam</span>
-                                        <span class="asset-type">Cổ phiếu</span>
-                                    </div>
-                                </td>
-                                <td class="text-end">
-                                    <span class="qty-value">1,000</span>
-                                </td>
-                                <td class="text-end">
-                                    <div class="price-value">62,000</div>
-                                    <div class="price-unit">VND</div>
-                                </td>
-                                <td class="text-end">
-                                    <div class="price-value">70,500</div>
-                                    <div class="price-unit">VND</div>
-                                </td>
-                                <td class="text-end">
-                                    <div class="total-value">70,500,000</div>
-                                    <div class="price-unit">VND</div>
-                                </td>
-                                <td class="text-end">
-                                    <div class="profit-container">
-                                        <div class="profit-amount positive">
-                                            +8,500,000 VND
-                                        </div>
-                                        <div class="profit-percent positive">
-                                            +13.71%
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="action-buttons">
-                                        <a href="#" class="btn-action view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="#" class="btn-action edit" title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" class="btn-action trade" data-bs-toggle="modal" data-bs-target="#tradeModalDemo1" title="Giao dịch">
-                                            <i class="fas fa-exchange-alt"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="asset-row">
-                                <td>
-                                    <div class="asset-symbol">
-                                        <div class="symbol-icon">F</div>
-                                        <span class="symbol-text">FPT</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="asset-name">
-                                        <span class="name-text">Tập đoàn FPT</span>
-                                        <span class="asset-type">Cổ phiếu</span>
-                                    </div>
-                                </td>
-                                <td class="text-end">
-                                    <span class="qty-value">500</span>
-                                </td>
-                                <td class="text-end">
-                                    <div class="price-value">98,800</div>
-                                    <div class="price-unit">VND</div>
-                                </td>
-                                <td class="text-end">
-                                    <div class="price-value">110,500</div>
-                                    <div class="price-unit">VND</div>
-                                </td>
-                                <td class="text-end">
-                                    <div class="total-value">55,250,000</div>
-                                    <div class="price-unit">VND</div>
-                                </td>
-                                <td class="text-end">
-                                    <div class="profit-container">
-                                        <div class="profit-amount positive">
-                                            +5,850,000 VND
-                                        </div>
-                                        <div class="profit-percent positive">
-                                            +11.84%
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="action-buttons">
-                                        <a href="#" class="btn-action view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="#" class="btn-action edit" title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" class="btn-action trade" data-bs-toggle="modal" data-bs-target="#tradeModalDemo2" title="Giao dịch">
-                                            <i class="fas fa-exchange-alt"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr class="asset-row">
-                                <td>
-                                    <div class="asset-symbol">
-                                        <div class="symbol-icon">V</div>
-                                        <span class="symbol-text">VIC</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="asset-name">
-                                        <span class="name-text">Tập đoàn Vingroup</span>
-                                        <span class="asset-type">Cổ phiếu</span>
-                                    </div>
-                                </td>
-                                <td class="text-end">
-                                    <span class="qty-value">200</span>
-                                </td>
-                                <td class="text-end">
-                                    <div class="price-value">58,500</div>
-                                    <div class="price-unit">VND</div>
-                                </td>
-                                <td class="text-end">
-                                    <div class="price-value">54,600</div>
-                                    <div class="price-unit">VND</div>
-                                </td>
-                                <td class="text-end">
-                                    <div class="total-value">10,920,000</div>
-                                    <div class="price-unit">VND</div>
-                                </td>
-                                <td class="text-end">
-                                    <div class="profit-container">
-                                        <div class="profit-amount negative">
-                                            -780,000 VND
-                                        </div>
-                                        <div class="profit-percent negative">
-                                            -6.67%
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="action-buttons">
-                                        <a href="#" class="btn-action view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="#" class="btn-action edit" title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button" class="btn-action trade" data-bs-toggle="modal" data-bs-target="#tradeModalDemo3" title="Giao dịch">
-                                            <i class="fas fa-exchange-alt"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="empty-state" data-aos="fade-up">
+                <div class="empty-illustration">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2459/2459013.png" alt="Không có tài sản">
+                </div>
+                <h3 class="empty-title">Chưa có cổ phiếu nào trong danh mục</h3>
+                <p class="empty-desc">Hãy bắt đầu đầu tư bằng cách thêm cổ phiếu vào danh mục của bạn</p>
+                <div class="empty-actions">
+                    <a href="{% url 'asset_create' %}" class="btn-action-large primary">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Mua cổ phiếu mới</span>
+                    </a>
+                    <a href="{% url 'transaction_create' %}" class="btn-action-large secondary">
+                        <i class="fas fa-hand-holding-usd"></i>
+                        <span>Bán cổ phiếu</span>
+                    </a>
                 </div>
             </div>
             {% endif %}
@@ -435,6 +276,7 @@
     </div>
     
     <!-- Market Prices Preview Section -->
+    {% if debug_stocks %}
     <div class="market-section">
         <div class="container">
             <div class="section-header" data-aos="fade-up">
@@ -443,7 +285,7 @@
                     <h2>Giá thị trường gần đây</h2>
                 </div>
                 <div class="section-actions">
-                    <a href="#" class="btn-text">
+                    <a href="{% url 'market' %}" class="btn-text">
                         <span>Xem tất cả</span>
                         <i class="fas fa-arrow-right"></i>
                     </a>
@@ -451,259 +293,72 @@
             </div>
             
             <div class="market-cards" data-aos="fade-up" data-aos-delay="100">
+                {% for symbol in debug_stocks|slice:":5" %}
                 <div class="market-card">
                     <div class="card-header">
-                        <div class="ticker-symbol">VNM</div>
-                        <div class="change-badge positive">
-                            <i class="fas fa-caret-up"></i>
-                            1.85%
+                        <div class="ticker-symbol">{{ symbol.ticker }}</div>
+                        <div class="change-badge {% if symbol.change > 0 %}positive{% elif symbol.change < 0 %}negative{% else %}neutral{% endif %}">
+                            <i class="fas {% if symbol.change > 0 %}fa-caret-up{% elif symbol.change < 0 %}fa-caret-down{% else %}fa-minus{% endif %}"></i>
+                            {{ symbol.change|floatformat:2 }}%
                         </div>
                     </div>
                     <div class="card-body">
-                        <div class="ticker-name">CTCP Sữa Việt Nam</div>
-                        <div class="ticker-price">70,500</div>
+                        <div class="ticker-name">{{ symbol.organ_name|truncatechars:25 }}</div>
+                        <div class="ticker-price">{{ symbol.price|default:"N/A"|floatformat:0|intcomma }}</div>
                     </div>
                     <div class="card-footer">
                         <div class="volume-label">Khối lượng:</div>
-                        <div class="volume-value">1,258,700</div>
+                        <div class="volume-value">{{ symbol.volume|default:"N/A"|intcomma }}</div>
                     </div>
                 </div>
-                
-                <div class="market-card">
-                    <div class="card-header">
-                        <div class="ticker-symbol">FPT</div>
-                        <div class="change-badge positive">
-                            <i class="fas fa-caret-up"></i>
-                            2.41%
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="ticker-name">Tập đoàn FPT</div>
-                        <div class="ticker-price">110,500</div>
-                    </div>
-                    <div class="card-footer">
-                        <div class="volume-label">Khối lượng:</div>
-                        <div class="volume-value">876,300</div>
-                    </div>
-                </div>
-                
-                <div class="market-card">
-                    <div class="card-header">
-                        <div class="ticker-symbol">VIC</div>
-                        <div class="change-badge negative">
-                            <i class="fas fa-caret-down"></i>
-                            1.27%
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="ticker-name">Tập đoàn Vingroup</div>
-                        <div class="ticker-price">54,600</div>
-                    </div>
-                    <div class="card-footer">
-                        <div class="volume-label">Khối lượng:</div>
-                        <div class="volume-value">2,341,500</div>
-                    </div>
-                </div>
-                
-                <div class="market-card">
-                    <div class="card-header">
-                        <div class="ticker-symbol">MSN</div>
-                        <div class="change-badge positive">
-                            <i class="fas fa-caret-up"></i>
-                            0.78%
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="ticker-name">Tập đoàn Masan</div>
-                        <div class="ticker-price">89,300</div>
-                    </div>
-                    <div class="card-footer">
-                        <div class="volume-label">Khối lượng:</div>
-                        <div class="volume-value">543,200</div>
-                    </div>
-                </div>
-                
-                <div class="market-card">
-                    <div class="card-header">
-                        <div class="ticker-symbol">VHM</div>
-                        <div class="change-badge negative">
-                            <i class="fas fa-caret-down"></i>
-                            0.52%
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="ticker-name">Vinhomes</div>
-                        <div class="ticker-price">48,700</div>
-                    </div>
-                    <div class="card-footer">
-                        <div class="volume-label">Khối lượng:</div>
-                        <div class="volume-value">1,872,400</div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
-    
-    <!-- Trading Modals -->
-    {% for asset in assets %}
-    <div class="modal fade" id="tradeModal{{ asset.pk }}" tabindex="-1" aria-labelledby="tradeModal{{ asset.pk }}Label" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="tradeModal{{ asset.pk }}Label">
-                        <i class="fas fa-exchange-alt"></i> Giao dịch {{ asset.symbol }}
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="asset-preview">
-                        <div class="asset-preview-symbol">{{ asset.symbol }}</div>
-                        <div class="asset-preview-name">{{ asset.name }}</div>
-                        <div class="asset-preview-tag">{{ asset.get_type_display }}</div>
-                    </div>
-                    
-                    <div class="asset-price-info">
-                        <div class="price-label">Giá hiện tại:</div>
-                        <div class="price-value">{{ asset.current_price|default:"0" }} VND</div>
-                        <div class="price-updated">
-                            Cập nhật: {{ asset.last_updated|date:"d/m/Y H:i" }}
-                        </div>
-                    </div>
-                    
-                    <div class="trade-buttons">
-                        <a href="{% if request.user.portfolios.first %}{% url 'buy_stock' portfolio_id=request.user.portfolios.first.id %}{% else %}#{% endif %}" class="btn-trade buy">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span>Mua</span>
-                        </a>
-                        <a href="{% if request.user.portfolios.first %}{% url 'sell_stock' portfolio_id=request.user.portfolios.first.id %}{% else %}#{% endif %}" class="btn-trade sell">
-                            <i class="fas fa-hand-holding-usd"></i>
-                            <span>Bán</span>
-                        </a>
-                    </div>
-                </div>
+    {% endif %}
+</div>
+
+<!-- Trading Modals -->
+{% for asset in assets %}
+<div class="modal fade" id="tradeModal{{ asset.pk }}" tabindex="-1" aria-labelledby="tradeModal{{ asset.pk }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tradeModal{{ asset.pk }}Label">
+                    <i class="fas fa-exchange-alt"></i> Giao dịch {{ asset.symbol }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </div>
-    </div>
-    {% endfor %}
-    
-    <!-- Trading Modals for Sample Data -->
-    <div class="modal fade" id="tradeModalDemo1" tabindex="-1" aria-labelledby="tradeModalDemo1Label" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="tradeModalDemo1Label">
-                        <i class="fas fa-exchange-alt"></i> Giao dịch VNM
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-body">
+                <div class="asset-preview">
+                    <div class="asset-preview-symbol">{{ asset.symbol }}</div>
+                    <div class="asset-preview-name">{{ asset.name }}</div>
+                    <div class="asset-preview-tag">{{ asset.get_type_display }}</div>
                 </div>
-                <div class="modal-body">
-                    <div class="asset-preview">
-                        <div class="asset-preview-symbol">VNM</div>
-                        <div class="asset-preview-name">CTCP Sữa Việt Nam</div>
-                        <div class="asset-preview-tag">Cổ phiếu</div>
-                    </div>
-                    
-                    <div class="asset-price-info">
-                        <div class="price-label">Giá hiện tại:</div>
-                        <div class="price-value">70,500 VND</div>
-                        <div class="price-updated">
-                            Cập nhật: 15/05/2024 10:30
-                        </div>
-                    </div>
-                    
-                    <div class="trade-buttons">
-                        <a href="#" class="btn-trade buy">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span>Mua</span>
-                        </a>
-                        <a href="#" class="btn-trade sell">
-                            <i class="fas fa-hand-holding-usd"></i>
-                            <span>Bán</span>
-                        </a>
+                
+                <div class="asset-price-info">
+                    <div class="price-label">Giá hiện tại:</div>
+                    <div class="price-value">{{ asset.current_price|default:"0"|dinh_dang_tien }} VND</div>
+                    <div class="price-updated">
+                        Cập nhật: {{ asset.last_updated|date:"d/m/Y H:i" }}
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="modal fade" id="tradeModalDemo2" tabindex="-1" aria-labelledby="tradeModalDemo2Label" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="tradeModalDemo2Label">
-                        <i class="fas fa-exchange-alt"></i> Giao dịch FPT
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="asset-preview">
-                        <div class="asset-preview-symbol">FPT</div>
-                        <div class="asset-preview-name">Tập đoàn FPT</div>
-                        <div class="asset-preview-tag">Cổ phiếu</div>
-                    </div>
-                    
-                    <div class="asset-price-info">
-                        <div class="price-label">Giá hiện tại:</div>
-                        <div class="price-value">110,500 VND</div>
-                        <div class="price-updated">
-                            Cập nhật: 15/05/2024 10:30
-                        </div>
-                    </div>
-                    
-                    <div class="trade-buttons">
-                        <a href="#" class="btn-trade buy">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span>Mua</span>
-                        </a>
-                        <a href="#" class="btn-trade sell">
-                            <i class="fas fa-hand-holding-usd"></i>
-                            <span>Bán</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="modal fade" id="tradeModalDemo3" tabindex="-1" aria-labelledby="tradeModalDemo3Label" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="tradeModalDemo3Label">
-                        <i class="fas fa-exchange-alt"></i> Giao dịch VIC
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="asset-preview">
-                        <div class="asset-preview-symbol">VIC</div>
-                        <div class="asset-preview-name">Tập đoàn Vingroup</div>
-                        <div class="asset-preview-tag">Cổ phiếu</div>
-                    </div>
-                    
-                    <div class="asset-price-info">
-                        <div class="price-label">Giá hiện tại:</div>
-                        <div class="price-value">54,600 VND</div>
-                        <div class="price-updated">
-                            Cập nhật: 15/05/2024 10:30
-                        </div>
-                    </div>
-                    
-                    <div class="trade-buttons">
-                        <a href="#" class="btn-trade buy">
-                            <i class="fas fa-shopping-cart"></i>
-                            <span>Mua</span>
-                        </a>
-                        <a href="#" class="btn-trade sell">
-                            <i class="fas fa-hand-holding-usd"></i>
-                            <span>Bán</span>
-                        </a>
-                    </div>
+                
+                <div class="trade-buttons">
+                    <a href="{% if request.user.portfolios.first %}{% url 'buy_stock' portfolio_id=request.user.portfolios.first.id %}{% else %}#{% endif %}" class="btn-trade buy">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Mua</span>
+                    </a>
+                    <a href="{% if request.user.portfolios.first %}{% url 'sell_stock' portfolio_id=request.user.portfolios.first.id %}{% else %}#{% endif %}" class="btn-trade sell">
+                        <i class="fas fa-hand-holding-usd"></i>
+                        <span>Bán</span>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endfor %}
 
 <style>
 :root {
