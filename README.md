@@ -82,6 +82,10 @@ Hệ thống quản lý danh mục đầu tư giúp người dùng theo dõi, mu
 - `dashboard.html`: Bảng điều khiển người dùng
 - `login.html`, `register.html`: Form đăng nhập và đăng ký
 
+### Cấu trúc cơ sở dữ liệu
+![alt text](erd.png)
+
+
 ## Cài đặt
 **Yêu cầu:**
 PostgresSQL

@@ -1058,27 +1058,27 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if '/portfolios/' in request.path %}active{% endif %}" href="#">
+                        <a class="nav-link {% if '/portfolios/' in request.path %}active{% endif %}" href="{% url 'portfolio_list' %}">
                             <i class="fas fa-folder me-1"></i> Danh mục
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if '/assets/' in request.path %}active{% endif %}" href="#">
+                        <a class="nav-link {% if '/assets/' in request.path %}active{% endif %}" href="{% url 'asset_list' %}">
                             <i class="fas fa-chart-bar me-1"></i> Tài sản
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if '/transactions/' in request.path %}active{% endif %}" href="#">
+                        <a class="nav-link {% if '/transactions/' in request.path %}active{% endif %}" href="{% url 'transaction_list' %}">
                             <i class="fas fa-exchange-alt me-1"></i> Giao dịch
                         </a>
                     </li>
                     <li class="nav-item has-notification">
-                        <a class="nav-link {% if '/wallet/' in request.path %}active{% endif %}" href="#">
+                        <a class="nav-link {% if '/wallet/' in request.path %}active{% endif %}" href="{% url 'wallet' %}">
                             <i class="fas fa-wallet me-1"></i> Ví điện tử
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if '/market/' in request.path %}active{% endif %}" href="#">
+                        <a class="nav-link {% if '/market/' in request.path %}active{% endif %}" href="{% url 'market' %}">
                             <i class="fas fa-chart-line me-1"></i> Thị trường
                         </a>
                     </li>
@@ -1101,14 +1101,14 @@
                             <span class="fw-bold mb-0">{% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
-                            <li><a class="dropdown-item py-2" href="#">
+                            <li><a class="dropdown-item py-2" href="{% url 'user_profile' %}">
                                 <i class="fas fa-user-cog me-2 text-primary"></i>Tài khoản</a>
                             </li>
                             <li><a class="dropdown-item py-2" href="#">
                                 <i class="fas fa-cog me-2 text-primary"></i>Cài đặt</a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item py-2" href="#">
+                            <li><a class="dropdown-item py-2" href="{% url 'logout' %}">
                                 <i class="fas fa-sign-out-alt me-2 text-danger"></i>Đăng xuất</a>
                             </li>
                         </ul>
@@ -1162,9 +1162,9 @@
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="{% url 'home' %}">Trang chủ</a></li>
                         <li class="mb-2"><a href="{% url 'dashboard' %}">Bảng điều khiển</a></li>
-                        <li class="mb-2"><a href="#">Danh mục</a></li>
-                        <li class="mb-2"><a href="#">Tài sản</a></li>
-                        <li class="mb-2"><a href="#">Ví điện tử</a></li>
+                        <li class="mb-2"><a href="{% url 'portfolio_list' %}">Danh mục</a></li>
+                        <li class="mb-2"><a href="{% url 'asset_list' %}">Tài sản</a></li>
+                        <li class="mb-2"><a href="{% url 'wallet' %}">Ví điện tử</a></li>
                     </ul>
                 </div>
                 <div class="col-md-2 mb-4 mb-md-0">

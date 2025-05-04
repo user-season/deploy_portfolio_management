@@ -11,20 +11,9 @@
                 <div class="col-lg-6" data-aos="fade-right">
                     <h1 class="display-4 fw-bold mb-4 text-white">Quản lý đầu tư chứng khoán thông minh</h1>
                     <p class="lead mb-4 pe-lg-5 text-white opacity-90">Theo dõi, phân tích và quản lý danh mục đầu tư của bạn với công cụ trực quan, toàn diện và dễ sử dụng.</p>
-                    {% if user.is_authenticated %}
                     <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg btn-rounded text-primary shadow-lg">
                         <i class="fas fa-chart-line me-2"></i>Xem danh mục của bạn
                     </a>
-                    {% else %}
-                    <div class="d-flex gap-3">
-                        <a href="{% url 'register' %}" class="btn btn-light btn-lg btn-rounded text-primary shadow-lg">
-                            <i class="fas fa-user-plus me-2"></i>Đăng ký ngay
-                        </a>
-                        <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg btn-rounded shadow">
-                            <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
-                        </a>
-                    </div>
-                    {% endif %}
                 </div>
                 <div class="col-lg-6 mt-5 mt-lg-0" data-aos="fade-left">
                     <div class="hero-image-wrapper text-center">
