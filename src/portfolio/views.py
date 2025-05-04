@@ -12,7 +12,7 @@ from django.http import JsonResponse
 from .vnstock_services import get_price_board, get_historical_data, sync_vnstock_to_assets, fetch_stock_prices_snapshot
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from .utils import get_ai_response
+from .utils import get_ai_response, get_auth0_user_profile
 from django.urls import reverse
 from urllib.parse import quote_plus, urlencode
 import os
@@ -554,42 +554,133 @@ def portfolio_transactions(request, portfolio_id):
 
 # Auth0 related views - replaced with Django authentication
 def login_view(request):
-    """Sử dụng login của Django thay vì Auth0"""
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect('dashboard')
-        else:
-            messages.error(request, 'Tên đăng nhập hoặc mật khẩu không đúng')
-    return render(request, 'portfolio/login.html')
+    """Sử dụng Auth0 để xác thực người dùng"""
+    from authlib.integrations.django_client import OAuth
+    from django.conf import settings
+    from urllib.parse import quote_plus, urlencode
+    
+    # Khởi tạo OAuth client
+    oauth = OAuth()
+    oauth.register(
+        "auth0",
+        client_id=settings.AUTH0_CLIENT_ID,
+        client_secret=settings.AUTH0_CLIENT_SECRET,
+        client_kwargs={
+            "scope": "openid profile email",
+        },
+        server_metadata_url=f"https://{settings.AUTH0_DOMAIN}/.well-known/openid-configuration",
+    )
+    
+    # Chuyển hướng đến trang đăng nhập Auth0
+    return oauth.auth0.authorize_redirect(
+        request, request.build_absolute_uri(reverse("callback"))
+    )
 
-# Callback không còn cần thiết khi không sử dụng Auth0
 def callback(request):
-    """Function này sẽ không được sử dụng khi không dùng Auth0"""
+    """Xử lý callback từ Auth0 và đăng nhập người dùng"""
+    from authlib.integrations.django_client import OAuth
+    from django.conf import settings
+    import json
+    from .utils import get_auth0_user_profile
+    
+    # Khởi tạo OAuth client
+    oauth = OAuth()
+    oauth.register(
+        "auth0",
+        client_id=settings.AUTH0_CLIENT_ID,
+        client_secret=settings.AUTH0_CLIENT_SECRET,
+        client_kwargs={
+            "scope": "openid profile email",
+        },
+        server_metadata_url=f"https://{settings.AUTH0_DOMAIN}/.well-known/openid-configuration",
+    )
+    
+    # Lấy token từ Auth0
+    token = oauth.auth0.authorize_access_token(request)
+    userinfo = token.get('userinfo')
+    
+    # Lấy thêm thông tin từ API Auth0 nếu được
+    access_token = token.get('access_token')
+    if access_token:
+        additional_info = get_auth0_user_profile(access_token)
+        if additional_info:
+            # Merge additional info vào userinfo
+            userinfo.update(additional_info)
+    
+    if userinfo:
+        # Lưu thông tin người dùng vào session
+        request.session['userinfo'] = userinfo
+        
+        # Kiểm tra xem người dùng đã tồn tại trong database chưa
+        auth0_user_id = userinfo.get('sub')
+        email = userinfo.get('email')
+        
+        try:
+            # Tìm user bằng auth0_user_id
+            user = User.objects.get(auth0_user_id=auth0_user_id)
+        except User.DoesNotExist:
+            try:
+                # Tìm user bằng email nếu không tìm thấy qua auth0_user_id
+                user = User.objects.get(email=email)
+                user.auth0_user_id = auth0_user_id
+                user.save()
+            except User.DoesNotExist:
+                # Tạo user mới nếu chưa tồn tại
+                user = User.objects.create_user(
+                    username=email.split('@')[0],
+                    email=email,
+                    auth0_user_id=auth0_user_id,
+                    first_name=userinfo.get('given_name', ''),
+                    last_name=userinfo.get('family_name', ''),
+                    profile_picture_url=userinfo.get('picture', '')
+                )
+                # Tự động tạo ví điện tử cho người dùng mới
+                from .models import Wallet
+                Wallet.objects.create(user=user)
+        
+        # Đăng nhập người dùng
+        login(request, user)
+        
+        # Cập nhật thông tin người dùng từ Auth0 profile
+        if 'picture' in userinfo and userinfo['picture']:
+            user.profile_picture_url = userinfo['picture']
+        if 'given_name' in userinfo and userinfo['given_name']:
+            user.first_name = userinfo['given_name']
+        if 'family_name' in userinfo and userinfo['family_name']:
+            user.last_name = userinfo['family_name']
+        user.save()
+        
+        return redirect('dashboard')
+    
     return redirect('home')
 
 def logout_view(request):
-    """Log the user out of Django"""
-    # Log the user out of Django
+    """Đăng xuất khỏi Django và Auth0"""
+    from django.conf import settings
+    from urllib.parse import quote_plus, urlencode
+    
+    # Đăng xuất khỏi Django
     logout(request)
-    # Redirect to home page
-    return redirect('home')
+    
+    # Xóa session
+    request.session.clear()
+    
+    # Chuyển hướng đến trang đăng xuất của Auth0
+    return redirect(
+        f"https://{settings.AUTH0_DOMAIN}/v2/logout?"
+        + urlencode(
+            {
+                "returnTo": request.build_absolute_uri(reverse("home")),
+                "client_id": settings.AUTH0_CLIENT_ID,
+            },
+            quote_via=quote_plus,
+        )
+    )
 
 def register(request):
-    """Django registration instead of Auth0"""
-    if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, 'Đăng ký thành công!')
-            return redirect('dashboard')
-    else:
-        form = UserRegistrationForm()
-    return render(request, 'portfolio/register.html', {'form': form})
+    """Chuyển hướng đến trang đăng ký của Auth0"""
+    # Sử dụng cùng hàm login_view để chuyển hướng đến Auth0
+    return login_view(request)
 
 # User profile view
 @login_required
@@ -603,8 +694,10 @@ def user_profile(request):
             
             # Check if a new profile picture was uploaded
             if 'profile_picture' in request.FILES and request.FILES['profile_picture']:
-                # If Auth0 user uploads a local picture, prioritize it over the Auth0 URL
+                # If user uploads a local picture, prioritize it over the Auth0 URL
                 user_data.profile_picture = request.FILES['profile_picture']
+                # Clear Auth0 profile picture URL to use the uploaded one
+                user_data.profile_picture_url = None
             
             user_data.save()
             messages.success(request, 'Thông tin cá nhân đã được cập nhật thành công!')
@@ -612,8 +705,12 @@ def user_profile(request):
     else:
         form = UserProfileForm(instance=user)
     
+    # Get Auth0 user info from session
+    auth0_userinfo = request.session.get('userinfo', {})
+    
     return render(request, 'portfolio/user_profile.html', {
-        'form': form
+        'form': form,
+        'auth0_userinfo': auth0_userinfo
     })
 
 # ============ MARKET =======

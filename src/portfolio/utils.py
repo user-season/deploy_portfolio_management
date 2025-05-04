@@ -223,3 +223,41 @@ def check_paid(transaction_id=None, amount=None):
         print(f"[DEBUG] Exception: {str(e)}")
     
     return result 
+
+# Auth0 Functions
+def get_auth0_user_profile(access_token):
+    """
+    Fetch additional user profile data from Auth0 API using the access token.
+    
+    Args:
+        access_token (str): The access token obtained from Auth0 authentication
+        
+    Returns:
+        dict: User profile data from Auth0
+    """
+    from django.conf import settings
+    
+    # Configure the Auth0 API URL
+    url = f"https://{settings.AUTH0_DOMAIN}/userinfo"
+    
+    # Configure the request headers with the access token
+    headers = {
+        'Authorization': f'Bearer {access_token}'
+    }
+    
+    try:
+        # Make the request to the Auth0 API
+        response = requests.get(url, headers=headers)
+        
+        # If successful, return the user profile data
+        if response.status_code == 200:
+            return response.json()
+        
+        # Log errors for debugging
+        print(f"Auth0 API error: {response.status_code} - {response.text}")
+        return {}
+    
+    except Exception as e:
+        # Log any exceptions for debugging
+        print(f"Error fetching Auth0 user profile: {str(e)}")
+        return {} 
