@@ -30,9 +30,12 @@ def transaction_list(request):
 
 def wallet(request):
     return render(request, 'portfolio/wallet.html')
-  
+
 def deposit_money(request):
     return render(request, 'portfolio/deposit.html')
+
+def withdraw_money(request):
+    return render(request, 'portfolio/withdraw.html')
 
 def market(request):
     return render(request, 'portfolio/market.html')
