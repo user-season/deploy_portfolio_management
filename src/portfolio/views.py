@@ -10,11 +10,16 @@ def home(request):
 def dashboard(request):
     return render(request, 'portfolio/dashboard.html')
 
+
 def login_view(request):
     return render(request, 'portfolio/login.html')
 
 def register(request):
     return render(request, 'portfolio/register.html')
+
+def user_profile(request):
+    return render(request, 'portfolio/user_profile.html')
+
 
 def portfolio_list(request):
     return render(request, 'portfolio/portfolio_list.html')
@@ -25,18 +30,24 @@ def portfolio_create(request):
 def asset_list(request):
     return render(request, 'portfolio/asset_list.html')
 
+
 def transaction_list(request):
     return render(request, 'portfolio/transaction_list.html')
 
-def wallet_transactions(request):
-    return render(request, 'portfolio/wallet_transactions.html')
-
+def transaction_create(request):
+    return render(request, 'portfolio/transaction_form.html')
 
 def wallet(request):
     return render(request, 'portfolio/wallet.html')
 
+def wallet_transactions(request):
+    return render(request, 'portfolio/wallet_transactions.html')
+    
 def bank_account_list(request):
     return render(request, 'portfolio/bank_account_list.html')
+
+def bank_account_create(request):
+    return render(request, 'portfolio/bank_account_form.html')
     
 
 def deposit_money(request):

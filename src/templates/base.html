@@ -558,71 +558,6 @@
             box-shadow: var(--shadow-md);
         }
         
-        .ai-chat-button {
-            background: linear-gradient(135deg, #7e57c2 0%, #5e35b1 100%);
-            box-shadow: 0 5px 15px rgba(126, 87, 194, 0.4);
-            transition: all 0.3s ease;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            position: relative;
-            border: none;
-        }
-        
-        .ai-chat-button:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(126, 87, 194, 0.5);
-        }
-        
-        .ai-chat-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            overflow: hidden;
-            position: relative;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 5px;
-        }
-        
-        .ai-chat-icon::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2), transparent 70%);
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-        
-        .ai-chat-button:hover .ai-chat-icon::after {
-            opacity: 1;
-        }
-        
-        .ai-chat-icon img {
-            width: 40px !important;
-            height: 40px !important;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 0 15px rgba(94, 53, 177, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        .ai-chat-button:hover .ai-chat-icon img {
-            transform: scale(1.1) rotate(5deg);
-            border-color: white;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        }
-        
         /* Pulse animation for chat button */
         .pulse-animation {
             animation: pulse-button 2s infinite;
@@ -659,10 +594,6 @@
             height: 100%;
             object-fit: cover;
             transition: all 0.3s ease;
-        }
-        
-        .chat-header:hover .chatbot-avatar img {
-            transform: scale(1.1);
         }
         
         footer {
@@ -847,13 +778,6 @@
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
         }
-        
-        .chat-header {
-            background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%);
-            border-radius: 20px 20px 0 0;
-            padding: 18px 20px;
-        }
-        
         .chat-messages {
             padding: 20px;
             height: calc(100% - 180px);
@@ -1051,41 +975,38 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    {% if user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}" href="{% url 'dashboard' %}">
                             <i class="fas fa-tachometer-alt me-1"></i> Bảng điều khiển
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if '/portfolios/' in request.path %}active{% endif %}" href="#">
+                        <a class="nav-link {% if '/portfolios/' in request.path %}active{% endif %}" href="{% url 'portfolio_list' %}">
                             <i class="fas fa-folder me-1"></i> Danh mục
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if '/assets/' in request.path %}active{% endif %}" href="#">
+                        <a class="nav-link {% if '/assets/' in request.path %}active{% endif %}" href="{% url 'asset_list' %}">
                             <i class="fas fa-chart-bar me-1"></i> Tài sản
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if '/transactions/' in request.path %}active{% endif %}" href="#">
+                        <a class="nav-link {% if '/transactions/' in request.path %}active{% endif %}" href="{% url 'transaction_list' %}">
                             <i class="fas fa-exchange-alt me-1"></i> Giao dịch
                         </a>
                     </li>
                     <li class="nav-item has-notification">
-                        <a class="nav-link {% if '/wallet/' in request.path %}active{% endif %}" href="#">
+                        <a class="nav-link {% if '/wallet/' in request.path %}active{% endif %}" href="{% url 'wallet' %}">
                             <i class="fas fa-wallet me-1"></i> Ví điện tử
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if '/market/' in request.path %}active{% endif %}" href="#">
+                        <a class="nav-link {% if '/market/' in request.path %}active{% endif %}" href="{% url 'market' %}">
                             <i class="fas fa-chart-line me-1"></i> Thị trường
                         </a>
                     </li>
-                    {% endif %}
                 </ul>
                 <ul class="navbar-nav">
-                    {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                             <div class="avatar-container me-2">
@@ -1098,7 +1019,7 @@
                                 </div>
                                 {% endif %}
                             </div>
-                            <span class="fw-bold mb-0">{% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}</span>
+                            <span class="fw-bold mb-0">user-name</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
                             <li><a class="dropdown-item py-2" href="#">
@@ -1113,18 +1034,6 @@
                             </li>
                         </ul>
                     </li>
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'register' %}">
-                            <i class="fas fa-user-plus me-1"></i> Đăng ký
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-primary text-white px-3 btn-rounded ms-2" href="{% url 'login' %}">
-                            <i class="fas fa-sign-in-alt me-1"></i> Đăng nhập
-                        </a>
-                    </li>
-                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -1162,9 +1071,9 @@
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="{% url 'home' %}">Trang chủ</a></li>
                         <li class="mb-2"><a href="{% url 'dashboard' %}">Bảng điều khiển</a></li>
-                        <li class="mb-2"><a href="#">Danh mục</a></li>
-                        <li class="mb-2"><a href="#">Tài sản</a></li>
-                        <li class="mb-2"><a href="#">Ví điện tử</a></li>
+                        <li class="mb-2"><a href="{% url 'portfolio_list' %}">Danh mục</a></li>
+                        <li class="mb-2"><a href="{% url 'asset_list' %}">Tài sản</a></li>
+                        <li class="mb-2"><a href="{% url 'wallet' %}">Ví điện tử</a></li>
                     </ul>
                 </div>
                 <div class="col-md-2 mb-4 mb-md-0">
@@ -1215,87 +1124,7 @@
     <script src="{% static 'portfolio/js/chat.js' %}"></script>
     {% block extra_js %}{% endblock %}
 
-    <!-- Chat Widget -->
-    <div class="chat-widget-container" id="chatContainer">
-        <div class="ai-chat-popup" id="aiChatPopup">
-            <div class="chat-header">
-                <div class="d-flex align-items-center">
-                    <div class="chatbot-avatar me-2">
-                        <img src="{% static 'portfolio/img/astrobot.jpg' %}" alt="AstroBot" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 10px rgba(94, 53, 177, 0.3);">
-                    </div>
-                    <div>
-                        <h5 class="mb-0">AstroBot</h5>
-                        <div class="status-indicator">
-                            <span class="status-dot"></span>
-                            <span class="status-text">Online</span>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <button class="btn btn-sm btn-light rounded-circle" id="minimizeChat">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                    <button class="btn btn-sm btn-light rounded-circle" id="closeChat">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <!-- Tin nhắn sẽ được thêm động qua JavaScript -->
-            </div>
-            <div class="suggested-questions" id="suggestedQuestions">
-                <h6 class="suggested-title">Câu hỏi gợi ý:</h6>
-                <div class="suggested-items">
-                    <button class="suggested-item" data-question="Tôi cần mua cổ phiếu ở đâu?">
-                        <i class="fas fa-question-circle me-2"></i>Tôi cần mua cổ phiếu ở đâu?
-                    </button>
-                    <button class="suggested-item" data-question="Tôi nên đầu tư vào cổ phiếu ngành nào ở Việt Nam?">
-                        <i class="fas fa-question-circle me-2"></i>Tôi nên đầu tư vào ngành nào?
-                    </button>
-                    <button class="suggested-item" data-question="Làm thế nào để phân tích một cổ phiếu?">
-                        <i class="fas fa-question-circle me-2"></i>Cách phân tích cổ phiếu?
-                    </button>
-                    <button class="suggested-item" data-question="Chỉ số P/E là gì?">
-                        <i class="fas fa-question-circle me-2"></i>Chỉ số P/E là gì?
-                    </button>
-                </div>
-            </div>
-            <div class="chat-input">
-                <form id="chatForm">
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="userMessage" placeholder="Nhập câu hỏi của bạn..." autocomplete="off">
-                        <button class="btn btn-primary send-button" type="submit">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <button class="ai-chat-button" id="aiChatButton">
-            <div class="ai-chat-icon">
-                <img src="{% static 'portfolio/img/astrobot.jpg' %}" alt="AstroBot" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
-            </div>
-            <span class="ai-chat-indicator"></span>
-        </button>
     </div>
-    
-    <!-- Script để hiển thị chat popup khi click vào nút -->
-    <script>
-        // Thêm function kiểm tra khi trang tải xong
-        document.addEventListener('DOMContentLoaded', function() {
-            const aiChatButton = document.getElementById('aiChatButton');
-            const aiChatPopup = document.getElementById('aiChatPopup');
-            
-            // Đảm bảo nút chat hiển thị đúng cách
-            if (aiChatButton && aiChatPopup) {
-                aiChatButton.style.display = 'flex';
-                aiChatPopup.style.display = 'none';
-                
-                console.log("Chat elements initialized");
-            }
-        });
-    </script>
 
     <!-- Script để xử lý hiệu ứng thanh navbar khi cuộn -->
     <script>
