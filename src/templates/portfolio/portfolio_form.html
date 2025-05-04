@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
-{% block title %}Tạo mới danh mục đầu tư | FinTrack{% endblock %}
+{% block title %}{{ title }} | {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="portfolio-form-page">
@@ -10,13 +11,17 @@
             <div class="header-content" data-aos="fade-down">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="#">Bảng điều khiển</a></li>
-                        <li class="breadcrumb-item"><a href="#">Danh mục đầu tư</a></li>
-                        <li class="breadcrumb-item active">Tạo mới</li>
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Bảng điều khiển</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'portfolio_list' %}">Danh mục đầu tư</a></li>
+                        <li class="breadcrumb-item active">{{ title }}</li>
                     </ol>
                 </nav>
                 <h1 class="form-title">
+                    {% if form.instance.pk %}
+                    <span class="highlight">Chỉnh sửa</span> danh mục đầu tư
+                    {% else %}
                     <span class="highlight">Tạo mới</span> danh mục đầu tư
+                    {% endif %}
                 </h1>
             </div>
         </div>
@@ -50,15 +55,25 @@
                                 </div>
                                 
                                 <div class="form-floating mb-4">
-                                    <input type="text" name="name" class="form-control" 
-                                           id="id_name" placeholder="Tên danh mục" value="" required>
+                                    <input type="text" name="name" class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                                           id="id_name" placeholder="Tên danh mục" value="{{ form.name.value|default:'' }}" required>
                                     <label for="id_name">Tên danh mục <span class="required-star">*</span></label>
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
                                 </div>
                                 
                                 <div class="form-floating mb-4">
-                                    <textarea name="description" class="form-control" 
-                                              id="id_description" placeholder="Mô tả" style="height: 120px;"></textarea>
+                                    <textarea name="description" class="form-control {% if form.description.errors %}is-invalid{% endif %}" 
+                                              id="id_description" placeholder="Mô tả" style="height: 120px;">{{ form.description.value|default:'' }}</textarea>
                                     <label for="id_description">Mô tả chi tiết</label>
+                                    {% if form.description.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.description.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -73,16 +88,26 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-4">
                                         <div class="form-floating">
-                                            <input type="text" name="investment_goal" class="form-control" 
-                                                   id="id_investment_goal" placeholder="Mục tiêu đầu tư" value="">
+                                            <input type="text" name="investment_goal" class="form-control {% if form.investment_goal.errors %}is-invalid{% endif %}" 
+                                                   id="id_investment_goal" placeholder="Mục tiêu đầu tư" value="{{ form.investment_goal.value|default:'' }}">
                                             <label for="id_investment_goal">Mục tiêu đầu tư</label>
+                                            {% if form.investment_goal.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.investment_goal.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                     <div class="col-md-6 mb-4">
                                         <div class="form-floating">
-                                            <input type="number" name="target_value" class="form-control" 
-                                                   id="id_target_value" placeholder="Giá trị mục tiêu" value="">
+                                            <input type="number" name="target_value" class="form-control {% if form.target_value.errors %}is-invalid{% endif %}" 
+                                                   id="id_target_value" placeholder="Giá trị mục tiêu" value="{{ form.target_value.value|default:'' }}">
                                             <label for="id_target_value">Giá trị mục tiêu (VNĐ)</label>
+                                            {% if form.target_value.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.target_value.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -97,10 +122,10 @@
                                 </div>
                                 
                                 <div class="risk-selector">
-                                    <input type="hidden" name="risk_tolerance" id="id_risk_tolerance" value="medium">
+                                    <input type="hidden" name="risk_tolerance" id="id_risk_tolerance" value="{{ form.risk_tolerance.value|default:'medium' }}">
                                     
                                     <div class="risk-options">
-                                        <div class="risk-option" data-value="low">
+                                        <div class="risk-option {% if form.risk_tolerance.value == 'low' or not form.risk_tolerance.value %}active{% endif %}" data-value="low">
                                             <div class="risk-icon low">
                                                 <i class="fas fa-shield-alt"></i>
                                             </div>
@@ -110,7 +135,7 @@
                                             </div>
                                         </div>
                                         
-                                        <div class="risk-option active" data-value="medium">
+                                        <div class="risk-option {% if form.risk_tolerance.value == 'medium' %}active{% endif %}" data-value="medium">
                                             <div class="risk-icon medium">
                                                 <i class="fas fa-balance-scale"></i>
                                             </div>
@@ -120,7 +145,7 @@
                                             </div>
                                         </div>
                                         
-                                        <div class="risk-option" data-value="high">
+                                        <div class="risk-option {% if form.risk_tolerance.value == 'high' %}active{% endif %}" data-value="high">
                                             <div class="risk-icon high">
                                                 <i class="fas fa-rocket"></i>
                                             </div>
@@ -130,17 +155,23 @@
                                             </div>
                                         </div>
                                     </div>
+                                    
+                                    {% if form.risk_tolerance.errors %}
+                                    <div class="text-danger small mt-2">
+                                        {% for error in form.risk_tolerance.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             
                             <div class="form-actions">
-                                <a href="#" class="btn-cancel">
+                                <a href="{% url 'portfolio_list' %}" class="btn-cancel">
                                     <i class="fas fa-times"></i>
                                     <span>Hủy bỏ</span>
                                 </a>
                                 <button type="submit" class="btn-submit">
-                                    <i class="fas fa-plus-circle"></i>
-                                    <span>Tạo mới</span>
+                                    <i class="fas {% if form.instance.pk %}fa-save{% else %}fa-plus-circle{% endif %}"></i>
+                                    <span>{% if form.instance.pk %}Cập nhật{% else %}Tạo mới{% endif %}</span>
                                 </button>
                             </div>
                         </form>
@@ -179,6 +210,38 @@
                         </div>
                     </div>
                     
+                    {% if form.instance.pk %}
+                    <!-- Thông tin danh mục khi chỉnh sửa -->
+                    <div class="summary-card" data-aos="fade-up" data-aos-delay="200">
+                        <div class="summary-header">
+                            <div class="summary-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <h3 class="summary-title">Tóm tắt danh mục</h3>
+                        </div>
+                        
+                        <div class="summary-content">
+                            <div class="summary-item">
+                                <div class="item-label">Ngày tạo</div>
+                                <div class="item-value">{{ form.instance.created_at|date:"d/m/Y" }}</div>
+                            </div>
+                            
+                            <div class="summary-item">
+                                <div class="item-label">Số lượng tài sản</div>
+                                <div class="item-value">{{ form.instance.assets.count|default:"0" }} tài sản</div>
+                            </div>
+                            
+                            <div class="summary-item">
+                                <div class="item-label">Tổng giá trị</div>
+                                <div class="item-value highlight-value">{{ form.instance.total_value|default:"0"|floatformat:0 }} VNĐ</div>
+                            </div>
+                            
+                            <a href="{% url 'portfolio_detail' pk=form.instance.pk %}" class="summary-link">
+                                <i class="fas fa-eye"></i> Xem chi tiết
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
