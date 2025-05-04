@@ -134,3 +134,9 @@ AUTH0_DOMAIN = 'dev-lrgbq7jwc8g46cow.us.auth0.com'
 AUTH0_CLIENT_ID = 'r1u6ia6JhvGNoJA6bw52oylsNw40p2jm'
 AUTH0_CLIENT_SECRET = 'lZ2pCeHzc9izvbfRF8QZpf1PU8dpqtVt0A2ReanWAUGenq8TsL6PNFXvjtrtsj4Z'
 # Các URL chính xác sẽ được tạo động từ request
+
+# Giúp tránh lỗi mismatching_state khi dùng Auth0 trên localhost
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'

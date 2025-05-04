@@ -648,7 +648,13 @@ def callback(request):
             user.first_name = userinfo['given_name']
         if 'family_name' in userinfo and userinfo['family_name']:
             user.last_name = userinfo['family_name']
+        for field in user._meta.fields:
+            value = getattr(user, field.name)
+            if isinstance(value, str) and len(value) > 200:
+                print(f"Field {field.name} quá dài: {len(value)} ký tự")
+
         user.save()
+
         
         return redirect('dashboard')
     
