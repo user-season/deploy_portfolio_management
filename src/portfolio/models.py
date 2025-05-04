@@ -20,9 +20,10 @@ class User(AbstractUser):
     # Profile picture - URL from Auth0 or uploaded image
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
     # Profile picture URL (for Auth0)
-    profile_picture_url = models.URLField(blank=True, null=True)
+    # profile_picture_url = models.URLField(blank=True, null=True)
+    profile_picture_url = models.URLField(max_length=2048, blank=True, null=True)
     # Auth0 User ID
-    auth0_user_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    auth0_user_id = models.CharField(max_length=2048, blank=True, null=True, unique=True)
     
     class Meta:
         # Tạo chỉ mục cho email và username
