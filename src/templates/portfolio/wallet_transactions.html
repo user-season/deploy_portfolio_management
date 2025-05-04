@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load currency_filters %}
 
 {% block title %}Lịch sử giao dịch | {{ block.super }}{% endblock %}
 
-{% block extra_css %}
+{% block extr_acss %}
 <style>
     .icon-circle {
         width: 40px;
@@ -42,24 +43,27 @@
             <h2 class="fw-bold mb-0">Lịch sử giao dịch ví</h2>
         </div>
         <div>
-            <a href="#" class="btn btn-outline-primary btn-rounded">
+            <a href="{% url 'wallet' %}" class="btn btn-outline-primary btn-rounded">
                 <i class="fas fa-wallet me-2"></i>Quay lại ví
             </a>
         </div>
     </div>
     
-    <!-- Sample success message for demonstration -->
-    <div class="alert alert-success rounded-4 mb-4">
-        <div class="d-flex">
-            <div class="me-3">
-                <i class="fas fa-check-circle fa-2x"></i>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} rounded-4 mb-4">
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="alert-heading">Thông báo</h6>
+                        <p class="mb-0">{{ message|safe }}</p>
+                    </div>
+                </div>
             </div>
-            <div>
-                <h6 class="alert-heading">Thông báo</h6>
-                <p class="mb-0">Giao dịch đã hoàn tất thành công!</p>
-            </div>
-        </div>
-    </div>
+        {% endfor %}
+    {% endif %}
     
     <!-- Bộ lọc -->
     <div class="card border-0 shadow-sm rounded-4 mb-4" data-aos="fade-up">
@@ -69,33 +73,33 @@
                     <label class="form-label small">Loại giao dịch</label>
                     <select name="type" class="form-select form-select-sm">
                         <option value="">Tất cả loại</option>
-                        <option value="deposit">Nạp tiền</option>
-                        <option value="withdraw">Rút tiền</option>
+                        {% for value, text in transaction_types %}
+                            <option value="{{ value }}" {% if request.GET.type == value %}selected{% endif %}>{{ text }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-3 col-sm-6">
                     <label class="form-label small">Trạng thái</label>
                     <select name="status" class="form-select form-select-sm">
                         <option value="">Tất cả trạng thái</option>
-                        <option value="completed">Hoàn thành</option>
-                        <option value="pending">Đang xử lý</option>
-                        <option value="failed">Thất bại</option>
-                        <option value="canceled">Đã hủy</option>
+                        {% for value, text in status_choices %}
+                            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ text }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-2 col-sm-6">
                     <label class="form-label small">Từ ngày</label>
-                    <input type="date" name="from_date" class="form-control form-control-sm">
+                    <input type="date" name="from_date" class="form-control form-control-sm" value="{{ request.GET.from_date|default:'' }}">
                 </div>
                 <div class="col-md-2 col-sm-6">
                     <label class="form-label small">Đến ngày</label>
-                    <input type="date" name="to_date" class="form-control form-control-sm">
+                    <input type="date" name="to_date" class="form-control form-control-sm" value="{{ request.GET.to_date|default:'' }}">
                 </div>
                 <div class="col-md-2 d-flex">
                     <button type="submit" class="btn btn-primary btn-sm">
                         <i class="fas fa-filter me-1"></i> Lọc
                     </button>
-                    <a href="#" class="btn btn-light btn-sm ms-2">
+                    <a href="{% url 'wallet_transactions' %}" class="btn btn-light btn-sm ms-2">
                         <i class="fas fa-redo me-1"></i> Đặt lại
                     </a>
                 </div>
@@ -108,10 +112,11 @@
         <div class="card-header bg-transparent border-0 p-4">
             <div class="d-flex align-items-center">
                 <h5 class="mb-0">Danh sách giao dịch</h5>
-                <span class="badge bg-primary rounded-pill ms-2">5</span>
+                <span class="badge bg-primary rounded-pill ms-2">{{ transactions.paginator.count }}</span>
             </div>
         </div>
         <div class="card-body p-0">
+            {% if transactions %}
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
@@ -126,177 +131,90 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Sample transaction 1 -->
+                        {% for transaction in transactions %}
                         <tr>
-                            <td class="ps-4">15/06/2024 10:25</td>
+                            <td class="ps-4">{{ transaction.created_at|date:"d/m/Y H:i" }}</td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <div class="icon-circle bg-success-light text-success me-2" style="width: 32px; height: 32px;">
-                                        <i class="fas fa-arrow-down"></i>
+                                    <div class="icon-circle {% if transaction.type == 'deposit' %}bg-success-light text-success{% else %}bg-danger-light text-danger{% endif %} me-2" style="width: 32px; height: 32px;">
+                                        <i class="fas {% if transaction.type == 'deposit' %}fa-arrow-down{% else %}fa-arrow-up{% endif %}"></i>
                                     </div>
-                                    <span>Nạp tiền</span>
+                                    <span>{{ transaction.get_type_display }}</span>
                                 </div>
                             </td>
-                            <td class="fw-medium text-success">+2,000,000 VNĐ</td>
-                            <td><span class="text-success">Miễn phí</span></td>
-                            <td>Ví điện tử</td>
+                            <td class="fw-medium {% if transaction.type == 'deposit' %}text-success{% else %}text-danger{% endif %}">
+                                {% if transaction.type == 'deposit' %}+{% else %}-{% endif %}{{ transaction.amount|dinh_dang_tien }} VNĐ
+                            </td>
                             <td>
-                                <span class="badge bg-success rounded-pill">
-                                    Hoàn thành
+                                {% if transaction.fee > 0 %}
+                                {{ transaction.fee|dinh_dang_tien }} VNĐ
+                                {% else %}
+                                <span class="text-success">Miễn phí</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ transaction.get_payment_method_display }}</td>
+                            <td>
+                                <span class="badge {% if transaction.status == 'completed' %}bg-success{% elif transaction.status == 'pending' %}bg-warning{% elif transaction.status == 'failed' %}bg-danger{% else %}bg-secondary{% endif %} rounded-pill">
+                                    {{ transaction.get_status_display }}
                                 </span>
                             </td>
                             <td class="text-end pe-4">
-                                <span class="text-monospace small">TX24061500001</span>
+                                <span class="text-monospace small">{{ transaction.transaction_id }}</span>
                             </td>
                         </tr>
-                        
-                        <!-- Sample transaction 2 -->
-                        <tr>
-                            <td class="ps-4">10/06/2024 14:10</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="icon-circle bg-danger-light text-danger me-2" style="width: 32px; height: 32px;">
-                                        <i class="fas fa-arrow-up"></i>
-                                    </div>
-                                    <span>Rút tiền</span>
-                                </div>
-                            </td>
-                            <td class="fw-medium text-danger">-1,500,000 VNĐ</td>
-                            <td>15,000 VNĐ</td>
-                            <td>Chuyển khoản ngân hàng</td>
-                            <td>
-                                <span class="badge bg-success rounded-pill">
-                                    Hoàn thành
-                                </span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <span class="text-monospace small">TX24061000002</span>
-                            </td>
-                        </tr>
-                        
-                        <!-- Sample transaction 3 -->
-                        <tr>
-                            <td class="ps-4">05/06/2024 09:45</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="icon-circle bg-success-light text-success me-2" style="width: 32px; height: 32px;">
-                                        <i class="fas fa-arrow-down"></i>
-                                    </div>
-                                    <span>Nạp tiền</span>
-                                </div>
-                            </td>
-                            <td class="fw-medium text-success">+5,000,000 VNĐ</td>
-                            <td><span class="text-success">Miễn phí</span></td>
-                            <td>Thẻ tín dụng</td>
-                            <td>
-                                <span class="badge bg-success rounded-pill">
-                                    Hoàn thành
-                                </span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <span class="text-monospace small">TX24060500003</span>
-                            </td>
-                        </tr>
-                        
-                        <!-- Sample transaction 4 -->
-                        <tr>
-                            <td class="ps-4">01/06/2024 16:30</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="icon-circle bg-danger-light text-danger me-2" style="width: 32px; height: 32px;">
-                                        <i class="fas fa-arrow-up"></i>
-                                    </div>
-                                    <span>Rút tiền</span>
-                                </div>
-                            </td>
-                            <td class="fw-medium text-danger">-2,500,000 VNĐ</td>
-                            <td>25,000 VNĐ</td>
-                            <td>Chuyển khoản ngân hàng</td>
-                            <td>
-                                <span class="badge bg-warning rounded-pill">
-                                    Đang xử lý
-                                </span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <span class="text-monospace small">TX24060100004</span>
-                            </td>
-                        </tr>
-                        
-                        <!-- Sample transaction 5 -->
-                        <tr>
-                            <td class="ps-4">25/05/2024 11:15</td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="icon-circle bg-danger-light text-danger me-2" style="width: 32px; height: 32px;">
-                                        <i class="fas fa-arrow-up"></i>
-                                    </div>
-                                    <span>Rút tiền</span>
-                                </div>
-                            </td>
-                            <td class="fw-medium text-danger">-1,000,000 VNĐ</td>
-                            <td>10,000 VNĐ</td>
-                            <td>Ví điện tử</td>
-                            <td>
-                                <span class="badge bg-danger rounded-pill">
-                                    Thất bại
-                                </span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <span class="text-monospace small">TX24052500005</span>
-                            </td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
             
-            <!-- Sample pagination -->
+            {% if transactions.has_other_pages %}
             <div class="d-flex justify-content-center py-3 border-top">
                 <nav aria-label="Page navigation">
                     <ul class="pagination mb-0">
+                        {% if transactions.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="#" aria-label="Previous">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ transactions.previous_page_number }}" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        {% endif %}
+                        
+                        {% for i in transactions.paginator.page_range %}
+                        {% if i > transactions.number|add:'-3' and i < transactions.number|add:'3' %}
+                        <li class="page-item {% if transactions.number == i %}active{% endif %}">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ i }}">{{ i }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if transactions.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="#" aria-label="Next">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ transactions.next_page_number }}" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>
+                        {% endif %}
                     </ul>
                 </nav>
             </div>
-        </div>
-    </div>
-    
-    <!-- Empty state (hidden by default, uncomment to show) -->
-    <!-- 
-    <div class="card border-0 shadow-sm rounded-4" data-aos="fade-up">
-        <div class="card-header bg-transparent border-0 p-4">
-            <div class="d-flex align-items-center">
-                <h5 class="mb-0">Danh sách giao dịch</h5>
-                <span class="badge bg-primary rounded-pill ms-2">0</span>
-            </div>
-        </div>
-        <div class="card-body p-0">
+            {% endif %}
+            
+            {% else %}
             <div class="text-center py-5">
-                <img src="{% static 'images/no-transactions.png' %}" alt="No transactions" class="img-fluid mb-4" style="max-width: 150px; opacity: 0.7;">
+                <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="No transactions" class="img-fluid mb-4" style="max-width: 150px; opacity: 0.7;">
                 <h5>Chưa có giao dịch nào</h5>
                 <p class="text-muted">Các giao dịch nạp/rút tiền sẽ được hiển thị tại đây</p>
                 <div class="mt-3">
-                    <a href="#" class="btn btn-success btn-rounded mx-2">
+                    <a href="{% url 'deposit_money' %}" class="btn btn-success btn-rounded mx-2">
                         <i class="fas fa-plus-circle me-2"></i>Nạp tiền
                     </a>
-                    <a href="#" class="btn btn-primary btn-rounded mx-2">
+                    <a href="{% url 'withdraw_money' %}" class="btn btn-primary btn-rounded mx-2">
                         <i class="fas fa-minus-circle me-2"></i>Rút tiền
                     </a>
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
-    -->
 </div>
-{% endblock %}
+{% endblock %} 
