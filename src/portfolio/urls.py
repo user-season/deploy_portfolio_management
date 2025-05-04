@@ -16,6 +16,8 @@ urlpatterns = [
     path('portfolios/create/', views.portfolio_create, name='portfolio_create'),
 
     path('transactions/', views.transaction_list, name='transaction_list'),
+    path('wallet/transactions/', views.wallet_transactions, name='wallet_transactions'),
+
     path('wallet/', views.wallet, name='wallet'),
     path('wallet/deposit/', views.deposit_money, name='deposit_money'),
     path('wallet/withdraw/', views.withdraw_money, name='withdraw_money'),

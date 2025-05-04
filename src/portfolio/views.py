@@ -28,6 +28,10 @@ def asset_list(request):
 def transaction_list(request):
     return render(request, 'portfolio/transaction_list.html')
 
+def wallet_transactions(request):
+    return render(request, 'portfolio/wallet_transactions.html')
+
+
 def wallet(request):
     return render(request, 'portfolio/wallet.html')
 
