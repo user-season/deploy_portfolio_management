@@ -6,12 +6,13 @@ from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Sum
 from django.db import transaction
+from django.core.paginator import Paginator
 
 from datetime import timedelta
 from decimal import Decimal
 import uuid
 
-from .forms import UserRegistrationForm, PortfolioForm, TransactionForm, AssetForm, DepositForm, WithdrawForm
+from .forms import UserRegistrationForm, PortfolioForm, TransactionForm, AssetForm, DepositForm, WithdrawForm, BankAccountForm
 from .models import Portfolio, PortfolioAsset, Transaction, Asset, Wallet, WalletTransaction, BankAccount
 from .utils import generate_qr_code, check_paid
 from .templatetags.currency_filters import dinh_dang_tien
@@ -483,16 +484,169 @@ def wallet(request):
 
 @login_required
 def wallet_transactions(request):
-    return render(request, 'portfolio/wallet_transactions.html')
+    # Lấy tất cả giao dịch của người dùng
+    transactions = WalletTransaction.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Lọc theo loại giao dịch nếu có
+    transaction_type = request.GET.get('type')
+    if transaction_type in ['deposit', 'withdraw']:
+        transactions = transactions.filter(type=transaction_type)
+    
+    # Lọc theo trạng thái nếu có
+    status = request.GET.get('status')
+    if status in ['pending', 'completed', 'failed', 'cancelled']:
+        transactions = transactions.filter(status=status)
+    
+    # Lọc theo ngày
+    from_date = request.GET.get('from_date')
+    if from_date:
+        transactions = transactions.filter(created_at__gte=from_date)
+    
+    to_date = request.GET.get('to_date')
+    if to_date:
+        transactions = transactions.filter(created_at__lte=to_date)
+    
+    # Phân trang
+    paginator = Paginator(transactions, 10)  # 10 giao dịch mỗi trang
+    page_number = request.GET.get('page')
+    paged_transactions = paginator.get_page(page_number)
+    
+    context = {
+        'transactions': paged_transactions,
+        'transaction_types': WalletTransaction.TYPE_CHOICES,
+        'status_choices': WalletTransaction.STATUS_CHOICES
+    }
+    
+    return render(request, 'portfolio/wallet_transactions.html', context)
     
 @login_required
 def bank_account_list(request):
-    return render(request, 'portfolio/bank_account_list.html')
+    bank_accounts = BankAccount.objects.filter(user=request.user).order_by('-is_default', '-created_at')
+    
+    context = {
+        'bank_accounts': bank_accounts
+    }
+    
+    return render(request, 'portfolio/bank_account_list.html', context)
 
 @login_required
 def bank_account_create(request):
-    return render(request, 'portfolio/bank_account_form.html')
+    if request.method == 'POST':
+        form = BankAccountForm(request.POST)
+        if form.is_valid():
+            bank_account = form.save(commit=False)
+            bank_account.user = request.user
+            bank_account.save()
+            
+            bank_name = form.cleaned_data['bank_name']
+            if bank_name == 'other':
+                display_name = form.cleaned_data['other_bank_name']
+            else:
+                display_name = dict(BankAccount.BANK_CHOICES)[bank_name]
+                
+            account_number = form.cleaned_data['account_number']
+            
+            messages.success(request, f'Đã thêm tài khoản {display_name} - {account_number}')
+            return redirect('bank_account_list')
+    else:
+        form = BankAccountForm()
     
+    context = {
+        'form': form,
+        'title': 'Thêm tài khoản ngân hàng'
+    }
+    
+    return render(request, 'portfolio/bank_account_form.html', context)
+    
+@login_required
+def update_bank_account(request, pk):
+    bank_account = get_object_or_404(BankAccount, id=pk, user=request.user)
+    
+    if request.method == 'POST':
+        form = BankAccountForm(request.POST, instance=bank_account)
+        if form.is_valid():
+            form.save()
+            
+            bank_name = form.cleaned_data['bank_name']
+            if bank_name == 'other':
+                display_name = form.cleaned_data['other_bank_name']
+            else:
+                display_name = dict(BankAccount.BANK_CHOICES)[bank_name]
+                
+            account_number = form.cleaned_data['account_number']
+            
+            messages.success(request, f'Đã cập nhật tài khoản {display_name} - {account_number}')
+            return redirect('bank_account_list')
+    else:
+        form = BankAccountForm(instance=bank_account)
+    
+    context = {
+        'form': form,
+        'bank_account': bank_account,
+        'title': 'Cập nhật tài khoản ngân hàng'
+    }
+    
+    return render(request, 'portfolio/bank_account_form.html', context)
+
+@login_required
+def delete_bank_account(request, pk):
+    bank_account = get_object_or_404(BankAccount, id=pk, user=request.user)
+    
+    if request.method == 'POST':
+        # Kiểm tra xem có giao dịch đang sử dụng tài khoản này không
+        transactions_using_account = WalletTransaction.objects.filter(
+            bank_account=bank_account,
+            status='pending'
+        ).exists()
+        
+        if transactions_using_account:
+            messages.error(request, 'Không thể xóa tài khoản này vì có giao dịch đang xử lý.')
+            return redirect('bank_account_list')
+        
+        # Lưu thông tin để hiển thị thông báo
+        bank_name = bank_account.bank_name
+        if bank_name == 'other':
+            display_name = bank_account.other_bank_name
+        else:
+            display_name = dict(BankAccount.BANK_CHOICES)[bank_name]
+            
+        account_number = bank_account.account_number
+        
+        # Xóa tài khoản
+        bank_account.delete()
+        
+        messages.success(request, f'Đã xóa tài khoản {display_name} - {account_number}')
+        return redirect('bank_account_list')
+    
+    context = {
+        'bank_account': bank_account
+    }
+    
+    return render(request, 'portfolio/bank_account_confirm_delete.html', context)
+    
+@login_required
+def set_default_bank_account(request, pk):
+    bank_account = get_object_or_404(BankAccount, id=pk, user=request.user)
+    
+    # Đặt tất cả tài khoản khác thành không mặc định
+    BankAccount.objects.filter(user=request.user).update(is_default=False)
+    
+    # Đặt tài khoản hiện tại thành mặc định
+    bank_account.is_default = True
+    bank_account.save()
+    
+    bank_name = bank_account.bank_name
+    if bank_name == 'other':
+        display_name = bank_account.other_bank_name
+    else:
+        display_name = dict(BankAccount.BANK_CHOICES)[bank_name]
+        
+    account_number = bank_account.account_number
+    
+    messages.success(request, f'Đã đặt {display_name} - {account_number} làm tài khoản mặc định')
+    
+    return redirect('bank_account_list')
+
 
 @login_required
 def deposit_money(request):

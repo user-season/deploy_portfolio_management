@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends 'portfolio/base.html' %}
 {% load static %}
 
-{% block title %}Thêm tài khoản ngân hàng | Quản lý tài chính{% endblock %}
+{% block title %}{{ title }} | {{ block.super }}{% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'portfolio/js/wallet.js' %}"></script>
@@ -11,24 +11,28 @@
 <div class="container py-5">
     <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-right">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="index.html">Bảng điều khiển</a></li>
-            <li class="breadcrumb-item"><a href="wallet.html">Ví điện tử</a></li>
-            <li class="breadcrumb-item"><a href="bank_accounts.html">Tài khoản ngân hàng</a></li>
-            <li class="breadcrumb-item active">Thêm tài khoản ngân hàng</li>
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Bảng điều khiển</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'wallet' %}">Ví điện tử</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'bank_account_list' %}">Tài khoản ngân hàng</a></li>
+            <li class="breadcrumb-item active">{{ title }}</li>
         </ol>
     </nav>
 
-    <div class="alert alert-success rounded-4 mb-4">
-        <div class="d-flex">
-            <div class="me-3">
-                <i class="fas fa-check-circle fa-2x"></i>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} rounded-4 mb-4">
+                <div class="d-flex">
+                    <div class="me-3">
+                        <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="alert-heading">Thông báo</h6>
+                        <p class="mb-0">{{ message|safe }}</p>
+                    </div>
+                </div>
             </div>
-            <div>
-                <h6 class="alert-heading">Thông báo</h6>
-                <p class="mb-0">Đây là trang demo. Các dữ liệu được hiển thị là dữ liệu mẫu.</p>
-            </div>
-        </div>
-    </div>
+        {% endfor %}
+    {% endif %}
 
     <div class="row justify-content-center">
         <div class="col-lg-8">
@@ -38,52 +42,68 @@
                         <div class="card-heading-icon">
                             <i class="fas fa-university"></i>
                         </div>
-                        <h4 class="mb-0">Thêm tài khoản ngân hàng</h4>
+                        <h4 class="mb-0">{{ title }}</h4>
                     </div>
                 </div>
                 <div class="card-body p-4">
                     <form method="post" id="bankAccountForm" action="">
                         {% csrf_token %}
+                        
+                        {% if form.errors %}
+                        <div class="alert alert-danger rounded-4 mb-4">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-exclamation-circle fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h6 class="alert-heading">Lỗi xử lý form</h6>
+                                    <ul class="mb-0">
+                                        {% for field in form %}
+                                            {% for error in field.errors %}
+                                                <li>{{ field.label }}: {{ error }}</li>
+                                            {% endfor %}
+                                        {% endfor %}
+                                        {% for error in form.non_field_errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
                         <div class="mb-4">
                             <label for="id_bank_name" class="form-label">Ngân hàng <span class="text-danger">*</span></label>
-                            <select name="bank_name" id="id_bank_name" class="form-select">
-                                <option value="">-- Chọn ngân hàng --</option>
-                                <option value="vietcombank">Vietcombank</option>
-                                <option value="techcombank">Techcombank</option>
-                                <option value="mbbank">MB Bank</option>
-                                <option value="tpbank">TPBank</option>
-                                <option value="acb">ACB</option>
-                                <option value="other">Ngân hàng khác</option>
-                            </select>
+                            {{ form.bank_name }}
                             <div class="form-text">Chọn ngân hàng của bạn từ danh sách</div>
                         </div>
                         
-                        <div class="mb-4 d-none" id="otherBankGroup">
+                        <div class="mb-4 {% if form.bank_name.value != 'other' %}d-none{% endif %}" id="otherBankGroup">
                             <label for="id_other_bank_name" class="form-label">Tên ngân hàng khác <span class="text-danger">*</span></label>
-                            <input type="text" name="other_bank_name" id="id_other_bank_name" class="form-control" placeholder="Nhập tên ngân hàng">
+                            {{ form.other_bank_name }}
                             <div class="form-text">Nhập tên ngân hàng nếu không có trong danh sách</div>
                         </div>
                         
                         <div class="mb-4">
                             <label for="id_account_name" class="form-label">Chủ tài khoản <span class="text-danger">*</span></label>
-                            <input type="text" name="account_name" id="id_account_name" class="form-control" placeholder="Nguyễn Văn A">
+                            {{ form.account_name }}
                             <div class="form-text">Nhập tên chủ tài khoản (như trên thẻ/sổ)</div>
                         </div>
                         
                         <div class="mb-4">
                             <label for="id_account_number" class="form-label">Số tài khoản <span class="text-danger">*</span></label>
-                            <input type="text" name="account_number" id="id_account_number" class="form-control" placeholder="1234567890">
+                            {{ form.account_number }}
                             <div class="form-text">Nhập số tài khoản ngân hàng của bạn</div>
                         </div>
                         
                         <div class="mb-4">
                             <label for="id_branch" class="form-label">Chi nhánh</label>
-                            <input type="text" name="branch" id="id_branch" class="form-control" placeholder="Chi nhánh Hồ Chí Minh">
+                            {{ form.branch }}
                             <div class="form-text">Nhập chi nhánh ngân hàng (không bắt buộc)</div>
                         </div>
                         
                         <div class="form-check mb-4">
-                            <input type="checkbox" name="is_default" id="id_is_default" class="form-check-input">
+                            {{ form.is_default }}
                             <label class="form-check-label" for="id_is_default">
                                 Đặt làm tài khoản mặc định
                             </label>
@@ -91,16 +111,31 @@
                         </div>
                         
                         <div class="d-flex justify-content-between mt-4">
-                            <a href="bank_accounts.html" class="btn btn-light btn-rounded">
+                            <a href="{% url 'bank_account_list' %}" class="btn btn-light btn-rounded">
                                 <i class="fas fa-arrow-left me-2"></i>Quay lại
                             </a>
                             <button type="submit" class="btn btn-primary btn-rounded">
-                                <i class="fas fa-save me-2"></i>Thêm tài khoản
+                                <i class="fas fa-save me-2"></i>{% if bank_account %}Cập nhật{% else %}Thêm{% endif %} tài khoản
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
+            
+            {% if bank_account %}
+            <div class="card border-0 shadow-sm rounded-4 mt-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="me-3">
+                            <i class="fas fa-info-circle text-primary"></i>
+                        </div>
+                        <h5 class="mb-0">Thông tin tài khoản</h5>
+                    </div>
+                    
+                    <p class="text-muted mb-0">Tài khoản này được tạo vào {{ bank_account.created_at|date:"d/m/Y H:i" }} và cập nhật lần cuối vào {{ bank_account.updated_at|date:"d/m/Y H:i" }}.</p>
+                </div>
+            </div>
+            {% endif %}
         </div>
         
         <div class="col-lg-4">
