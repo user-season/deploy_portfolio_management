@@ -50,6 +50,10 @@ def user_profile(request):
     return render(request, 'portfolio/user_profile.html')
 
 
+def user_profile(request):
+    return render(request, 'portfolio/user_profile.html')
+
+
 def portfolio_list(request):
     return render(request, 'portfolio/portfolio_list.html')
     
