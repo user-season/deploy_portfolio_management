@@ -10,9 +10,9 @@
 Hệ thống quản lý danh mục đầu tư giúp người dùng theo dõi, mua bán tài sản tài chính và quản lý danh mục đầu tư của họ. Hệ thống cung cấp các chức năng như nạp tiền vào ví, giao dịch tài sản, theo dõi biến động thị trường, và báo cáo hiệu suất danh mục.
 
 ## Công Nghệ Sử Dụng
-- **Backend**: Django (Python)
+- **Font-End**: HTML, CSS, JavaScript
+- **Back-End**: Django (Python)
 - **Database**: PostgreSQL
-- **Authentication**: Django Authentication
 
 ## Các Tính Năng Chính
 - Đăng ký, đăng nhập, xác thực người dùng
@@ -22,36 +22,74 @@ Hệ thống quản lý danh mục đầu tư giúp người dùng theo dõi, mu
 - Theo dõi biến động giá thị trường
 - Xem báo cáo hiệu suất danh mục đầu tư
 
-## Cấu Trúc Cơ Sở Dữ Liệu
-Hệ thống bao gồm các bảng chính:
+## Cấu Trúc Dự Án
+```
+.
+├── docker-compose.yml              # Cấu hình Docker Compose
+├── Dockerfile                      # Cấu hình Docker
+├── entrypoint.sh                   # Script khởi động cho Docker
+├── requirements.txt                # Các thư viện Python cần thiết
+├── run.bat                         # Script khởi động cho Windows
+├── run.sh                          # Script khởi động cho Linux/macOS
+├── .env                            # Cấu hình biến môi trường
+└── src/                            # Mã nguồn chính của dự án
+    ├── manage.py                   # Tệp quản lý Django
+    ├── config/                     # Cấu hình Django
+    │   ├── settings.py             # Cài đặt Django
+    │   ├── urls.py                 # URL chính của hệ thống
+    │   ├── asgi.py                 # Cấu hình ASGI
+    │   └── wsgi.py                 # Cấu hình WSGI
+    ├── portfolio/                  # Ứng dụng chính
+    │   ├── admin.py                # Cấu hình admin
+    │   ├── apps.py                 # Cấu hình ứng dụng
+    │   ├── models.py               # Định nghĩa model dữ liệu
+    │   ├── views.py                # Xử lý logic và hiển thị
+    │   ├── urls.py                 # Định nghĩa URL cho ứng dụng
+    │   ├── tests.py                # Kiểm thử đơn vị
+    │   └── migrations/             # Migration database
+    ├── static/                     # Tài nguyên tĩnh (CSS, JS, hình ảnh)
+    ├── media/                      # File người dùng tải lên
+    └── templates/                  # Template HTML
+        ├── base.html               # Template cơ sở
+        └── portfolio/              # Template cho ứng dụng portfolio
+            ├── home.html           # Trang chủ
+            ├── dashboard.html      # Bảng điều khiển
+            ├── login.html          # Trang đăng nhập
+            └── register.html       # Trang đăng ký
+```
 
-1. **Users**: Quản lý thông tin người dùng
-2. **Wallets**: Quản lý số dư của người dùng
-3. **Deposits**: Lưu lịch sử nạp tiền
-4. **Portfolios**: Quản lý danh mục đầu tư
-5. **Assets**: Lưu danh sách tài sản tài chính
-6. **Portfolio_Assets**: Lưu tài sản trong danh mục đầu tư
-7. **Transactions**: Lưu lịch sử mua bán tài sản
-8. **Market_Data**: Cập nhật giá tài sản theo thời gian
-9. **Performance_Reports**: Báo cáo hiệu suất danh mục
+## Mô Tả Các Thành Phần Chính
 
-## Hướng Dẫn Cài Đặt
-### 1. Clone repository
-```bash
-$ git clone https://github.com/iuh-application-development/portfolio_management.git
-```
-### 2. Cài đặt App
-```bash
-$ ./run.bat
-```
-### 4. Cấu hình PostgreSQL
-Cập nhật file `.env` với thông tin database:
-```
-DATABASE_NAME=your_db_name
-DATABASE_USER=your_db_user
-DATABASE_PASSWORD=your_db_password
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-```
-Hệ thống sẽ chạy tại `http://127.0.0.1:8000/`.
+### Models
+- `User`: Mô hình người dùng mở rộng từ Django User
+- `Portfolio`: Danh mục đầu tư
+- `Asset`: Tài sản tài chính
+- `Transaction`: Giao dịch mua/bán
+- `Wallet`: Ví tiền của người dùng
+- `BankAccount`: Tài khoản ngân hàng liên kết
 
+### Views
+- `home`: Hiển thị trang chủ
+- `dashboard`: Bảng điều khiển chính
+- `register`, `login_view`: Xử lý đăng ký và đăng nhập
+- `portfolio_*`: Các view xử lý danh mục đầu tư
+- `transaction_*`: Các view xử lý giao dịch
+- `wallet_*`: Các view xử lý ví điện tử
+
+### Templates
+- `base.html`: Template cơ sở chung
+- `home.html`: Trang chủ với giới thiệu hệ thống
+- `dashboard.html`: Bảng điều khiển người dùng
+- `login.html`, `register.html`: Form đăng nhập và đăng ký
+
+## Cài đặt
+**Yêu cầu:**
+PostgresSQL
+Python 3 trở lên
+
+- **Windows:** Chạy file `run.bat` bằng cách click vào file \
+- **Linux/MacOS:** Chạy file `run.sh` bằng cách chạy lệnh `bash run.sh` \
+- **Docker:** Chạy trên các hệ điều hành \
+    Chạy lệnh: `dos2unix entrypoint.sh` để chuyển định dạng file entrypoint.sh thành định dạng Unix \
+    Chạy lệnh: `docker-compose up --build` để build các Image \
+    Truy cập trình duyệt ở địa chỉ: http://localhost:8000/

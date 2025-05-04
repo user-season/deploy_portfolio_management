@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}Lịch sử giao dịch | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div class="card-heading mb-3 mb-md-0">
+            <div class="card-heading-icon">
+                <i class="fas fa-exchange-alt"></i>
+            </div>
+            <h2 class="fw-bold mb-0">Lịch sử giao dịch</h2>
+        </div>
+        <a href="#" class="btn btn-primary btn-rounded" data-aos="fade-left">
+            <i class="fas fa-plus me-2"></i>Tạo giao dịch mới
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <select name="portfolio" class="form-select" id="portfolioSelect">
+                            <option value="">Tất cả danh mục</option>
+                            <option value="1">Danh mục đầu tư dài hạn</option>
+                            <option value="2">Danh mục cổ phiếu bluechip</option>
+                            <option value="3">Danh mục ngân hàng</option>
+                        </select>
+                        <label for="portfolioSelect">Danh mục</label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-floating">
+                        <select name="type" class="form-select" id="typeSelect">
+                            <option value="">Tất cả loại</option>
+                            <option value="buy">Mua</option>
+                            <option value="sell">Bán</option>
+                        </select>
+                        <label for="typeSelect">Loại giao dịch</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <input type="date" name="from_date" class="form-control" id="fromDate">
+                        <label for="fromDate">Từ ngày</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-floating">
+                        <input type="date" name="to_date" class="form-control" id="toDate">
+                        <label for="toDate">Đến ngày</label>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100 h-100 btn-rounded">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden" data-aos="fade-up">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0 ps-4">Danh mục</th>
+                            <th class="border-0">Mã CP</th>
+                            <th class="border-0">Loại GD</th>
+                            <th class="border-0 text-end">Số lượng</th>
+                            <th class="border-0 text-end">Giá</th>
+                            <th class="border-0 text-end">Tổng giá trị</th>
+                            <th class="border-0">Thời gian</th>
+                            <th class="border-0 pe-4">Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="ps-4">Danh mục đầu tư dài hạn</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle me-2">
+                                        <i class="fas fa-chart-line text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">VNM</h6>
+                                        <small class="text-muted">Vinamilk</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-success rounded-pill">
+                                    Mua
+                                </span>
+                            </td>
+                            <td class="text-end">1000</td>
+                            <td class="text-end">80000</td>
+                            <td class="text-end fw-medium">80000000</td>
+                            <td>15/05/2024 10:30</td>
+                            <td class="pe-4">
+                                <span class="text-muted" data-bs-toggle="tooltip" title="Đầu tư dài hạn vào VNM">
+                                    Đầu tư dài hạn vào...
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4">Danh mục cổ phiếu bluechip</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle me-2">
+                                        <i class="fas fa-chart-line text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">VIC</h6>
+                                        <small class="text-muted">Vingroup</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-success rounded-pill">
+                                    Mua
+                                </span>
+                            </td>
+                            <td class="text-end">500</td>
+                            <td class="text-end">90000</td>
+                            <td class="text-end fw-medium">45000000</td>
+                            <td>10/05/2024 14:15</td>
+                            <td class="pe-4">
+                                <span class="text-muted">-</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4">Danh mục ngân hàng</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-circle me-2">
+                                        <i class="fas fa-chart-line text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">VCB</h6>
+                                        <small class="text-muted">Vietcombank</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger rounded-pill">
+                                    Bán
+                                </span>
+                            </td>
+                            <td class="text-end">200</td>
+                            <td class="text-end">95000</td>
+                            <td class="text-end fw-medium">19000000</td>
+                            <td>05/05/2024 09:45</td>
+                            <td class="pe-4">
+                                <span class="text-muted" data-bs-toggle="tooltip" title="Chốt lời một phần sau khi tăng 10%">
+                                    Chốt lời một phần...
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <nav aria-label="Page navigation" class="mt-4" data-aos="fade-up" data-aos-delay="100">
+        <ul class="pagination justify-content-center">
+            <li class="page-item disabled">
+                <a class="page-link rounded-start" href="#" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <li class="page-item active">
+                <span class="page-link">1</span>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="#">2</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="#">3</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link rounded-end" href="#" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}
