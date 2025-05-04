@@ -11,11 +11,13 @@ from django.core.paginator import Paginator
 from datetime import timedelta
 from decimal import Decimal
 import uuid
+import json
 
 from .forms import UserRegistrationForm, PortfolioForm, TransactionForm, AssetForm, DepositForm, WithdrawForm, BankAccountForm
 from .models import Portfolio, PortfolioAsset, Transaction, Asset, Wallet, WalletTransaction, BankAccount
 from .utils import generate_qr_code, check_paid
 from .templatetags.currency_filters import dinh_dang_tien
+from .vnstock_services import get_price_board, sync_vnstock_to_assets
 
 
 
@@ -24,7 +26,38 @@ def home(request):
 
 @login_required
 def dashboard(request):
-    return render(request, 'portfolio/dashboard.html')
+    portfolios = Portfolio.objects.filter(user=request.user)
+    total_value = sum(p.total_value for p in portfolios)
+    total_cost = sum(p.total_cost for p in portfolios)
+    total_profit = ((total_value - total_cost) / total_cost * 100) if total_cost > 0 else 0
+    
+    total_assets = PortfolioAsset.objects.filter(
+        portfolio__user=request.user,
+        quantity__gt=0
+    ).count()
+    
+    monthly_transactions = Transaction.objects.filter(
+        portfolio__user=request.user,
+        transaction_date__gte=timezone.now() - timezone.timedelta(days=30)
+    ).count()
+    
+    recent_transactions = Transaction.objects.filter(
+        portfolio__user=request.user
+    ).order_by('-transaction_date')[:5]
+    
+    # Get wallet for displaying balance on dashboard
+    wallet, created = Wallet.objects.get_or_create(user=request.user)
+
+    context = {
+        'portfolios': portfolios,
+        'total_value': total_value,
+        'total_profit': total_profit,
+        'total_assets': total_assets,
+        'monthly_transactions': monthly_transactions,
+        'recent_transactions': recent_transactions,
+        'wallet': wallet,
+    }
+    return render(request, 'portfolio/dashboard.html', context)
 
 
 def login_view(request):
@@ -1022,4 +1055,57 @@ def withdraw_money(request):
 
 @login_required
 def market(request):
-    return render(request, 'portfolio/market.html')
+    # Get price board data or use fallback data if there's an error
+    try:
+        price_board = get_price_board()
+        price_board_json = price_board.to_json(orient='split')
+        print("Successfully fetched price board data")
+    except Exception as e:
+        print(f"Error in market view: {str(e)}")
+        # Simple fallback data with explicit index structure
+        fallback_data = {
+            "index": [0, 1, 2, 3, 4],
+            "columns": ["symbol", "ceiling", "floor", "ref_price", "match_price", "match_vol"],
+            "data": [
+                ["AAA", 25000, 20000, 22000, 22500, 10000],
+                ["VNM", 60000, 50000, 55000, 56000, 5000],
+                ["FPT", 90000, 80000, 85000, 86000, 3000],
+                ["VIC", 45000, 35000, 40000, 41000, 2000],
+                ["MSN", 70000, 60000, 65000, 66000, 4000]
+            ]
+        }
+        price_board_json = json.dumps(fallback_data)
+        messages.warning(request, "Không thể tải dữ liệu thị trường thực. Hiển thị dữ liệu mẫu.")
+    
+    # Log data for debugging
+    print(f"Data structure sent to template: {price_board_json[:100]}...")
+    
+    context = {
+        "price_board_json": price_board_json,
+    }
+    return render(request, 'portfolio/market.html', context)
+
+
+@login_required
+def sync_assets(request):
+    """View to synchronize assets from VNStock to the database"""
+    if request.method == 'POST' or request.method == 'GET':  # Allow both GET and POST
+        try:
+            result = sync_vnstock_to_assets()
+            
+            if isinstance(result, dict):
+                messages.success(
+                    request, 
+                    f"Đồng bộ thành công! Đã thêm {result['created']} cổ phiếu mới, cập nhật {result['updated']} cổ phiếu. Bây giờ bạn có thể mua/bán những cổ phiếu này."
+                )
+            else:
+                messages.error(request, "Đồng bộ không thành công, không có cổ phiếu nào được thêm.")
+        except Exception as e:
+            messages.error(request, f"Lỗi khi đồng bộ dữ liệu: {str(e)}")
+    
+    # Check if the request came from the market page
+    referer = request.META.get('HTTP_REFERER', '')
+    if 'market' in referer:
+        return redirect('market')
+    else:
+        return redirect('debug_assets')

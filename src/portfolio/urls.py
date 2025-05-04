@@ -42,4 +42,6 @@ urlpatterns = [
 
     path('market/', views.market, name='market'),
 
+    path('debug/assets/sync/', views.sync_assets, name='sync_assets'),
+
 ]
