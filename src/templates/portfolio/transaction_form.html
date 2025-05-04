@@ -1,0 +1,558 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if transaction_type == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %} | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none"><i class="fas fa-home me-1"></i>Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Danh mục</a></li>
+                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Danh mục của tôi</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% if transaction_type == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %}</li>
+                </ol>
+            </nav>
+
+            <!-- Card chính -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header p-4 {% if transaction_type == 'buy' %}bg-success-subtle{% else %}bg-danger-subtle{% endif %} border-bottom-0">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle p-3 me-3 {% if transaction_type == 'buy' %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+                            <i class="fas fa-{% if transaction_type == 'buy' %}cart-plus{% else %}cart-arrow-down{% endif %} fa-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="card-title mb-0 {% if transaction_type == 'buy' %}text-success{% else %}text-danger{% endif %}">
+                                {% if transaction_type == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %}
+                            </h4>
+                            <p class="text-muted mb-0">Danh mục của tôi</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post" id="transactionForm" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Hidden fields -->
+                        <input type="hidden" name="transaction_type" value="{{ transaction_type }}">
+                        <input type="hidden" name="portfolio" value="1">
+                        <input type="hidden" id="id_total_amount" name="total_amount">
+                        <input type="hidden" id="id_transaction_date" name="transaction_date" value="{{ transaction_date|default:'' }}">
+                        
+                        <!-- Mã cổ phiếu -->
+                        <div class="mb-4">
+                            <label for="id_symbol" class="form-label fw-medium">Mã cổ phiếu <span class="text-danger">*</span></label>
+                            
+                            {% if transaction_type == 'buy' %}
+                            <!-- Input tìm kiếm khi MUA cổ phiếu -->
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-search text-primary"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control border-start-0 shadow-none" 
+                                       id="id_symbol" 
+                                       name="symbol" 
+                                       placeholder="Nhập mã cổ phiếu (VD: FPT, VNM, HPG)"
+                                       required
+                                       autocomplete="off">
+                            </div>
+                            <div id="stockInfo" class="mt-2 d-none">
+                                <div class="d-flex align-items-center mb-1 stock-info-box">
+                                    <span class="stock-symbol me-2"></span>
+                                    <span class="stock-name small text-muted flex-grow-1"></span>
+                                    <div class="stock-price-box px-2 py-1 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1 text-primary"></i>
+                                Nhập mã cổ phiếu để tìm kiếm thông tin
+                            </div>
+                            {% else %}
+                            <!-- Select dropdown khi BÁN cổ phiếu -->
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-tags text-danger"></i>
+                                </span>
+                                <select class="form-select border-start-0 shadow-none" id="id_symbol" name="symbol" required>
+                                    <option value="">Chọn cổ phiếu để bán</option>
+                                    <option value="FPT" data-quantity="1000" data-average-price="75000" data-current-price="85000">FPT (1000 CP)</option>
+                                    <option value="VNM" data-quantity="500" data-average-price="65000" data-current-price="70000">VNM (500 CP)</option>
+                                    <option value="HPG" data-quantity="800" data-average-price="25000" data-current-price="30000">HPG (800 CP)</option>
+                                    <option value="VIC" data-quantity="200" data-average-price="80000" data-current-price="75000">VIC (200 CP)</option>
+                                </select>
+                            </div>
+                            <div id="stockInfo" class="mt-2 d-none">
+                                <div class="d-flex align-items-center mb-1 stock-info-box">
+                                    <span class="stock-symbol me-2"></span>
+                                    <span class="stock-name small text-muted flex-grow-1"></span>
+                                    <div class="stock-price-box px-2 py-1 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1 text-primary"></i>
+                                Chọn mã cổ phiếu đang sở hữu trong danh mục
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Số lượng -->
+                            <div class="col-md-6">
+                                <div class="mb-md-0 mb-4">
+                                    <label for="id_quantity" class="form-label fw-medium">Số lượng <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <button type="button" class="btn btn-outline-secondary quantity-btn" data-action="decrease">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" 
+                                               class="form-control text-center shadow-none" 
+                                               id="id_quantity" 
+                                               name="quantity" 
+                                               min="1" 
+                                               max="1000000"
+                                               value="100"
+                                               required>
+                                        <button type="button" class="btn btn-outline-secondary quantity-btn" data-action="increase">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1 text-primary"></i>
+                                        Số lượng cổ phiếu tối đa: 1,000,000 CP
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Giá -->
+                            <div class="col-md-6">
+                                <div>
+                                    <label for="id_price" class="form-label fw-medium">Giá (VNĐ) <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" 
+                                               class="form-control shadow-none" 
+                                               id="id_price" 
+                                               name="price" 
+                                               min="0" 
+                                               step="100"
+                                               value="0"
+                                               required>
+                                        <span class="input-group-text bg-light">VNĐ</span>
+                                    </div>
+                                    <div class="form-text">
+                                        <i class="fas fa-sync-alt me-1 text-primary cursor-pointer" id="refreshPrice"></i>
+                                        Giá thị trường sẽ tự động cập nhật
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ghi chú -->
+                        <div class="mt-4">
+                            <label for="id_notes" class="form-label fw-medium">Ghi chú (không bắt buộc)</label>
+                            <textarea class="form-control shadow-none" id="id_notes" name="notes" rows="2" placeholder="Thêm ghi chú về giao dịch này"></textarea>
+                        </div>
+
+                        <!-- Tổng tiền -->
+                        <div class="mt-4 p-3 rounded-3 {% if transaction_type == 'buy' %}bg-success-subtle{% else %}bg-danger-subtle{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Tổng tiền {% if transaction_type == 'buy' %}mua{% else %}bán{% endif %}</h6>
+                                    <small class="text-muted">Số lượng × Giá</small>
+                                </div>
+                                <div class="text-end">
+                                    <h4 class="mb-0 {% if transaction_type == 'buy' %}text-success{% else %}text-danger{% endif %}" id="totalAmountDisplay">0 VNĐ</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if transaction_type == 'sell' %}
+                        <!-- Thông tin lợi nhuận dự kiến khi bán -->
+                        <div class="mt-3 p-3 rounded-3 bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h6 class="mb-0">Giá mua trung bình</h6>
+                                </div>
+                                <div class="text-end">
+                                    <span id="averagePriceDisplay">0 VNĐ</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h6 class="mb-0">Tổng vốn đầu tư</h6>
+                                </div>
+                                <div class="text-end">
+                                    <span id="totalInvestedDisplay">0 VNĐ</span>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Lợi nhuận dự kiến</h6>
+                                </div>
+                                <div class="text-end">
+                                    <h5 class="mb-0" id="profitDisplay">0 VNĐ</h5>
+                                    <small class="text-muted" id="profitPercentDisplay">0%</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="#" class="btn btn-outline-secondary px-4">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-{% if transaction_type == 'buy' %}success{% else %}danger{% endif %} px-4">
+                                <i class="fas fa-{% if transaction_type == 'buy' %}cart-plus{% else %}cart-arrow-down{% endif %} me-2"></i>
+                                {% if transaction_type == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Phần thông tin bổ sung -->
+            <div class="card border-0 shadow-sm rounded-3 mt-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>
+                        Lưu ý về giao dịch
+                    </h5>
+                    <div class="small">
+                        <p class="mb-2">
+                            <i class="fas fa-circle me-2 text-{% if transaction_type == 'buy' %}success{% else %}danger{% endif %} small"></i>
+                            {% if transaction_type == 'buy' %}
+                            Khi mua cổ phiếu, số tiền sẽ được trừ vào giá trị danh mục của bạn.
+                            {% else %}
+                            Khi bán cổ phiếu, số tiền sẽ được cộng vào giá trị danh mục của bạn.
+                            {% endif %}
+                        </p>
+                        <p class="mb-2">
+                            <i class="fas fa-circle me-2 text-{% if transaction_type == 'buy' %}success{% else %}danger{% endif %} small"></i>
+                            Giá cổ phiếu sẽ được tự động cập nhật theo giá thị trường.
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-circle me-2 text-{% if transaction_type == 'buy' %}success{% else %}danger{% endif %} small"></i>
+                            Các giao dịch sẽ được ghi nhận ngay lập tức vào danh mục của bạn.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script>
+$(document).ready(function() {
+    // Styling cho stock-info
+    $("<style>")
+        .prop("type", "text/css")
+        .html(`
+            .stock-info-box {
+                background-color: #f8f9fa;
+                border-radius: 0.5rem;
+                padding: 0.75rem;
+                border-left: 3px solid #0d6efd;
+            }
+            .stock-symbol {
+                font-weight: bold;
+                color: #0d6efd;
+            }
+            .stock-price-box {
+                background-color: #e9ecef;
+                font-weight: 500;
+            }
+            .cursor-pointer {
+                cursor: pointer;
+            }
+            .ui-autocomplete {
+                max-height: 300px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                border-radius: 0.5rem;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+                border: none;
+                padding: 0.5rem 0;
+                z-index: 9999;
+            }
+            .ui-menu-item {
+                padding: 0 !important;
+            }
+            .ui-menu .ui-menu-item-wrapper {
+                padding: 0.5rem 1rem;
+                border: none !important;
+                border-left: 3px solid transparent !important;
+                transition: all 0.2s;
+            }
+            .ui-menu .ui-menu-item-wrapper.ui-state-active {
+                background-color: #f8f9fa !important;
+                color: #0d6efd !important;
+                border-left: 3px solid #0d6efd !important;
+                margin: 0 !important;
+            }
+        `)
+        .appendTo("head");
+
+    // Mẫu dữ liệu cổ phiếu
+    var stockData = {
+        'FPT': { price: 85000, name: 'Công ty Cổ phần FPT' },
+        'VNM': { price: 70000, name: 'Công ty Cổ phần Sữa Việt Nam' },
+        'HPG': { price: 30000, name: 'Công ty Cổ phần Tập đoàn Hòa Phát' },
+        'VIC': { price: 75000, name: 'Tập đoàn Vingroup' },
+        'MSN': { price: 90000, name: 'Tập đoàn Masan' },
+        'VCB': { price: 95000, name: 'Ngân hàng TMCP Ngoại Thương Việt Nam' },
+        'MWG': { price: 45000, name: 'Công ty Cổ phần Thế Giới Di Động' },
+        'SSI': { price: 28000, name: 'Công ty Cổ phần Chứng khoán SSI' }
+    };
+
+    {% if transaction_type == 'buy' %}
+    // Khởi tạo autocomplete cho trường tìm kiếm mã cổ phiếu khi MUA
+    $("#id_symbol").autocomplete({
+        source: function(request, response) {
+            var results = [];
+            var term = request.term.toUpperCase();
+            
+            if (term) {
+                for (var symbol in stockData) {
+                    if (symbol.indexOf(term) !== -1) {
+                        results.push({
+                            value: symbol,
+                            label: symbol + " - " + stockData[symbol].name
+                        });
+                    }
+                }
+            }
+            
+            response(results);
+        },
+        minLength: 1,
+        select: function(event, ui) {
+            // Lấy mã cổ phiếu từ đối tượng ui.item
+            var symbol = ui.item.value;
+            $("#id_symbol").val(symbol);
+            
+            // Hiển thị thông tin cổ phiếu
+            $(".stock-symbol").text(symbol);
+            $(".stock-name").text(stockData[symbol].name);
+            $("#stockInfo").removeClass("d-none").addClass("animate__animated animate__fadeIn");
+            
+            // Lấy giá hiện tại của cổ phiếu
+            getStockPrice(symbol);
+            
+            return false;
+        },
+        focus: function(event, ui) {
+            // Highlight khi focus
+            return false;
+        }
+    }).autocomplete("instance")._renderItem = function(ul, item) {
+        // Hiển thị mã cổ phiếu trong dropdown
+        return $("<li>")
+            .append("<div><span class='fw-medium'>" + item.value + "</span> - " + stockData[item.value].name + "</div>")
+            .appendTo(ul);
+    };
+    {% else %}
+    // Xử lý khi thay đổi cổ phiếu trong select dropdown khi BÁN
+    $("#id_symbol").on("change", function() {
+        var selectedOption = $(this).find("option:selected");
+        var symbol = $(this).val();
+        
+        if (symbol) {
+            // Lấy thông tin từ data attributes
+            var quantity = selectedOption.data("quantity");
+            var averagePrice = selectedOption.data("averagePrice");
+            
+            // Hiển thị thông tin cổ phiếu
+            $(".stock-symbol").text(symbol);
+            $(".stock-name").html(`<span class="badge bg-primary">Đang sở hữu: ${quantity} CP</span>`);
+            $("#stockInfo").removeClass("d-none").addClass("animate__animated animate__fadeIn");
+            
+            // Lấy giá hiện tại từ dữ liệu mẫu
+            getStockPrice(symbol);
+            
+            // Cập nhật số lượng tối đa
+            $("#id_quantity").attr("max", quantity);
+            
+            if (quantity < parseInt($("#id_quantity").val())) {
+                $("#id_quantity").val(quantity);
+            }
+            
+            // Tính tổng tiền
+            calculateTotal();
+        } else {
+            // Ẩn thông tin cổ phiếu nếu không chọn gì
+            $("#stockInfo").addClass("d-none");
+        }
+    });
+    {% endif %}
+    
+    // Hàm lấy giá cổ phiếu (sử dụng dữ liệu mẫu)
+    function getStockPrice(symbol) {
+        // Show loading indicator
+        $(".stock-price-box").html('<i class="fas fa-spinner fa-spin me-1"></i> Đang tải...');
+
+        // Mô phỏng API call bằng setTimeout
+        setTimeout(function() {
+            if (stockData[symbol]) {
+                var price = stockData[symbol].price;
+                
+                // Update the price field in the form
+                $("#id_price").val(price);
+
+                // Display the price
+                $(".stock-price-box").html(
+                    '<i class="fas fa-tag me-1"></i> ' + 
+                    new Intl.NumberFormat('vi-VN').format(price) + ' VNĐ'
+                );
+
+                // Calculate the total amount
+                calculateTotal();
+            } else {
+                $(".stock-price-box").html('<i class="fas fa-exclamation-circle me-1 text-warning"></i> Không có giá');
+            }
+        }, 500); // Giả lập độ trễ 500ms
+    }
+
+    // Refresh button for fetching the latest price
+    $("#refreshPrice").on("click", function() {
+        var symbol = $("#id_symbol").val();
+        if (symbol) {
+            // Thêm biến động ngẫu nhiên cho giá
+            var randomChange = Math.floor(Math.random() * 1000) - 500; // -500 to 500
+            stockData[symbol].price = Math.max(100, stockData[symbol].price + randomChange);
+            
+            getStockPrice(symbol);
+            $(this).addClass("fa-spin");
+            setTimeout(() => {
+                $(this).removeClass("fa-spin");
+            }, 1000);
+        }
+    });
+    
+    // Tính tổng tiền khi thay đổi số lượng hoặc giá
+    $("#id_quantity, #id_price").on("input", calculateTotal);
+    
+    // Hàm tính tổng tiền
+    function calculateTotal() {
+        var quantity = parseInt($("#id_quantity").val()) || 0;
+        var price = parseFloat($("#id_price").val()) || 0;
+        var total = quantity * price;
+        
+        // Định dạng số với dấu phân cách hàng nghìn
+        var formatted = new Intl.NumberFormat('vi-VN').format(total);
+        $("#totalAmountDisplay").text(formatted + " VNĐ");
+        $("#id_total_amount").val(total);
+        
+        {% if transaction_type == 'sell' %}
+        // Tính lợi nhuận khi bán cổ phiếu
+        var selectedOption = $("#id_symbol").find("option:selected");
+        if (selectedOption.val()) {
+            var averagePrice = selectedOption.data("averagePrice");
+            
+            // Nếu không có averagePrice, thử lấy theo attribute
+            if (averagePrice === undefined) {
+                averagePrice = parseFloat(selectedOption.attr("data-average-price"));
+            }
+            
+            var totalInvested = quantity * averagePrice;
+            var profit = total - totalInvested;
+            var profitPercent = (totalInvested > 0) ? (profit / totalInvested * 100) : 0;
+            
+            // Hiển thị thông tin
+            $("#averagePriceDisplay").text(new Intl.NumberFormat('vi-VN').format(averagePrice) + " VNĐ");
+            $("#totalInvestedDisplay").text(new Intl.NumberFormat('vi-VN').format(totalInvested) + " VNĐ");
+            $("#profitDisplay").text(new Intl.NumberFormat('vi-VN').format(profit) + " VNĐ")
+                .removeClass("text-success text-danger")
+                .addClass(profit >= 0 ? "text-success" : "text-danger");
+            $("#profitPercentDisplay").text((profitPercent >= 0 ? "+" : "") + profitPercent.toFixed(2) + "%")
+                .removeClass("text-success text-danger")
+                .addClass(profitPercent >= 0 ? "text-success" : "text-danger");
+        }
+        {% endif %}
+    }
+    
+    // Nút tăng/giảm số lượng
+    $(".quantity-btn").on("click", function() {
+        var action = $(this).data("action");
+        var input = $("#id_quantity");
+        var currentVal = parseInt(input.val()) || 0;
+        var max = parseInt(input.attr("max")) || 1000000;
+        
+        if (action === "increase") {
+            if (currentVal < max) {
+                input.val(currentVal + 100);
+            }
+        } else {
+            if (currentVal > 100) {
+                input.val(currentVal - 100);
+            } else {
+                input.val(1);
+            }
+        }
+        
+        // Kích hoạt sự kiện input để tính toán lại tổng tiền
+        input.trigger("input");
+    });
+    
+    // Kiểm tra số lượng khi submit form
+    $("#transactionForm").on("submit", function(e) {
+        var quantity = parseInt($("#id_quantity").val());
+        var price = parseFloat($("#id_price").val());
+        var assetId = $("#id_symbol").val();
+        
+        if (!assetId) {
+            e.preventDefault();
+            alert("Vui lòng chọn mã cổ phiếu");
+            $("#id_symbol").focus();
+            return false;
+        }
+        
+        if (!quantity || quantity < 1) {
+            e.preventDefault();
+            alert("Số lượng phải lớn hơn 0");
+            $("#id_quantity").focus();
+            return false;
+        }
+        
+        if (quantity > 1000000) {
+            e.preventDefault();
+            alert("Số lượng cổ phiếu không được vượt quá 1,000,000 CP");
+            $("#id_quantity").focus();
+            return false;
+        }
+        
+        if (!price || price <= 0) {
+            e.preventDefault();
+            alert("Giá phải lớn hơn 0");
+            $("#id_price").focus();
+            return false;
+        }
+
+        // Tính toán tổng tiền
+        var totalAmount = quantity * price;
+        $("#id_total_amount").val(totalAmount);
+        
+        // Đảm bảo ngày giao dịch hợp lệ
+        if (!$("#id_transaction_date").val()) {
+            $("#id_transaction_date").val(new Date().toISOString().split('T')[0]);
+        }
+        
+        // Demo purposes only - prevent actual submission
+        e.preventDefault();
+        alert("Form gửi thành công (chế độ demo).\n\nChi tiết giao dịch:\nMã: " + assetId + "\nSố lượng: " + quantity + "\nGiá: " + price.toLocaleString('vi-VN') + " VNĐ\nThành tiền: " + totalAmount.toLocaleString('vi-VN') + " VNĐ");
+        return false;
+    });
+    
+    // Tính toán ban đầu
+    calculateTotal();
+});
+</script>
+{% endblock %}
