@@ -22,6 +22,9 @@ from vnstock import Vnstock
 import json
 import pandas as pd
 import random
+from django.shortcuts import render
+
+
 
 # Comment out OAuth setup temporarily
 """
@@ -725,22 +728,22 @@ def market(request):
     # Get price board data or use fallback data if there's an error
     try:
         price_board = get_price_board()
-        price_board_json = price_board.to_json(orient='split')
+        if price_board.empty:
+            raise ValueError("Empty price board returned")
+        
+        # Convert to JSON in 'records' orientation for better frontend handling
+        price_board_json = price_board.to_json(orient='records')
         print("Successfully fetched price board data")
     except Exception as e:
         print(f"Error in market view: {str(e)}")
-        # Simple fallback data with explicit index structure
-        fallback_data = {
-            "index": [0, 1, 2, 3, 4],
-            "columns": ["symbol", "ceiling", "floor", "ref_price", "match_price", "match_vol"],
-            "data": [
-                ["AAA", 25000, 20000, 22000, 22500, 10000],
-                ["VNM", 60000, 50000, 55000, 56000, 5000],
-                ["FPT", 90000, 80000, 85000, 86000, 3000],
-                ["VIC", 45000, 35000, 40000, 41000, 2000],
-                ["MSN", 70000, 60000, 65000, 66000, 4000]
-            ]
-        }
+        # Simple fallback data with explicit structure
+        fallback_data = [
+            {"CK": "AAA", "Trần": 25000, "Sàn": 20000, "TC": 22000, "Giá": 22500, "Khối lượng": "10,000"},
+            {"CK": "VNM", "Trần": 60000, "Sàn": 50000, "TC": 55000, "Giá": 56000, "Khối lượng": "5,000"},
+            {"CK": "FPT", "Trần": 90000, "Sàn": 80000, "TC": 85000, "Giá": 86000, "Khối lượng": "3,000"},
+            {"CK": "VIC", "Trần": 45000, "Sàn": 35000, "TC": 40000, "Giá": 41000, "Khối lượng": "2,000"},
+            {"CK": "MSN", "Trần": 70000, "Sàn": 60000, "TC": 65000, "Giá": 66000, "Khối lượng": "4,000"}
+        ]
         price_board_json = json.dumps(fallback_data)
         messages.warning(request, "Không thể tải dữ liệu thị trường thực. Hiển thị dữ liệu mẫu.")
     
@@ -751,6 +754,8 @@ def market(request):
         "price_board_json": price_board_json,
     }
     return render(request, 'portfolio/market.html', context)
+
+
 
 def get_historical_data_api(request, stock_code):
     try:
