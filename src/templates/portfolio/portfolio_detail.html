@@ -26,27 +26,25 @@
                             </div>
                             <h3 class="mb-0">{{ portfolio.name }}</h3>
                         </div>
-                        <div class="dropdown">
-                            <button class="btn btn-light rounded-pill" data-bs-toggle="dropdown">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'portfolio_update' pk=portfolio.pk %}">
-                                        <i class="fas fa-edit me-2 text-warning"></i>Chỉnh sửa
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'buy_stock' portfolio_id=portfolio.pk %}">
-                                        <i class="fas fa-plus me-2 text-success"></i>Mua cổ phiếu
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{% url 'sell_stock' portfolio_id=portfolio.pk %}">
-                                        <i class="fas fa-minus me-2 text-danger"></i>Bán cổ phiếu
-                                    </a>
-                                </li>
-                            </ul>
+                        <div class="d-flex align-items-center">
+                            <a href="{% url 'buy_stock' portfolio_id=portfolio.pk %}" class="btn btn-success rounded-pill me-2">
+                                <i class="fas fa-plus-circle me-1"></i> Mua
+                            </a>
+                            <a href="{% url 'sell_stock' portfolio_id=portfolio.pk %}" class="btn btn-danger rounded-pill me-2">
+                                <i class="fas fa-minus-circle me-1"></i> Bán
+                            </a>
+                            <div class="dropdown">
+                                <button class="btn btn-light rounded-pill" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'portfolio_update' pk=portfolio.pk %}">
+                                            <i class="fas fa-edit me-2 text-warning"></i>Chỉnh sửa
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
@@ -150,9 +148,14 @@
                                 {% if pa.profit_loss > 0 %}+{% endif %}{{ pa.profit_loss|default:"0"|dinh_dang_tien }} VND
                             </td>
                             <td class="text-end pe-4">
-                                <a href="{% url 'sell_stock' portfolio_id=portfolio.pk %}" class="btn btn-sm btn-outline-danger btn-rounded">
-                                    <i class="fas fa-minus"></i>
-                                </a>
+                                <div class="d-flex justify-content-end">
+                                    <a href="{% url 'buy_stock' portfolio_id=portfolio.pk %}" class="btn btn-sm btn-success rounded-circle me-1" title="Mua thêm">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                    <a href="{% url 'sell_stock' portfolio_id=portfolio.pk %}" class="btn btn-sm btn-danger rounded-circle" title="Bán">
+                                        <i class="fas fa-minus"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         {% empty %}

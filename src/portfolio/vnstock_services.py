@@ -205,6 +205,69 @@ def sync_vnstock_to_assets():
         print(f"Error syncing VNStock data: {str(e)}")
         return {'created': 0, 'updated': 0, 'errors': 1, 'total': 0}
 
+def get_current_bid_price(symbol):
+    """Lấy giá mua (bid) hiện tại của một mã cổ phiếu."""
+    try:
+        print(f"DEBUG: Getting price for symbol {symbol}")
+        # Sử dụng Vnstock instance đã có
+        price_board = stock.trading.price_board(symbols_list=[symbol])
+        
+        if isinstance(price_board.columns, pd.MultiIndex):
+            # Nếu đầu ra là MultiIndex columns
+            try:
+                price = price_board[('match', 'match_price')].iloc[0]
+                print(f"DEBUG: Found price with ('match', 'match_price'): {price}")
+                return price
+            except:
+                # Thử các tên cột khác nếu không tìm thấy
+                for col_pair in [('match', 'price'), ('price', 'price'), ('trade', 'price')]:
+                    try:
+                        price = price_board[col_pair].iloc[0]
+                        print(f"DEBUG: Found price with {col_pair}: {price}")
+                        return price
+                    except:
+                        continue
+                # Nếu không tìm được, chuyển đổi columns và thử lại
+                price_board.columns = ['_'.join(map(str, col)).strip() for col in price_board.columns.values]
+                print(f"DEBUG: Converted columns to: {price_board.columns}")
+        
+        # Chọn cột giá phù hợp
+        for col in ['match_match_price', 'match_price', 'price']:
+            if col in price_board.columns:
+                price = price_board[col].iloc[0]
+                print(f"DEBUG: Found price with {col}: {price}")
+                return price
+        
+        # Nếu không tìm thấy cột giá
+        print(f"Warning: Could not find price column for {symbol}. Available columns: {price_board.columns}")
+        return None
+    except Exception as e:
+        print(f"Error in get_current_bid_price for {symbol}: {str(e)}")
+        return None
+
+def get_all_stock_symbols():
+    """Lấy danh sách mã cổ phiếu và tên công ty dựa theo yêu cầu người dùng"""
+    try:
+        print("DEBUG: Getting all stock symbols from VNStock")
+        # Sử dụng code chính xác từ hướng dẫn
+        symbols_data = Vnstock().stock(symbol='VN30', source='VCI').listing.all_symbols().values
+        
+        # Debug the shape of data
+        print(f"DEBUG: Got {len(symbols_data)} symbols, first 3: {symbols_data[:3]}")
+        
+        # Chuyển đổi thành định dạng dễ sử dụng hơn
+        symbols = []
+        for item in symbols_data:
+            symbols.append({
+                'ticker': item[0],
+                'organ_name': item[1]
+            })
+        
+        return symbols
+    except Exception as e:
+        print(f"Error in get_all_stock_symbols: {str(e)}")
+        return []
+
 def fetch_stock_prices_snapshot(output_file=None):
     """Lấy snapshot giá cổ phiếu hiện tại"""
     try:
