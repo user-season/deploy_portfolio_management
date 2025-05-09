@@ -43,6 +43,12 @@
                             </h4>
                             <p class="text-muted mb-0">{{ portfolio.name }}</p>
                         </div>
+                        
+                        <!-- Hiển thị số dư ví -->
+                        <div class="ms-auto text-end">
+                            <p class="mb-0"><i class="fas fa-wallet me-1"></i> Số dư ví:</p>
+                            <h5 class="text-primary mb-0">{{ wallet.balance|floatformat:"0"|default:"0"|stringformat:',d'|safe }} VNĐ</h5>
+                        </div>
                     </div>
                 </div>
 
@@ -61,24 +67,49 @@
                             <label for="id_symbol" class="form-label fw-medium">Mã cổ phiếu <span class="text-danger">*</span></label>
                             
                             {% if form.transaction_type.value == 'buy' %}
-                            <!-- Input tìm kiếm khi MUA cổ phiếu -->
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0">
-                                    <i class="fas fa-search text-primary"></i>
-                                </span>
-                                <input type="text" 
-                                       class="form-control border-start-0 shadow-none" 
-                                       id="id_symbol" 
-                                       name="symbol" 
-                                       placeholder="Nhập mã cổ phiếu (VD: FPT, VNM, HPG)"
-                                       required
-                                       autocomplete="off">
+                            <!-- Input tìm kiếm khi MUA cổ phiếu - Thiết kế dropdown mới -->
+                            <div class="symbol-search-wrapper position-relative">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-search text-primary"></i>
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control border-start-0 shadow-none" 
+                                           id="id_symbol_search" 
+                                           placeholder="Nhập mã cổ phiếu (VD: AAA, FPT, VNM)"
+                                           autocomplete="off">
+                                    <input type="hidden" id="id_symbol" name="symbol" required>
+                                </div>
+                                <!-- Debugging element để xem giá trị symbol đang được set -->
+                                <div id="debug_symbol" class="small text-muted mt-1" style="display:none;">
+                                    Symbol: <span id="debug_symbol_value"></span>
+                                </div>
+                                <div id="symbolDropdown" class="symbol-dropdown shadow rounded-3 d-none">
+                                    <div class="p-2 border-bottom search-header">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Tìm thấy <span id="resultCount">0</span> kết quả</small>
+                                    </div>
+                                    <div class="dropdown-body py-1" id="symbolResults">
+                                        <!-- Kết quả tìm kiếm sẽ được thêm vào đây -->
+                                        <div class="dropdown-item-empty text-center py-3">
+                                            <small class="text-muted">Nhập ít nhất 1 ký tự để tìm kiếm</small>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown-footer p-2 border-top">
+                                        <small class="text-muted"><i class="fas fa-keyboard me-1"></i> Dùng phím ↑↓ để chọn và Enter để xác nhận</small>
+                                    </div>
+                                </div>
                             </div>
                             <div id="stockInfo" class="mt-2 d-none">
-                                <div class="d-flex align-items-center mb-1 stock-info-box">
-                                    <span class="stock-symbol me-2"></span>
-                                    <span class="stock-name small text-muted flex-grow-1"></span>
-                                    <div class="stock-price-box px-2 py-1 rounded"></div>
+                                <div class="d-flex align-items-center p-3 stock-info-box">
+                                    <div class="d-flex flex-column">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="stock-symbol h5 mb-0 me-2"></span>
+                                            <span class="stock-name text-muted"></span>
+                                        </div>
+                                        <div class="d-flex align-items-center mt-1">
+                                            <div class="stock-price-box px-3 py-1 rounded-pill"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="form-text">
@@ -97,6 +128,7 @@
                                     <option value="{{ asset.asset.symbol }}" 
                                             data-quantity="{{ asset.quantity }}" 
                                             data-average-price="{{ asset.average_price }}"
+                                            data-asset-id="{{ asset.asset.id }}"
                                             data-current-price="{{ asset.asset.current_price }}">
                                         {{ asset.asset.symbol }} ({{ asset.quantity }} CP)
                                     </option>
@@ -168,6 +200,26 @@
                             </div>
                         </div>
 
+                        <!-- Ngày giao dịch -->
+                        <div class="mt-4">
+                            <label for="id_transaction_date" class="form-label fw-medium">Ngày giao dịch <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="fas fa-calendar-alt text-primary"></i>
+                                </span>
+                                <input type="date" 
+                                       class="form-control border-start-0 shadow-none" 
+                                       id="id_transaction_date" 
+                                       name="transaction_date" 
+                                       value="{{ form.transaction_date.value|date:'Y-m-d'|default:today_date }}"
+                                       required>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1 text-primary"></i>
+                                Chọn ngày thực hiện giao dịch
+                            </div>
+                        </div>
+
                         <!-- Ghi chú -->
                         <div class="mt-4">
                             <label for="id_notes" class="form-label fw-medium">Ghi chú (không bắt buộc)</label>
@@ -223,7 +275,14 @@
                             <a href="{% url 'portfolio_detail' pk=portfolio.pk %}" class="btn btn-outline-secondary px-4">
                                 <i class="fas fa-arrow-left me-2"></i>Quay lại
                             </a>
-                            <button type="submit" class="btn btn-{% if form.transaction_type.value == 'buy' %}success{% else %}danger{% endif %} px-4">
+                            
+                            <!-- Thêm trường ẩn để lưu giá trị symbol khi submit -->
+                            {% if form.transaction_type.value == 'sell' %}
+                            <input type="hidden" id="selected_symbol" name="selected_symbol" value="">
+                            <input type="hidden" id="selected_asset_id" name="selected_asset_id" value="">
+                            {% endif %}
+                            
+                            <button type="submit" id="submit-btn" class="btn btn-{% if form.transaction_type.value == 'buy' %}success{% else %}danger{% endif %} px-4">
                                 <i class="fas fa-{% if form.transaction_type.value == 'buy' %}cart-plus{% else %}cart-arrow-down{% endif %} me-2"></i>
                                 {% if form.transaction_type.value == 'buy' %}Mua cổ phiếu{% else %}Bán cổ phiếu{% endif %}
                             </button>
@@ -243,9 +302,17 @@
                         <p class="mb-2">
                             <i class="fas fa-circle me-2 text-{% if form.transaction_type.value == 'buy' %}success{% else %}danger{% endif %} small"></i>
                             {% if form.transaction_type.value == 'buy' %}
-                            Khi mua cổ phiếu, số tiền sẽ được trừ vào giá trị danh mục của bạn.
+                            Khi mua cổ phiếu, số tiền sẽ được trừ vào số dư ví điện tử của bạn.
                             {% else %}
-                            Khi bán cổ phiếu, số tiền sẽ được cộng vào giá trị danh mục của bạn.
+                            Khi bán cổ phiếu, số tiền sẽ được cộng vào số dư ví điện tử của bạn.
+                            {% endif %}
+                        </p>
+                        <p class="mb-2">
+                            <i class="fas fa-circle me-2 text-{% if form.transaction_type.value == 'buy' %}success{% else %}danger{% endif %} small"></i>
+                            {% if form.transaction_type.value == 'buy' %}
+                            Đảm bảo ví điện tử của bạn có đủ số dư để thực hiện giao dịch.
+                            {% else %}
+                            Đảm bảo bạn có đủ số lượng cổ phiếu để bán.
                             {% endif %}
                         </p>
                         <p class="mb-2">
@@ -270,15 +337,64 @@
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <script>
 $(document).ready(function() {
-    // Styling cho stock-info
+    // Đặt ngày mặc định nếu không có ngày nào được chọn
+    if (!$("#id_transaction_date").val()) {
+        $("#id_transaction_date").val('{{ today_date }}');
+    }
+    
+    {% if form.transaction_type.value == 'sell' %}
+    // Lưu trữ dữ liệu portfolio asset cho form bán
+    var portfolioAssetData = {{ portfolio_asset_data|safe }};
+    console.log("Portfolio Asset Data:", portfolioAssetData);
+    
+    // Đặt giá trị ban đầu cho selected_symbol từ dropdown nếu có sẵn lựa chọn
+    var initialSymbol = $("#id_symbol").val();
+    if (initialSymbol) {
+        $("#selected_symbol").val(initialSymbol);
+        console.log("Set initial selected_symbol:", initialSymbol);
+        
+        // Lấy asset_id từ option được chọn
+        var selectedOption = $("#id_symbol option:selected");
+        if (selectedOption.length) {
+            var assetId = selectedOption.data("asset-id");
+            if (assetId) {
+                $("#selected_asset_id").val(assetId);
+                console.log("Set initial selected_asset_id:", assetId);
+            }
+        }
+    }
+    
+    // Fix vấn đề với jQuery.data() không tự động chuyển đổi kebab-case sang camelCase
+    // cho các phiên bản jQuery cũ
+    $.fn.getDataAttribute = function(name) {
+        // Thử lấy theo camelCase (jQuery data API)
+        var camelCase = $.camelCase ? $.camelCase(name) : name.replace(/-([a-z])/g, function(g) { return g[1].toUpperCase(); });
+        var value = this.data(camelCase);
+        
+        // Nếu không có, thử lấy theo kebab-case từ attr
+        if (value === undefined) {
+            value = this.attr('data-' + name);
+        }
+        
+        // Nếu là số, convert sang số
+        if (value !== undefined && !isNaN(value)) {
+            value = parseFloat(value);
+        }
+        
+        return value;
+    };
+    {% endif %}
+    
+    // Styling cho stock-info và dropdown tìm kiếm
     $("<style>")
         .prop("type", "text/css")
         .html(`
+            /* Stock info styling */
             .stock-info-box {
                 background-color: #f8f9fa;
-                border-radius: 0.5rem;
-                padding: 0.75rem;
-                border-left: 3px solid #0d6efd;
+                border-radius: 0.75rem;
+                border-left: 4px solid #0d6efd;
+                transition: all 0.3s ease;
             }
             .stock-symbol {
                 font-weight: bold;
@@ -287,89 +403,397 @@ $(document).ready(function() {
             .stock-price-box {
                 background-color: #e9ecef;
                 font-weight: 500;
+                font-size: 0.9rem;
             }
             .cursor-pointer {
                 cursor: pointer;
             }
-            .ui-autocomplete {
-                max-height: 300px;
-                overflow-y: auto;
-                overflow-x: hidden;
+            
+            /* Dropdown search styling */
+            .symbol-search-wrapper {
+                position: relative;
+            }
+            .symbol-dropdown {
+                position: absolute;
+                top: calc(100% + 5px);
+                left: 0;
+                right: 0;
+                z-index: 1000;
+                background: white;
                 border-radius: 0.5rem;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-                border: none;
-                padding: 0.5rem 0;
-                z-index: 9999;
+                max-height: 300px;
+                overflow: hidden;
+                border: 1px solid rgba(0,0,0,0.1);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
             }
-            .ui-menu-item {
-                padding: 0 !important;
+            .dropdown-body {
+                max-height: 250px;
+                overflow-y: auto;
             }
-            .ui-menu .ui-menu-item-wrapper {
-                padding: 0.5rem 1rem;
-                border: none !important;
-                border-left: 3px solid transparent !important;
+            .search-header, .dropdown-footer {
+                background-color: #f8f9fa;
+            }
+            .dropdown-item {
+                padding: 0.75rem 1rem;
+                cursor: pointer;
+                border-left: 3px solid transparent;
                 transition: all 0.2s;
+                display: flex;
+                align-items: center;
             }
-            .ui-menu .ui-menu-item-wrapper.ui-state-active {
-                background-color: #f8f9fa !important;
-                color: #0d6efd !important;
-                border-left: 3px solid #0d6efd !important;
-                margin: 0 !important;
+            .dropdown-item:hover, .dropdown-item.active {
+                background-color: #f1f8ff;
+                border-left: 3px solid #0d6efd;
+            }
+            .dropdown-item .ticker {
+                font-weight: bold;
+                color: #0d6efd;
+                margin-right: 0.5rem;
+                min-width: 60px;
+            }
+            .dropdown-item .company-name {
+                font-size: 0.9rem;
+                color: #6c757d;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 300px;
+            }
+            .dropdown-item-empty {
+                padding: 1.5rem;
+                text-align: center;
+                color: #6c757d;
+            }
+            
+            /* Thêm style cho trường tìm kiếm */
+            #id_symbol_search {
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                font-size: 1rem;
+                padding-left: 1rem;
+                height: 45px;
+            }
+            #id_symbol_search:focus {
+                box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+                border-color: #86b7fe;
+            }
+            .input-group-text {
+                background-color: white;
+                border-right: none;
+            }
+            
+            /* Animate stock info */
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease forwards;
             }
         `)
         .appendTo("head");
 
     {% if form.transaction_type.value == 'buy' %}
-    // Khởi tạo autocomplete cho trường tìm kiếm mã cổ phiếu khi MUA
-    $("#id_symbol").autocomplete({
-        source: function(request, response) {
+    // Xử lý tìm kiếm cổ phiếu khi MUA - Dropdown mới
+    let activeIndex = -1;
+    let totalResults = 0;
+    
+    // Tìm kiếm cổ phiếu khi người dùng nhập
+    $("#id_symbol_search").on("input focus", function() {
+        const searchTerm = $(this).val().trim();
+        
+        if(searchTerm.length > 0) {
+            // Hiển thị dropdown và gọi API
+            fetchStockSymbols(searchTerm);
+        } else {
+            // Đặt lại dropdown khi không có kí tự
+            $("#symbolResults").html(`
+                <div class="dropdown-item-empty text-center py-3">
+                    <small class="text-muted">Nhập ít nhất 1 ký tự để tìm kiếm</small>
+                </div>
+            `);
+            $("#resultCount").text("0");
+            $("#symbolDropdown").removeClass("d-none");
+            
+            // Reset lựa chọn
+            activeIndex = -1;
+            totalResults = 0;
+        }
+    });
+    
+    // Hiển thị dropdown khi focus vào input và clear value
+    $("#id_symbol_search").on("focus", function() {
+        if (!$(this).data("had-focus")) {
+            $(this).data("had-focus", true);
+            $(this).val("");
+            $("#symbolDropdown").removeClass("d-none");
+        }
+    });
+    
+    // Hàm gọi API để lấy danh sách cổ phiếu
+    function fetchStockSymbols(searchTerm) {
+        $.ajax({
+            url: "{% url 'get_stock_symbols' %}",
+            dataType: "json",
+            data: {
+                term: searchTerm
+            },
+            success: function(data) {
+                renderSymbolResults(data, searchTerm);
+            },
+            error: function(xhr, status, error) {
+                console.error('Lỗi khi tìm kiếm mã cổ phiếu:', error);
+                $("#symbolResults").html(`
+                    <div class="dropdown-item-empty text-center py-3">
+                        <small class="text-muted"><i class="fas fa-exclamation-circle text-danger"></i> Có lỗi xảy ra, vui lòng thử lại</small>
+                    </div>
+                `);
+                $("#symbolDropdown").removeClass("d-none");
+            }
+        });
+    }
+    
+    // Hàm render kết quả tìm kiếm
+    function renderSymbolResults(symbols, searchTerm) {
+        if(symbols && symbols.length > 0) {
+            let html = '';
+            
+            // Lấy thông tin cổ phiếu và công ty
             $.ajax({
-                url: "{% url 'get_stock_symbols' %}",
+                url: "/api/stock-symbols-info/",
                 dataType: "json",
+                method: "POST",
                 data: {
-                    term: request.term
+                    symbols: JSON.stringify(symbols),
+                    csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
                 },
-                success: function(data) {
-                    // Chuyển đổi dữ liệu thành mảng các object có value và label
-                    var results = $.map(data, function(item) {
-                        return {
-                            value: item,
-                            label: item
-                        };
+                success: function(stockInfo) {
+                    symbols.forEach(symbol => {
+                        const company = stockInfo[symbol] || "Không có thông tin";
+                        html += `
+                            <div class="dropdown-item" data-symbol="${symbol}" data-company="${company}">
+                                <div class="d-flex align-items-center w-100">
+                                    <span class="ticker">${symbol}</span>
+                                    <span class="company-name">${company}</span>
+                                </div>
+                            </div>
+                        `;
                     });
-                    response(results);
+                    
+                    $("#symbolResults").html(html);
+                    $("#resultCount").text(symbols.length);
+                    $("#symbolDropdown").removeClass("d-none");
+                    
+                    // Cập nhật biến tracking
+                    activeIndex = -1;
+                    totalResults = symbols.length;
+                    
+                    // Bind sự kiện click cho các item
+                    $(".dropdown-item").on("click", function() {
+                        selectSymbol($(this).data("symbol"), $(this).data("company"));
+                    });
                 },
                 error: function(xhr, status, error) {
-                    console.error('Lỗi khi tìm kiếm mã cổ phiếu:', error);
-                    response([]);
+                    console.error('Error fetching company names:', error);
+                    // Fallback: render without company names
+                    symbols.forEach(symbol => {
+                        html += `
+                            <div class="dropdown-item" data-symbol="${symbol}">
+                                <div class="d-flex align-items-center w-100">
+                                    <span class="ticker">${symbol}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    $("#symbolResults").html(html);
+                    $("#resultCount").text(symbols.length);
+                    $("#symbolDropdown").removeClass("d-none");
+                    
+                    // Cập nhật biến tracking
+                    activeIndex = -1;
+                    totalResults = symbols.length;
+                    
+                    // Bind sự kiện click cho các item
+                    $(".dropdown-item").on("click", function() {
+                        selectSymbol($(this).data("symbol"), "");
+                    });
                 }
             });
-        },
-        minLength: 1,
-        select: function(event, ui) {
-            // Lấy mã cổ phiếu từ đối tượng ui.item
-            var symbol = ui.item.value;
-            $("#id_symbol").val(symbol);
-            
-            // Hiển thị thông tin cổ phiếu
-            $(".stock-symbol").text(symbol);
-            $("#stockInfo").removeClass("d-none").addClass("animate__animated animate__fadeIn");
-            
-            // Lấy giá hiện tại của cổ phiếu
-            getStockPrice(symbol);
-            
-            return false;
-        },
-        focus: function(event, ui) {
-            // Highlight khi focus
-            return false;
+        } else {
+            $("#symbolResults").html(`
+                <div class="dropdown-item-empty text-center py-3">
+                    <small class="text-muted">Không tìm thấy mã cổ phiếu phù hợp</small>
+                </div>
+            `);
+            $("#resultCount").text("0");
+            $("#symbolDropdown").removeClass("d-none");
         }
-    }).autocomplete("instance")._renderItem = function(ul, item) {
-        // Hiển thị mã cổ phiếu trong dropdown
-        return $("<li>")
-            .append("<div><span class='fw-medium'>" + item.label + "</span></div>")
-            .appendTo(ul);
-    };
+    }
+    
+    // Hàm chọn mã cổ phiếu
+    function selectSymbol(symbol, company) {
+        // Cập nhật giá trị input ẩn và hiển thị
+        $("#id_symbol").val(symbol);
+        $("#id_symbol_search").val(symbol);
+        
+        console.log("Selected symbol:", symbol, "Set to input:", $("#id_symbol").val());
+        
+        // Đảm bảo giá trị symbol đã được set đúng
+        setTimeout(function() {
+            console.log("After timeout check - symbol value:", $("#id_symbol").val());
+            // Kiểm tra nếu giá trị không được set đúng, thử lại
+            if ($("#id_symbol").val() !== symbol) {
+                console.log("Symbol value not set correctly, trying again");
+                $("#id_symbol").val(symbol);
+            }
+        }, 100);
+        
+        // Debug display
+        $("#debug_symbol").show();
+        $("#debug_symbol_value").text(symbol);
+        
+        // Đóng dropdown
+        $("#symbolDropdown").addClass("d-none");
+        
+        // Hiển thị thông tin cổ phiếu
+        $(".stock-symbol").text(symbol);
+        $(".stock-name").text(company || "");
+        $("#stockInfo").removeClass("d-none").addClass("fade-in");
+        
+        // Hiển thị thông tin debug
+        if (!$("#debug_symbol_info").length) {
+            $("<div id='debug_symbol_info' class='small text-muted mt-2'></div>").insertAfter($("#stockInfo"));
+        }
+        $("#debug_symbol_info").html(`
+            <small>
+            <i class="fas fa-info-circle me-1"></i>
+            Mã CP: <strong>${symbol}</strong>
+            ${company ? '| Công ty: ' + company : ''}
+            </small>
+        `);
+        
+        // Lấy giá hiện tại của cổ phiếu
+        getStockPrice(symbol);
+        
+        // Tự động tạo asset mới nếu cần thiết
+        ensureAssetExists(symbol, company);
+    }
+    
+    function ensureAssetExists(symbol, company) {
+        // Gọi API để đảm bảo asset tồn tại trong hệ thống
+        $.ajax({
+            url: "/api/create-asset/",
+            method: "POST",
+            dataType: "json",
+            data: {
+                symbol: symbol,
+                csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+            },
+            success: function(data) {
+                if (data.success) {
+                    // Cập nhật thông tin debug
+                    if ($("#debug_symbol_info").length) {
+                        let statusMsg = "";
+                        if (data.created) {
+                            statusMsg = `<br><small><i class="fas fa-plus-circle text-success me-1"></i> Đã tạo mới cổ phiếu trong database</small>`;
+                        } else if (data.updated) {
+                            statusMsg = `<br><small><i class="fas fa-sync text-info me-1"></i> Đã cập nhật giá</small>`;
+                        } else {
+                            statusMsg = `<br><small><i class="fas fa-check-circle text-success me-1"></i> Cổ phiếu đã tồn tại</small>`;
+                        }
+                        $("#debug_symbol_info").append(statusMsg);
+                        
+                        // Cập nhật tên công ty nếu cần
+                        if (data.asset_name && $(".stock-name").text().trim() === "") {
+                            $(".stock-name").text(data.asset_name);
+                        }
+                    }
+                } else {
+                    // Hiển thị thông báo lỗi
+                    if ($("#debug_symbol_info").length) {
+                        $("#debug_symbol_info").append(`
+                            <br><small><i class="fas fa-exclamation-circle text-warning me-1"></i> 
+                            Không thể tạo/cập nhật cổ phiếu: ${data.error || 'Lỗi không xác định'}</small>
+                        `);
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                // Hiển thị thông báo lỗi
+                if ($("#debug_symbol_info").length) {
+                    $("#debug_symbol_info").append(`
+                        <br><small><i class="fas fa-exclamation-circle text-danger me-1"></i> 
+                        Lỗi kết nối: ${error || 'Không kết nối được với server'}</small>
+                    `);
+                }
+            }
+        });
+    }
+    
+    // Xử lý phím di chuyển trong dropdown
+    $("#id_symbol_search").on("keydown", function(e) {
+        const dropdown = $("#symbolDropdown");
+        const items = $(".dropdown-item");
+        
+        // Chỉ xử lý khi dropdown đang hiển thị và có kết quả
+        if (!dropdown.hasClass("d-none") && totalResults > 0) {
+            switch (e.key) {
+                case "ArrowDown":
+                    e.preventDefault();
+                    // Di chuyển xuống item tiếp theo
+                    activeIndex = (activeIndex + 1) % totalResults;
+                    items.removeClass("active");
+                    items.eq(activeIndex).addClass("active");
+                    
+                    // Đảm bảo item đang active luôn hiển thị trong vùng scroll
+                    const activeItem = items.eq(activeIndex);
+                    const dropdownBody = $(".dropdown-body");
+                    
+                    if (activeItem.position().top + activeItem.outerHeight() > dropdownBody.height()) {
+                        dropdownBody.scrollTop(dropdownBody.scrollTop() + activeItem.outerHeight());
+                    }
+                    break;
+                    
+                case "ArrowUp":
+                    e.preventDefault();
+                    // Di chuyển lên item trước đó
+                    activeIndex = (activeIndex - 1 + totalResults) % totalResults;
+                    items.removeClass("active");
+                    items.eq(activeIndex).addClass("active");
+                    
+                    // Đảm bảo item đang active luôn hiển thị trong vùng scroll
+                    const activeItemUp = items.eq(activeIndex);
+                    const dropdownBodyUp = $(".dropdown-body");
+                    
+                    if (activeItemUp.position().top < 0) {
+                        dropdownBodyUp.scrollTop(dropdownBodyUp.scrollTop() - activeItemUp.outerHeight());
+                    }
+                    break;
+                    
+                case "Enter":
+                    e.preventDefault();
+                    // Chọn item đang active
+                    if (activeIndex >= 0) {
+                        const selectedItem = items.eq(activeIndex);
+                        selectSymbol(selectedItem.data("symbol"), selectedItem.data("company"));
+                    }
+                    break;
+                    
+                case "Escape":
+                    e.preventDefault();
+                    // Đóng dropdown
+                    dropdown.addClass("d-none");
+                    break;
+            }
+        }
+    });
+    
+    // Đóng dropdown khi click ra ngoài
+    $(document).on("click", function(e) {
+        if (!$(e.target).closest(".symbol-search-wrapper").length) {
+            $("#symbolDropdown").addClass("d-none");
+        }
+    });
     {% else %}
     // Xử lý khi thay đổi cổ phiếu trong select dropdown khi BÁN
     $("#id_symbol").on("change", function() {
@@ -377,9 +801,32 @@ $(document).ready(function() {
         var symbol = $(this).val();
         
         if (symbol) {
-            // Lấy thông tin từ data attributes
-            var quantity = selectedOption.data("quantity");
-            var averagePrice = selectedOption.data("averagePrice");
+            // Lấy thông tin từ data attributes sử dụng hàm mới
+            var quantity = selectedOption.getDataAttribute("quantity");
+            var assetId = selectedOption.getDataAttribute("asset-id");
+            
+            // Cập nhật giá trị hidden inputs để giữ lại khi submit form
+            $("#selected_symbol").val(symbol);
+            $("#selected_asset_id").val(assetId);
+            
+            // Lấy giá trung bình từ dữ liệu JSON
+            var averagePrice = null;
+            
+            // Thử lấy từ portfolioAssetData nếu có
+            if (portfolioAssetData && assetId && portfolioAssetData[assetId]) {
+                averagePrice = portfolioAssetData[assetId].average_price;
+                console.log("Got average price from JSON data:", averagePrice);
+            }
+            
+            // Fallback nếu không lấy được từ JSON
+            if (averagePrice === null || isNaN(averagePrice)) {
+                // Lấy từ data attribute
+                averagePrice = selectedOption.getDataAttribute("average-price");
+                console.log("Got average price from data attribute:", averagePrice);
+            }
+            
+            // Ghi log để debug
+            console.log("Selected asset:", symbol, "Asset ID:", assetId, "Quantity:", quantity, "Average Price:", averagePrice);
             
             // Hiển thị thông tin cổ phiếu
             $(".stock-symbol").text(symbol);
@@ -408,31 +855,78 @@ $(document).ready(function() {
     // Hàm lấy giá cổ phiếu
     function getStockPrice(symbol) {
         // Show loading indicator
-        $(".stock-price-box").html('<i class="fas fa-spinner fa-spin me-1"></i> Đang tải...');
+        $(".stock-price-box").html('<i class="fas fa-spinner fa-spin me-1"></i> Đang tải giá...');
 
         // Call the API to fetch stock price
         $.ajax({
             url: "/api/stock-price/" + symbol + "/",
             dataType: "json",
             success: function(data) {
-                if (data && data.price) {
+                if (data && data.success) {
+                    // Cập nhật thông tin tên công ty nếu có
+                    if (data.asset_name && $(".stock-name").text().trim() === "") {
+                        $(".stock-name").text(data.asset_name);
+                    }
+                    
                     // Update the price field in the form
                     $("#id_price").val(data.price);
+                    
+                    // Display the price with change info if available
+                    let priceHtml = '<i class="fas fa-tag me-1"></i> ' + 
+                                    new Intl.NumberFormat('vi-VN').format(data.price) + ' VNĐ';
+                    
+                    // Add change percentage if available
+                    if (data.change_percent !== undefined) {
+                        const changeClass = data.change_percent >= 0 ? 'text-success' : 'text-danger';
+                        const changeIcon = data.change_percent >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                        const changePrefix = data.change_percent >= 0 ? '+' : '';
+                        
+                        priceHtml += ` <span class="${changeClass}"><i class="fas ${changeIcon} me-1"></i>${changePrefix}${data.change_percent.toFixed(2)}%</span>`;
+                    }
+                    
+                    // Add source label if available
+                    if (data.source) {
+                        let sourceLabel = '<span class="ms-2 badge bg-secondary">Database</span>';
+                        if (data.source === 'vnstock') {
+                            sourceLabel = '<span class="ms-2 badge bg-primary">VNStock API</span>';
+                        } else if (data.source === 'default') {
+                            sourceLabel = '<span class="ms-2 badge bg-warning text-dark">Giá mặc định</span>';
+                        }
+                        priceHtml += sourceLabel;
+                    }
+                    
+                    $(".stock-price-box").html(priceHtml);
 
-                    // Display the price
-                    $(".stock-price-box").html(
-                        '<i class="fas fa-tag me-1"></i> ' + 
-                        new Intl.NumberFormat('vi-VN').format(data.price) + ' VNĐ'
-                    );
+                    // Cập nhật thông tin debug
+                    if ($("#debug_symbol_info").length) {
+                        $("#debug_symbol_info").append(`
+                            <br><small><i class="fas fa-check-circle text-success me-1"></i> 
+                            Đã tải giá thành công: ${new Intl.NumberFormat('vi-VN').format(data.price)} VNĐ</small>
+                        `);
+                    }
 
                     // Calculate the total amount
                     calculateTotal();
                 } else {
                     $(".stock-price-box").html('<i class="fas fa-exclamation-circle me-1 text-warning"></i> Không có giá');
+                    // Hiển thị lỗi trong debug info
+                    if ($("#debug_symbol_info").length) {
+                        $("#debug_symbol_info").append(`
+                            <br><small><i class="fas fa-exclamation-circle text-warning me-1"></i> 
+                            Không lấy được giá: ${data.error || 'Lỗi không xác định'}</small>
+                        `);
+                    }
                 }
             },
-            error: function() {
-                $(".stock-price-box").html('<i class="fas fa-exclamation-circle me-1 text-danger"></i> Lỗi');
+            error: function(xhr, status, error) {
+                $(".stock-price-box").html('<i class="fas fa-exclamation-circle me-1 text-danger"></i> Lỗi lấy giá');
+                // Hiển thị lỗi trong debug info
+                if ($("#debug_symbol_info").length) {
+                    $("#debug_symbol_info").append(`
+                        <br><small><i class="fas fa-exclamation-circle text-danger me-1"></i> 
+                        Lỗi khi lấy giá: ${error || 'Không kết nối được với server'}</small>
+                    `);
+                }
             }
         });
     }
@@ -467,13 +961,33 @@ $(document).ready(function() {
         // Tính lợi nhuận khi bán cổ phiếu
         var selectedOption = $("#id_symbol").find("option:selected");
         if (selectedOption.val()) {
-            var averagePrice = selectedOption.data("avgPrice");
+            // Lấy giá mua trung bình từ nhiều nguồn
+            var averagePrice = null;
             
-            // Nếu data-avg-price không hoạt động, thử đúng tên thuộc tính
-            if (!averagePrice) {
-                averagePrice = parseFloat(selectedOption.attr("data-avg-price"));
+            // 1. Thử lấy từ dữ liệu JSON
+            var assetId = selectedOption.getDataAttribute("asset-id");
+            if (portfolioAssetData && assetId && portfolioAssetData[assetId]) {
+                averagePrice = portfolioAssetData[assetId].average_price;
+                console.log("Calculate with average price from JSON:", averagePrice);
+            } 
+            
+            // 2. Thử lấy từ data attribute
+            if (averagePrice === null || isNaN(averagePrice)) {
+                averagePrice = selectedOption.getDataAttribute("average-price");
+                console.log("Calculate with average price from attribute:", averagePrice);
             }
             
+            // 3. Fallback nếu không có giá trị hợp lệ
+            if (averagePrice === null || isNaN(averagePrice) || averagePrice <= 0) {
+                averagePrice = price;
+                console.log("Using current price as fallback for average price:", averagePrice);
+            }
+            
+            // Ghi log thông tin tính toán
+            console.log("Calculate profit - Quantity:", quantity, "Average Price:", averagePrice, 
+                        "Current Price:", price, "Asset ID:", assetId);
+            
+            // Tính toán các giá trị
             var totalInvested = quantity * averagePrice;
             var profit = total - totalInvested;
             var profitPercent = (totalInvested > 0) ? (profit / totalInvested * 100) : 0;
@@ -518,12 +1032,55 @@ $(document).ready(function() {
     $("#transactionForm").on("submit", function(e) {
         var quantity = parseInt($("#id_quantity").val());
         var price = parseFloat($("#id_price").val());
-        var assetId = $("#id_symbol").val();
+        var symbol = $("#id_symbol").val();
         
-        if (!assetId) {
+        // Lấy symbol từ dropdown hoặc từ trường ẩn
+        if (!symbol && $("#selected_symbol").length) {
+            symbol = $("#selected_symbol").val();
+            console.log("Using symbol from hidden field:", symbol);
+            
+            // Set lại giá trị dropdown nếu có thể
+            if (symbol && $("#id_symbol option[value='" + symbol + "']").length) {
+                $("#id_symbol").val(symbol);
+                console.log("Reset dropdown value to:", symbol);
+            }
+        }
+        
+        // Debug thông tin form trước khi submit
+        console.log("Form submit check: symbol=", symbol, "quantity=", quantity, "price=", price);
+        console.log("Selected symbol from hidden field:", $("#selected_symbol").val());
+        console.log("Selected asset ID from hidden field:", $("#selected_asset_id").val());
+        
+        // Kiểm tra tất cả các trường ẩn
+        console.log("Hidden fields:");
+        $("input[type=hidden]").each(function() {
+            console.log(" - " + $(this).attr('name') + ": " + $(this).val());
+        });
+        
+        // Display debug info on screen
+        if (!$("#debug_form_values").length) {
+            $("<div id='debug_form_values' class='alert alert-info mt-3'></div>").insertAfter($("#transactionForm"));
+        }
+        
+        $("#debug_form_values").html(`
+            <h5>Debug Form Values:</h5>
+            <ul>
+                <li>Symbol: ${symbol}</li>
+                <li>Quantity: ${quantity}</li>
+                <li>Price: ${price}</li>
+                <li>Total: ${quantity * price}</li>
+                <li>Hidden symbol field value: ${$("#id_symbol").val()}</li>
+                <li>Selected symbol field value: ${$("#selected_symbol").val()}</li>
+                <li>Transaction type: ${$("input[name='transaction_type']").val()}</li>
+                <li>Portfolio ID: ${$("input[name='portfolio']").val()}</li>
+                <li>Transaction date: ${$("#id_transaction_date").val()}</li>
+            </ul>
+        `);
+        
+        if (!symbol) {
             e.preventDefault();
             alert("Vui lòng chọn mã cổ phiếu");
-            $("#id_symbol").focus();
+            $("#id_symbol_search").focus();
             return false;
         }
         
@@ -548,6 +1105,17 @@ $(document).ready(function() {
             return false;
         }
 
+        // Đảm bảo giá trị symbol được truyền đúng
+        if($("#id_symbol_search").length) {
+            $("#id_symbol").val($("#id_symbol_search").val());
+        } else if($("#selected_symbol").length && $("#selected_symbol").val()) {
+            // Form bán, đảm bảo giá trị symbol được giữ lại
+            symbol = $("#selected_symbol").val();
+            $("#id_symbol").val(symbol);
+        }
+        
+        console.log("Final symbol value:", $("#id_symbol").val());
+
         // Tính toán tổng tiền
         var totalAmount = quantity * price;
         $("#id_total_amount").val(totalAmount);
@@ -560,6 +1128,181 @@ $(document).ready(function() {
     
     // Tính toán ban đầu
     calculateTotal();
+
+    // Validate the form before submission
+    $("#transactionForm").on('submit', function(e) {
+        {% if form.transaction_type.value == 'buy' %}
+        // Chỉ áp dụng cho form mua cổ phiếu
+        const symbol = $("#id_symbol").val();
+        const price = parseFloat($("#id_price").val());
+        const quantity = parseInt($("#id_quantity").val());
+        const transactionDate = $("#id_transaction_date").val();
+        
+        if (!symbol) {
+            e.preventDefault();
+            // Hiển thị thông báo lỗi
+            showValidationError("Vui lòng chọn mã cổ phiếu cần mua");
+            return false;
+        }
+        
+        if (isNaN(price) || price <= 0) {
+            e.preventDefault();
+            showValidationError("Vui lòng nhập giá hợp lệ (lớn hơn 0)");
+            return false;
+        }
+        
+        if (isNaN(quantity) || quantity <= 0) {
+            e.preventDefault();
+            showValidationError("Vui lòng nhập số lượng hợp lệ (lớn hơn 0)");
+            return false;
+        }
+        
+        if (!transactionDate) {
+            e.preventDefault();
+            showValidationError("Vui lòng chọn ngày giao dịch");
+            return false;
+        }
+        
+        // Hiển thị thông tin tóm tắt giao dịch
+        const totalAmount = price * quantity;
+        const formattedDate = formatDate(transactionDate);
+        
+        if (!confirm(
+            `Xác nhận mua cổ phiếu:\n\n` +
+            `- Mã cổ phiếu: ${symbol}\n` +
+            `- Giá: ${new Intl.NumberFormat('vi-VN').format(price)} VNĐ\n` +
+            `- Số lượng: ${quantity} cổ phiếu\n` +
+            `- Ngày giao dịch: ${formattedDate}\n` +
+            `- Tổng tiền: ${new Intl.NumberFormat('vi-VN').format(totalAmount)} VNĐ\n\n` +
+            `Bạn có chắc chắn muốn thực hiện giao dịch này?`
+        )) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Thêm class loading vào nút submit
+        $("#submit-btn").addClass("disabled").html('<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...');
+        {% endif %}
+        
+        {% if form.transaction_type.value == 'sell' %}
+        // Validate the form before submission
+        $("#transactionForm").on('submit', function(e) {
+            // Xử lý form bán cổ phiếu
+            const selectedSymbol = $("#selected_symbol").val(); // Ưu tiên lấy từ trường ẩn
+            const symbol = $("#id_symbol").val() || selectedSymbol;
+            const price = parseFloat($("#id_price").val());
+            const quantity = parseInt($("#id_quantity").val());
+            const maxQuantity = parseInt($("#id_quantity").attr("max") || 0);
+            const transactionDate = $("#id_transaction_date").val();
+            const assetId = $("#selected_asset_id").val();
+            
+            // Ghi log thông tin form
+            console.log("Submit sell form - Symbol:", symbol);
+            console.log("Submit sell form - Price:", price);
+            console.log("Submit sell form - Quantity:", quantity);
+            console.log("Submit sell form - Date:", transactionDate);
+            console.log("Submit sell form - Asset ID:", assetId);
+            console.log("Submit sell form - Hidden Fields:", {
+                selected_symbol: $("#selected_symbol").val(),
+                selected_asset_id: $("#selected_asset_id").val(),
+                id_symbol: $("#id_symbol").val()
+            });
+            
+            // Kiểm tra điều kiện trước khi submit
+            if (!symbol) {
+                e.preventDefault();
+                showValidationError("Vui lòng chọn mã cổ phiếu để bán");
+                return false;
+            }
+            
+            // Đảm bảo cả id_symbol và selected_symbol đều có giá trị đúng
+            if (selectedSymbol) {
+                $("#id_symbol").val(selectedSymbol);
+            }
+            
+            if (isNaN(price) || price <= 0) {
+                e.preventDefault();
+                showValidationError("Vui lòng nhập giá hợp lệ (lớn hơn 0)");
+                return false;
+            }
+            
+            if (isNaN(quantity) || quantity <= 0) {
+                e.preventDefault();
+                showValidationError("Vui lòng nhập số lượng hợp lệ (lớn hơn 0)");
+                return false;
+            }
+            
+            if (quantity > maxQuantity) {
+                e.preventDefault();
+                showValidationError(`Số lượng bán (${quantity}) không thể lớn hơn số lượng đang sở hữu (${maxQuantity})`);
+                return false;
+            }
+            
+            if (!transactionDate) {
+                e.preventDefault();
+                showValidationError("Vui lòng chọn ngày giao dịch");
+                return false;
+            }
+            
+            // Ghi log thông tin trước khi submit
+            console.log("Final form values - symbol:", $("#id_symbol").val());
+            console.log("Final form values - selected_symbol:", $("#selected_symbol").val());
+            
+            // Hiển thị thông tin tóm tắt giao dịch
+            const totalAmount = price * quantity;
+            const formattedDate = formatDate(transactionDate);
+            
+            if (!confirm(
+                `Xác nhận bán cổ phiếu:\n\n` +
+                `- Mã cổ phiếu: ${symbol}\n` +
+                `- Giá: ${new Intl.NumberFormat('vi-VN').format(price)} VNĐ\n` +
+                `- Số lượng: ${quantity} cổ phiếu\n` +
+                `- Ngày giao dịch: ${formattedDate}\n` +
+                `- Tổng tiền: ${new Intl.NumberFormat('vi-VN').format(totalAmount)} VNĐ\n\n` +
+                `Bạn có chắc chắn muốn thực hiện giao dịch này?`
+            )) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Thêm class loading vào nút submit
+            $("#submit-btn").addClass("disabled").html('<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...');
+        });
+        {% endif %}
+    });
+
+    function showValidationError(message) {
+        // Hiển thị thông báo lỗi
+        const alertHtml = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        
+        // Kiểm tra xem đã có alert nào chưa
+        if ($("#form-alerts").length === 0) {
+            // Tạo container cho alerts
+            $("<div id='form-alerts'></div>").insertBefore("#transactionForm");
+        }
+        
+        // Thêm alert mới
+        $("#form-alerts").html(alertHtml);
+        
+        // Cuộn lên đầu form
+        $('html, body').animate({
+            scrollTop: $("#form-alerts").offset().top - 100
+        }, 200);
+    }
+
+    // Hàm định dạng ngày sang dd/mm/yyyy
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
 });
 </script>
 {% endblock %} 

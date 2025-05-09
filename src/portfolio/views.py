@@ -9,7 +9,7 @@ from .forms import PortfolioForm, AssetForm, TransactionForm, UserRegistrationFo
 from django.contrib.auth import login, logout, authenticate
 from decimal import Decimal
 from django.http import JsonResponse
-from .vnstock_services import get_price_board, get_historical_data, sync_vnstock_to_assets, fetch_stock_prices_snapshot
+from .vnstock_services import get_price_board, get_historical_data, sync_vnstock_to_assets, fetch_stock_prices_snapshot, get_all_stock_symbols, get_current_bid_price
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from .utils import get_ai_response, get_auth0_user_profile
@@ -22,6 +22,10 @@ from vnstock import Vnstock
 import json
 import pandas as pd
 import random
+from django.shortcuts import render
+from datetime import datetime
+
+
 
 # Comment out OAuth setup temporarily
 """
@@ -377,67 +381,170 @@ def transaction_create(request):
 def buy_stock(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, pk=portfolio_id, user=request.user)
     
+    # Lấy thông tin ví điện tử của người dùng
+    wallet, created = Wallet.objects.get_or_create(user=request.user)
+    
     # Get all assets for the autocomplete feature
     all_assets = Asset.objects.all()
+    
+    # Lấy ngày hiện tại cho trường ngày mặc định
+    today_date = timezone.now().strftime('%Y-%m-%d')
     
     if request.method == 'POST':
         # Get symbol and convert to asset
         symbol = request.POST.get('symbol')
         
-        try:
-            # Find asset by symbol
-            asset = Asset.objects.get(symbol=symbol)
-            
-            # Build form data with the asset included
-            form_data = request.POST.copy()
-            form_data['asset'] = asset.id  # Set the asset ID in the form data
-            
-            form = TransactionForm(form_data, initial={'portfolio': portfolio, 'transaction_type': 'buy'})
-            
-            if form.is_valid():
-                transaction = form.save(commit=False)
-                transaction.portfolio = portfolio
-                transaction.transaction_type = 'buy'
-                transaction.transaction_date = timezone.now()
+        # Debugging
+        print(f"DEBUG BUY STOCK: symbol={symbol}, POST data: {request.POST}")
+        
+        # Direct method bypass form validation
+        if symbol:
+            try:
+                # Find asset by symbol or create new if not exists
+                try:
+                    # Tìm kiếm asset
+                    asset = Asset.objects.get(symbol=symbol)
+                    print(f"DEBUG FOUND ASSET: {asset.id} - {asset.symbol} - {asset.name} - current price: {asset.current_price}")
+                except Asset.DoesNotExist:
+                    # Nếu không có, tạo mới asset từ VNStock API
+                    print(f"DEBUG ASSET NOT FOUND: {symbol} - Creating new asset")
+                    from .vnstock_services import get_current_bid_price, get_all_stock_symbols
+                    
+                    # Lấy giá hiện tại
+                    current_price = get_current_bid_price(symbol)
+                    if current_price is None:
+                        current_price = float(request.POST.get('price', 10000))
+                    
+                    # Lấy thông tin công ty
+                    company_name = f"Cổ phiếu {symbol}"
+                    try:
+                        all_symbols = get_all_stock_symbols()
+                        company_info = next((item for item in all_symbols if item['ticker'] == symbol), None)
+                        if company_info:
+                            company_name = company_info.get('organ_name', company_name)
+                    except Exception as e:
+                        print(f"DEBUG ERROR getting company info: {str(e)}")
+                    
+                    # Tạo asset mới
+                    asset = Asset(
+                        symbol=symbol,
+                        name=company_name,
+                        type='stock',
+                        sector='Unknown',
+                        description=f"Auto-created during buy transaction on {datetime.now().strftime('%Y-%m-%d')}",
+                        current_price=current_price
+                    )
+                    asset.save()
+                    print(f"DEBUG CREATED NEW ASSET: {asset.id} - {asset.symbol} - {asset.name} - price: {asset.current_price}")
+                
+                # Get values directly from POST
+                quantity = int(request.POST.get('quantity', 0))
+                price = float(request.POST.get('price', 0))
+                if price == 0 and asset.current_price > 0:
+                    price = float(asset.current_price)
+                    print(f"DEBUG Using asset current price: {price}")
+                
+                # Tính tổng tiền giao dịch
+                total_amount = quantity * price
+                notes = request.POST.get('notes', '')
+                transaction_date_str = request.POST.get('transaction_date')
+                
+                # Xử lý ngày giao dịch, nếu người dùng chọn ngày
+                if transaction_date_str:
+                    try:
+                        transaction_date = datetime.strptime(transaction_date_str, '%Y-%m-%d').date()
+                    except ValueError:
+                        # Nếu có lỗi khi parse ngày, sử dụng ngày hiện tại
+                        transaction_date = timezone.now().date()
+                        messages.warning(request, f"Định dạng ngày không hợp lệ. Đã sử dụng ngày hiện tại.")
+                else:
+                    transaction_date = timezone.now().date()
+                
+                # Validate values
+                if quantity <= 0:
+                    messages.error(request, "Số lượng phải lớn hơn 0")
+                    form = TransactionForm(initial={'portfolio': portfolio, 'transaction_type': 'buy'})
+                    return render(request, 'portfolio/transaction_form.html', {
+                        'form': form, 'title': 'Mua cổ phiếu', 'portfolio': portfolio, 'today_date': today_date,
+                        'wallet': wallet
+                    })
+                    
+                if price <= 0:
+                    messages.error(request, "Giá phải lớn hơn 0")
+                    form = TransactionForm(initial={'portfolio': portfolio, 'transaction_type': 'buy'})
+                    return render(request, 'portfolio/transaction_form.html', {
+                        'form': form, 'title': 'Mua cổ phiếu', 'portfolio': portfolio, 'today_date': today_date,
+                        'wallet': wallet
+                    })
+                
+                # Chuyển đổi tổng tiền thành Decimal để tránh lỗi khi so sánh với wallet.balance
+                from decimal import Decimal
+                total_amount_decimal = Decimal(str(total_amount))
+                
+                # Kiểm tra số dư ví điện tử
+                if wallet.balance < total_amount_decimal:
+                    messages.error(request, f"Số dư ví không đủ. Số dư hiện tại: {wallet.balance:,.0f} VNĐ, cần: {total_amount:,.0f} VNĐ")
+                    form = TransactionForm(initial={'portfolio': portfolio, 'transaction_type': 'buy'})
+                    return render(request, 'portfolio/transaction_form.html', {
+                        'form': form, 'title': 'Mua cổ phiếu', 'portfolio': portfolio, 'today_date': today_date,
+                        'wallet': wallet 
+                    })
+                
+                # Create transaction directly
+                print(f"DEBUG DIRECT CREATE: Creating transaction with: portfolio={portfolio.id}, asset={asset.id}, quantity={quantity}, price={price}, date={transaction_date}")
+                
+                transaction = Transaction(
+                    portfolio=portfolio,
+                    asset=asset,
+                    transaction_type='buy',
+                    quantity=quantity,
+                    price=price,
+                    total_amount=total_amount,
+                    transaction_date=transaction_date,
+                    notes=notes
+                )
+                
+                # Thực hiện giao dịch và cập nhật ví
+                # Trừ tiền từ ví điện tử (sử dụng Decimal để tránh lỗi kiểu dữ liệu)
+                wallet.balance = wallet.balance - total_amount_decimal
+                wallet.save()
+                
+                # Lưu giao dịch
                 transaction.save()
                 
-                messages.success(request, 'Giao dịch mua đã được thực hiện thành công!')
+                print(f"DEBUG TRANSACTION SAVED: {transaction.id} - {transaction.asset.symbol} - {transaction.quantity} units at {transaction.price} on {transaction.transaction_date}")
+                messages.success(request, f'Giao dịch mua {quantity} cổ phiếu {symbol} với giá {price:,.0f} VNĐ vào ngày {transaction_date.strftime("%d/%m/%Y")} đã được thực hiện thành công! Số dư ví còn: {wallet.balance:,.0f} VNĐ')
                 return redirect('portfolio_detail', pk=portfolio_id)
-            else:
-                messages.error(request, f"Lỗi khi xử lý giao dịch: {form.errors}")
-        except Asset.DoesNotExist:
-            messages.error(request, f"Không tìm thấy cổ phiếu với mã {symbol}")
-            form = TransactionForm(initial={
-                'portfolio': portfolio,
-                'transaction_type': 'buy',
-                'transaction_date': timezone.now()
-            })
-    else:
-        # Create form with initial values
-        form = TransactionForm(initial={
-            'portfolio': portfolio,
-            'transaction_type': 'buy',
-            'transaction_date': timezone.now()
-        })
-        
-        # Direct assignment of assets queryset
-        form.fields['asset'].queryset = all_assets
-        
-        # Log the asset count
-        print(f"DEBUG: Asset count in buy_stock form: {form.fields['asset'].queryset.count()}")
+                
+            except ValueError as e:
+                print(f"DEBUG VALUE ERROR: {str(e)}")
+                messages.error(request, f"Lỗi định dạng dữ liệu: {str(e)}")
+            except Exception as e:
+                print(f"DEBUG GENERIC ERROR: {str(e)}")
+                messages.error(request, f"Lỗi không xác định: {str(e)}")
+        else:
+            messages.error(request, "Vui lòng chọn mã cổ phiếu")
+            
+    # Create a form with default values
+    form = TransactionForm(initial={'portfolio': portfolio, 'transaction_type': 'buy'})
     
     return render(request, 'portfolio/transaction_form.html', {
         'form': form,
         'title': 'Mua cổ phiếu',
         'portfolio': portfolio,
         'portfolio_assets': portfolio.portfolioasset_set.all(),
-        'all_assets': all_assets
+        'all_assets': all_assets,
+        'today_date': today_date,
+        'wallet': wallet  # Thêm thông tin ví vào context
     })
 
 @login_required
 def sell_stock(request, portfolio_id):
     # Check that the portfolio exists and belongs to the current user
     portfolio = get_object_or_404(Portfolio, pk=portfolio_id, user=request.user)
+    
+    # Lấy thông tin ví điện tử của người dùng
+    wallet, created = Wallet.objects.get_or_create(user=request.user)
     
     # Get owned assets for this portfolio with quantity > 0
     portfolio_assets = PortfolioAsset.objects.filter(
@@ -450,14 +557,26 @@ def sell_stock(request, portfolio_id):
         id__in=portfolio_assets.values_list('asset_id', flat=True)
     )
     
+    # Lấy ngày hiện tại cho trường ngày mặc định
+    today_date = timezone.now().strftime('%Y-%m-%d')
+    
     # Debug info
     print(f"DEBUG: Portfolio ID: {portfolio_id}, User: {request.user.username}")
     print(f"DEBUG: Owned assets count: {owned_assets.count()}")
     print(f"DEBUG: Portfolio assets count: {portfolio_assets.count()}")
     
     if request.method == 'POST':
-        # Get symbol and convert to asset
-        symbol = request.POST.get('symbol')
+        # Log ra tất cả dữ liệu form
+        print(f"DEBUG: SELL STOCK - Full POST data: {request.POST.dict()}")
+        
+        # Lấy symbol từ form, ưu tiên dùng selected_symbol nếu có
+        symbol = request.POST.get('selected_symbol') or request.POST.get('symbol')
+        
+        print(f"DEBUG: Using symbol: {symbol}")
+        
+        if not symbol:
+            messages.error(request, "Không tìm thấy mã cổ phiếu để bán, vui lòng chọn lại.")
+            return redirect('sell_stock', portfolio_id=portfolio_id)
         
         try:
             # Find asset by symbol
@@ -471,6 +590,7 @@ def sell_stock(request, portfolio_id):
             
             if form.is_valid():
                 quantity = form.cleaned_data['quantity']
+                price = form.cleaned_data['price']
                 
                 # Kiểm tra số lượng bán không vượt quá số lượng hiện có
                 portfolio_asset = portfolio_assets.filter(asset=asset).first()
@@ -484,16 +604,40 @@ def sell_stock(request, portfolio_id):
                         'title': 'Bán cổ phiếu',
                         'portfolio': portfolio,
                         'portfolio_assets': portfolio_assets,
-                        'owned_assets': owned_assets
+                        'owned_assets': owned_assets,
+                        'today_date': today_date,
+                        'wallet': wallet
                     })
                 
                 transaction = form.save(commit=False)
                 transaction.portfolio = portfolio
                 transaction.transaction_type = 'sell'
-                transaction.transaction_date = timezone.now()
+                
+                # Lấy ngày giao dịch từ form
+                transaction_date_str = form_data.get('transaction_date')
+                if transaction_date_str:
+                    try:
+                        transaction_date = datetime.strptime(transaction_date_str, '%Y-%m-%d').date()
+                        transaction.transaction_date = transaction_date
+                    except ValueError:
+                        transaction.transaction_date = timezone.now().date()
+                        messages.warning(request, f"Định dạng ngày không hợp lệ. Đã sử dụng ngày hiện tại.")
+                
+                # Tính tổng tiền giao dịch
+                total_amount = quantity * price
+                
+                # Chuyển đổi tổng tiền thành Decimal để tránh lỗi khi cộng với wallet.balance
+                from decimal import Decimal
+                total_amount_decimal = Decimal(str(total_amount))
+                
+                # Lưu giao dịch
                 transaction.save()
                 
-                messages.success(request, 'Giao dịch bán đã được thực hiện thành công!')
+                # Cập nhật số dư ví (sử dụng Decimal để tránh lỗi kiểu dữ liệu)
+                wallet.balance = wallet.balance + total_amount_decimal
+                wallet.save()
+                
+                messages.success(request, f'Giao dịch bán {quantity} cổ phiếu {symbol} với giá {transaction.price:,.0f} VNĐ vào ngày {transaction.transaction_date.strftime("%d/%m/%Y")} đã được thực hiện thành công! Số dư ví: {wallet.balance:,.0f} VNĐ')
                 return redirect('portfolio_detail', pk=portfolio_id)
             else:
                 # Debug form errors
@@ -535,12 +679,38 @@ def sell_stock(request, portfolio_id):
         if not owned_assets.exists():
             messages.warning(request, 'Không có cổ phiếu nào trong danh mục để bán. Hãy mua cổ phiếu trước.')
     
+    # Chuẩn bị context với portfolio_assets đã được xử lý để truyền dữ liệu đúng
+    prepared_portfolio_assets = []
+    for pa in portfolio_assets:
+        prepared_portfolio_assets.append({
+            'asset': pa.asset,
+            'quantity': pa.quantity,
+            'average_price': pa.average_price,
+            'symbol': pa.asset.symbol,
+            'asset_id': pa.asset.id,
+            'name': pa.asset.name,
+            'current_price': pa.asset.current_price
+        })
+    
+    # Tạo data attributes cho mỗi portfolio asset để sử dụng trong JavaScript
+    portfolio_asset_data = {pa['asset'].id: {
+        'average_price': float(pa['average_price']),
+        'quantity': pa['quantity'],
+        'symbol': pa['symbol']
+    } for pa in prepared_portfolio_assets}
+    
+    # Chuyển đổi thành chuỗi JSON để sử dụng trong template
+    portfolio_asset_json = json.dumps(portfolio_asset_data)
+    
     return render(request, 'portfolio/transaction_form.html', {
         'form': form,
         'title': 'Bán cổ phiếu',
         'portfolio': portfolio,
-        'portfolio_assets': portfolio_assets,
-        'owned_assets': owned_assets
+        'portfolio_assets': prepared_portfolio_assets,
+        'portfolio_asset_data': portfolio_asset_json,  # Thêm dữ liệu JSON
+        'owned_assets': owned_assets,
+        'today_date': today_date,
+        'wallet': wallet  # Thêm thông tin ví vào context
     })
 
 @login_required
@@ -725,22 +895,22 @@ def market(request):
     # Get price board data or use fallback data if there's an error
     try:
         price_board = get_price_board()
-        price_board_json = price_board.to_json(orient='split')
+        if price_board.empty:
+            raise ValueError("Empty price board returned")
+        
+        # Convert to JSON in 'records' orientation for better frontend handling
+        price_board_json = price_board.to_json(orient='records')
         print("Successfully fetched price board data")
     except Exception as e:
         print(f"Error in market view: {str(e)}")
-        # Simple fallback data with explicit index structure
-        fallback_data = {
-            "index": [0, 1, 2, 3, 4],
-            "columns": ["symbol", "ceiling", "floor", "ref_price", "match_price", "match_vol"],
-            "data": [
-                ["AAA", 25000, 20000, 22000, 22500, 10000],
-                ["VNM", 60000, 50000, 55000, 56000, 5000],
-                ["FPT", 90000, 80000, 85000, 86000, 3000],
-                ["VIC", 45000, 35000, 40000, 41000, 2000],
-                ["MSN", 70000, 60000, 65000, 66000, 4000]
-            ]
-        }
+        # Simple fallback data with explicit structure
+        fallback_data = [
+            {"CK": "AAA", "Trần": 25000, "Sàn": 20000, "TC": 22000, "Giá": 22500, "Khối lượng": "10,000"},
+            {"CK": "VNM", "Trần": 60000, "Sàn": 50000, "TC": 55000, "Giá": 56000, "Khối lượng": "5,000"},
+            {"CK": "FPT", "Trần": 90000, "Sàn": 80000, "TC": 85000, "Giá": 86000, "Khối lượng": "3,000"},
+            {"CK": "VIC", "Trần": 45000, "Sàn": 35000, "TC": 40000, "Giá": 41000, "Khối lượng": "2,000"},
+            {"CK": "MSN", "Trần": 70000, "Sàn": 60000, "TC": 65000, "Giá": 66000, "Khối lượng": "4,000"}
+        ]
         price_board_json = json.dumps(fallback_data)
         messages.warning(request, "Không thể tải dữ liệu thị trường thực. Hiển thị dữ liệu mẫu.")
     
@@ -751,6 +921,8 @@ def market(request):
         "price_board_json": price_board_json,
     }
     return render(request, 'portfolio/market.html', context)
+
+
 
 def get_historical_data_api(request, stock_code):
     try:
@@ -897,13 +1069,75 @@ def get_stock_symbols(request):
     """API view để lấy danh sách mã cổ phiếu phù hợp với từ khóa tìm kiếm"""
     term = request.GET.get('term', '')
     
-    # Tìm kiếm cổ phiếu phù hợp với từ khóa
-    assets = Asset.objects.filter(symbol__istartswith=term)[:10]  # Giới hạn 10 kết quả
+    # Sử dụng hàm vnstock để lấy danh sách cổ phiếu
+    from .vnstock_services import get_all_stock_symbols
     
-    # Trả về danh sách các mã cổ phiếu
-    symbols = [asset.symbol for asset in assets]
+    try:
+        # Lấy toàn bộ danh sách cổ phiếu
+        all_symbols = get_all_stock_symbols()
+        
+        # Lọc theo từ khóa tìm kiếm - ưu tiên mã cổ phiếu khớp với từ khóa
+        filtered_symbols = [item['ticker'] for item in all_symbols 
+                           if term.upper() in item['ticker'].upper()][:10]
+        
+        # Nếu không đủ 10 kết quả, tìm thêm trong tên công ty
+        if len(filtered_symbols) < 10 and term:
+            remaining_slots = 10 - len(filtered_symbols)
+            company_matches = [item['ticker'] for item in all_symbols 
+                              if item['ticker'] not in filtered_symbols 
+                              and term.upper() in item['organ_name'].upper()][:remaining_slots]
+            filtered_symbols.extend(company_matches)
+        
+        return JsonResponse(filtered_symbols, safe=False)
+    except Exception as e:
+        print(f"Error in get_stock_symbols: {str(e)}")
+        
+        # Fallback to database search if vnstock fails
+        assets = Asset.objects.filter(symbol__istartswith=term)[:10]
+        symbols = [asset.symbol for asset in assets]
+        
+        return JsonResponse(symbols, safe=False)
+
+@login_required
+def get_stock_symbols_info(request):
+    """API view để lấy thông tin tên công ty cho các mã cổ phiếu"""
+    if request.method == 'POST':
+        try:
+            import json
+            symbols_json = request.POST.get('symbols', '[]')
+            symbols = json.loads(symbols_json)
+            
+            # Nếu không có mã cổ phiếu, trả về dict trống
+            if not symbols:
+                return JsonResponse({}, safe=False)
+            
+            # Lấy thông tin từ vnstock API
+            from .vnstock_services import get_all_stock_symbols
+            try:
+                all_symbols = get_all_stock_symbols()
+                # Tạo dict ánh xạ từ mã đến tên công ty
+                symbol_info = {item['ticker']: item['organ_name'] for item in all_symbols 
+                              if item['ticker'] in symbols}
+                
+                # Nếu thiếu symbol nào, bổ sung từ database
+                missing_symbols = [symbol for symbol in symbols if symbol not in symbol_info]
+                if missing_symbols:
+                    assets = Asset.objects.filter(symbol__in=missing_symbols)
+                    for asset in assets:
+                        symbol_info[asset.symbol] = asset.name
+                
+                return JsonResponse(symbol_info, safe=False)
+            except Exception as e:
+                print(f"Error fetching company names from vnstock: {str(e)}")
+                # Fallback to database
+                assets = Asset.objects.filter(symbol__in=symbols)
+                symbol_info = {asset.symbol: asset.name for asset in assets}
+                return JsonResponse(symbol_info, safe=False)
+                
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
     
-    return JsonResponse(symbols, safe=False)
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 @login_required
 def get_stock_price(request, symbol):
@@ -912,12 +1146,73 @@ def get_stock_price(request, symbol):
     """
     try:
         import random
-
-        # Tìm cổ phiếu trong cơ sở dữ liệu
+        from .vnstock_services import get_current_bid_price, get_all_stock_symbols
+        
+        # Tìm asset hoặc tạo mới nếu chưa có
         asset = Asset.objects.filter(symbol=symbol).first()
-        if asset:
-            # Lấy giá từ cơ sở dữ liệu
-            match_price = float(asset.current_price)
+        
+        # Lấy giá từ vnstock theo hướng dẫn của người dùng
+        current_bid = get_current_bid_price(symbol)
+        
+        if current_bid is not None:
+            # Nếu lấy giá thành công từ API, sử dụng giá này
+            match_price = float(current_bid)
+            
+            # Nếu asset chưa tồn tại, tạo mới
+            if not asset:
+                # Tìm thông tin công ty từ VNStock
+                try:
+                    print(f"DEBUG: Asset {symbol} not found in database, creating new asset")
+                    all_symbols = get_all_stock_symbols()
+                    company_info = next((item for item in all_symbols if item['ticker'] == symbol), None)
+                    
+                    if company_info:
+                        company_name = company_info.get('organ_name', f"Công ty {symbol}")
+                        # Tạo asset mới
+                        asset = Asset(
+                            symbol=symbol,
+                            name=company_name,
+                            type='stock',
+                            sector='Unknown',
+                            description=f"Auto-created from VNStock on {datetime.now().strftime('%Y-%m-%d')}",
+                            current_price=match_price
+                        )
+                        asset.save()
+                        print(f"DEBUG: Created new asset: {asset.id} - {asset.symbol} - {asset.name}")
+                    else:
+                        # Nếu không tìm thấy thông tin công ty, vẫn tạo Asset với thông tin tối thiểu
+                        print(f"DEBUG: Company info for {symbol} not found in VNStock, creating minimal asset")
+                        asset = Asset(
+                            symbol=symbol,
+                            name=f"Cổ phiếu {symbol}",
+                            type='stock',
+                            sector='Unknown',
+                            description=f"Auto-created minimal asset on {datetime.now().strftime('%Y-%m-%d')}",
+                            current_price=match_price
+                        )
+                        asset.save()
+                        print(f"DEBUG: Created minimal asset: {asset.id} - {asset.symbol}")
+                except Exception as e:
+                    print(f"ERROR creating new asset: {str(e)}")
+                    # Tạo asset đơn giản nhất có thể nếu có lỗi
+                    try:
+                        asset = Asset(
+                            symbol=symbol,
+                            name=f"Cổ phiếu {symbol}",
+                            type='stock',
+                            sector='Unknown',
+                            description="Auto-created as fallback after error",
+                            current_price=match_price
+                        )
+                        asset.save()
+                        print(f"DEBUG: Created fallback asset after error: {asset.id} - {asset.symbol}")
+                    except Exception as e2:
+                        print(f"CRITICAL ERROR creating fallback asset: {str(e2)}")
+            elif asset:
+                # Cập nhật giá mới cho asset
+                asset.current_price = match_price
+                asset.save(update_fields=['current_price', 'last_updated'])
+                print(f"DEBUG: Updated price for {symbol} to {match_price}")
             
             # Tạo giá trị giả lập cho biến động giá
             change_percent = random.uniform(-2, 2)
@@ -934,21 +1229,163 @@ def get_stock_price(request, symbol):
                 'change_percent': change_percent,
                 'buy_price': buy_price,
                 'sell_price': sell_price,
-                'source': 'database'
+                'source': 'vnstock',
+                'asset_exists': asset is not None,
+                'asset_id': asset.id if asset else None,
+                'asset_name': asset.name if asset else f"Cổ phiếu {symbol}"
             }
             
             # Trả về phản hồi JSON
             return JsonResponse(response_data)
         else:
-            # Không tìm thấy cổ phiếu trong cơ sở dữ liệu
-            return JsonResponse({
-                'success': False,
-                'error': f'Không tìm thấy mã cổ phiếu {symbol}'
-            }, status=404)
+            # Không lấy được giá từ API, tìm trong cơ sở dữ liệu
+            asset = Asset.objects.filter(symbol=symbol).first()
+            if asset:
+                match_price = float(asset.current_price)
+                change_percent = random.uniform(-2, 2)
+                buy_price = round(match_price * 0.995)
+                sell_price = round(match_price * 1.005)
+                
+                response_data = {
+                    'success': True,
+                    'symbol': symbol,
+                    'price': match_price,
+                    'change_percent': change_percent,
+                    'buy_price': buy_price,
+                    'sell_price': sell_price,
+                    'source': 'database',
+                    'asset_exists': True,
+                    'asset_id': asset.id,
+                    'asset_name': asset.name
+                }
+                return JsonResponse(response_data)
+            else:
+                # Tạo cổ phiếu mới với giá mặc định nếu không thể lấy từ API
+                try:
+                    default_price = 10000  # Giá mặc định
+                    asset = Asset(
+                        symbol=symbol,
+                        name=f"Cổ phiếu {symbol}",
+                        type='stock',
+                        sector='Unknown',
+                        description=f"Auto-created with default price on {datetime.now().strftime('%Y-%m-%d')}",
+                        current_price=default_price
+                    )
+                    asset.save()
+                    print(f"DEBUG: Created new asset with default price: {asset.id} - {asset.symbol}")
+                    
+                    response_data = {
+                        'success': True,
+                        'symbol': symbol,
+                        'price': default_price,
+                        'change_percent': 0,
+                        'buy_price': round(default_price * 0.995),
+                        'sell_price': round(default_price * 1.005),
+                        'source': 'default',
+                        'asset_exists': True,
+                        'asset_id': asset.id,
+                        'asset_name': asset.name
+                    }
+                    return JsonResponse(response_data)
+                except Exception as e:
+                    print(f"ERROR creating new asset with default price: {str(e)}")
+                    # Không tìm thấy cổ phiếu trong cơ sở dữ liệu và không thể tạo mới
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'Không tìm thấy mã cổ phiếu {symbol} và không thể tạo mới'
+                    }, status=404)
     except Exception as e:
-        # Xử lý lỗi
-        print(f"ERROR in get_stock_price: {e}")
+        print(f"ERROR in get_stock_price: {str(e)}")
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': f'Lỗi khi xử lý thông tin cổ phiếu: {str(e)}'
         }, status=500)
+
+@login_required
+def create_asset_from_symbol(request):
+    """
+    API endpoint để tạo mới hoặc cập nhật asset từ mã cổ phiếu
+    """
+    if request.method == 'POST':
+        try:
+            symbol = request.POST.get('symbol')
+            if not symbol:
+                return JsonResponse({'success': False, 'error': 'Thiếu mã cổ phiếu'}, status=400)
+            
+            from .vnstock_services import get_current_bid_price, get_all_stock_symbols
+            
+            # Kiểm tra xem asset đã tồn tại chưa
+            asset = Asset.objects.filter(symbol=symbol).first()
+            
+            # Nếu đã tồn tại thì cập nhật giá
+            if asset:
+                # Lấy giá hiện tại từ API
+                current_price = get_current_bid_price(symbol)
+                if current_price is not None:
+                    asset.current_price = float(current_price)
+                    asset.save(update_fields=['current_price', 'last_updated'])
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'message': f'Đã cập nhật giá cho {symbol}',
+                        'asset_id': asset.id,
+                        'asset_name': asset.name,
+                        'price': float(asset.current_price),
+                        'created': False,
+                        'updated': True
+                    })
+                else:
+                    return JsonResponse({
+                        'success': True,
+                        'message': f'Không lấy được giá mới cho {symbol}, giữ nguyên giá cũ',
+                        'asset_id': asset.id,
+                        'asset_name': asset.name,
+                        'price': float(asset.current_price),
+                        'created': False,
+                        'updated': False
+                    })
+            
+            # Nếu chưa tồn tại, tạo mới
+            # Lấy giá hiện tại
+            current_price = get_current_bid_price(symbol)
+            if current_price is None:
+                current_price = 10000  # Giá mặc định nếu không lấy được
+            
+            # Lấy thông tin công ty
+            company_name = f"Cổ phiếu {symbol}"
+            try:
+                all_symbols = get_all_stock_symbols()
+                company_info = next((item for item in all_symbols if item['ticker'] == symbol), None)
+                if company_info:
+                    company_name = company_info.get('organ_name', company_name)
+            except Exception as e:
+                print(f"ERROR getting company info for {symbol}: {str(e)}")
+            
+            # Tạo asset mới
+            new_asset = Asset(
+                symbol=symbol,
+                name=company_name,
+                type='stock',
+                sector='Unknown',
+                description=f"Auto-created via API on {datetime.now().strftime('%Y-%m-%d')}",
+                current_price=current_price
+            )
+            new_asset.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Đã tạo mới cổ phiếu {symbol}',
+                'asset_id': new_asset.id,
+                'asset_name': new_asset.name,
+                'price': float(new_asset.current_price),
+                'created': True,
+                'updated': False
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Lỗi: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'Chỉ hỗ trợ phương thức POST'}, status=405)

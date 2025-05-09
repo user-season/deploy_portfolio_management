@@ -105,7 +105,6 @@ class TransactionForm(forms.ModelForm):
             'portfolio': forms.HiddenInput(),
             'asset': forms.Select(attrs={
                 'class': 'form-select',
-                'required': True,
                 'id': 'id_asset',
                 'placeholder': 'Chọn mã cổ phiếu'
             })
@@ -113,6 +112,9 @@ class TransactionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Cho phép field 'asset' là không bắt buộc, vì chúng ta sẽ xử lý thông qua symbol
+        self.fields['asset'].required = False
+        
         if 'initial' in kwargs and 'portfolio' in kwargs['initial']:
             portfolio = kwargs['initial']['portfolio']
             if kwargs['initial'].get('transaction_type') == 'sell':
@@ -134,6 +136,11 @@ class TransactionForm(forms.ModelForm):
         
         if price and price <= 0:
             raise forms.ValidationError('Giá phải lớn hơn 0')
+            
+        # Không validate asset vì asset sẽ được set từ symbol 
+        # trong view trước khi lưu transaction
+        if 'asset' not in cleaned_data:
+            cleaned_data['asset'] = None
         
         return cleaned_data
 
