@@ -422,7 +422,7 @@
             </div>
         </div>
         
-        {% if messages %}
+        <!-- {% if messages %}
         <div class="messages mb-3">
             {% for message in messages %}
             <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
@@ -431,11 +431,9 @@
             </div>
             {% endfor %}
         </div>
-        {% endif %}
+        {% endif %} -->
         
-        {% if request.user.is_staff %}
-        <div id="debugInfo" class="mb-3"></div>
-        {% endif %}
+        <!-- <div id="debugInfo" class="mb-3"></div> -->
         
         <div class="table-container">
             <div class="table-scroll">
@@ -511,165 +509,134 @@
         const tableBody = document.getElementById('marketTableBody');
         
         try {
-            // Log raw data for debugging
-            console.log('Raw price_board_json:', '{{ price_board_json|escapejs }}');
-            
-            const price_board = JSON.parse('{{ price_board_json|escapejs }}');
-            console.log('Parsed price_board:', price_board);
-            
-            if (!price_board) {
-                throw new Error('Invalid price board data structure');
-            }
-            
-            // Add debugging info for admins
-            if (document.getElementById('debugInfo')) {
-                let debugInfo = '<div class="card mb-3">';
-                debugInfo += '<div class="card-header bg-info text-white">Debug Information</div>';
-                debugInfo += '<div class="card-body">';
-                
-                if (Array.isArray(price_board)) {
-                    debugInfo += `<p>Định dạng dữ liệu: Array of Objects (${price_board.length} records)</p>`;
-                    if (price_board.length > 0) {
-                        debugInfo += `<p>Mẫu dữ liệu: ${JSON.stringify(price_board[0])}</p>`;
-                        debugInfo += `<p>Các cột: ${JSON.stringify(Object.keys(price_board[0]))}</p>`;
-                    }
-                } else if (price_board.data && price_board.columns) {
-                    debugInfo += `<p>Định dạng dữ liệu: Split format</p>`;
-                    debugInfo += `<p>Columns: ${JSON.stringify(price_board.columns)}</p>`;
-                    if (price_board.data.length > 0) {
-                        debugInfo += `<p>First row: ${JSON.stringify(price_board.data[0])}</p>`;
-                    }
-                } else {
-                    debugInfo += `<p>Định dạng dữ liệu không xác định</p>`;
-                    debugInfo += `<p>Keys: ${JSON.stringify(Object.keys(price_board))}</p>`;
+            fetch('/api/get-price-board/')
+            .then(response => response.json()) // chuyển response thành JSON
+            .then(data => {
+                // console.log(data); // xử lý dữ liệu trả về
+                let price_board = data.data;
+                // console.log('Price board data:', price_board);
+                if (!price_board) {
+                    throw new Error('Invalid price board data structure');
                 }
-                
-                debugInfo += '</div></div>';
-                document.getElementById('debugInfo').innerHTML = debugInfo;
-            }
-            
-            // Format functions
-            function formatPrice(price) {
-                if (!price || isNaN(parseFloat(price))) return 'N/A';
-                return parseFloat(price/1000).toFixed(2);
-            }
-            
-            function getPriceClass(matchPrice, refPrice, ceiling, floor) {
-                if (!matchPrice || !refPrice) return '';
-                if (matchPrice === ceiling) return 'price-ceiling';
-                if (matchPrice === floor) return 'price-floor';
-                if (matchPrice === refPrice) return 'price-reference';
-                if (matchPrice > refPrice) return 'price-up';
-                if (matchPrice < refPrice) return 'price-down';
-                return '';
-            }
-            
-            // Xử lý dữ liệu và tạo HTML cho bảng
-            let tableHTML = '';
-            
-            if (Array.isArray(price_board)) {
-                // Định dạng mới: Array of Objects (records)
-                for (let i = 0; i < price_board.length; i++) {
-                    const item = price_board[i];
+                // Add debugging info for admins
+                if (document.getElementById('debugInfo')) {
+                    let debugInfo = '<div class="card mb-3">';
+                    debugInfo += '<div class="card-header bg-info text-white">Debug Information</div>';
+                    debugInfo += '<div class="card-body">';
                     
-                    // Kiểm tra xem item có phải là object không và có mã CK
-                    if (item && typeof item === 'object' && item.CK) {
-                        const symbol = item.CK;
-                        const ceiling = item.Trần || 0;
-                        const floor = item.Sàn || 0;
-                        const refPrice = item.TC || 0;
-                        const matchPrice = item.Giá || 0;
-                        const matchVol = item['Khối lượng'] || '0';
-                        
-                        tableHTML += `<tr title='Click để xem biểu đồ giá'>
-                            <td class="stock-symbol">${symbol}</td>
-                            <td class="price-ceiling">${formatPrice(ceiling)}</td>
-                            <td class="price-floor">${formatPrice(floor)}</td>
-                            <td class="price-reference">${formatPrice(refPrice)}</td>
-                            <td class="${getPriceClass(matchPrice, refPrice, ceiling, floor)}">${formatPrice(matchPrice)}</td>
-                            <td>${matchVol}</td>
-                        </tr>`;
+                    if (Array.isArray(price_board)) {
+                        debugInfo += `<p>Định dạng dữ liệu: Array of Objects (${price_board.length} records)</p>`;
+                        console.log('Price board length:', price_board.length);
+                        if (price_board.length > 0) {
+                            debugInfo += `<p>Mẫu dữ liệu: ${JSON.stringify(price_board[0])}</p>`;
+                            debugInfo += `<p>Các cột: ${JSON.stringify(Object.keys(price_board[0]))}</p>`;
+                        }
+                    } else if (price_board.data && price_board.columns) {
+                        debugInfo += `<p>Định dạng dữ liệu: Split format</p>`;
+                        debugInfo += `<p>Columns: ${JSON.stringify(price_board.columns)}</p>`;
+                        if (price_board.data.length > 0) {
+                            debugInfo += `<p>First row: ${JSON.stringify(price_board.data[0])}</p>`;
+                        }
+                    } else {
+                        debugInfo += `<p>Định dạng dữ liệu không xác định</p>`;
+                        debugInfo += `<p>Keys: ${JSON.stringify(Object.keys(price_board))}</p>`;
                     }
+                    
+                    debugInfo += '</div></div>';
+                    document.getElementById('debugInfo').innerHTML = debugInfo;
                 }
-            } else if (price_board.data && price_board.columns) {
-                // Cấu trúc dữ liệu cũ (split orientation)
-                const data = price_board.data;
-                const columns = price_board.columns;
                 
-                // Tìm chỉ số cột
-                const colIndices = {};
-                columns.forEach((col, idx) => {
-                    if (col.includes('symbol') || col === 'CK') colIndices.symbol = idx;
-                    if (col.includes('ceiling') || col === 'Trần') colIndices.ceiling = idx;
-                    if (col.includes('floor') || col === 'Sàn') colIndices.floor = idx;
-                    if (col.includes('ref_price') || col === 'TC') colIndices.ref_price = idx;
-                    if (col.includes('match_price') || col === 'Giá') colIndices.match_price = idx;
-                    if (col.includes('match_vol') || col === 'Khối lượng') colIndices.match_vol = idx;
-                });
-                
-                for (let i = 0; i < data.length; i++) {
-                    if (data[i][colIndices.symbol]) {
-                        const symbol = data[i][colIndices.symbol];
-                        const ceiling = colIndices.ceiling !== undefined ? data[i][colIndices.ceiling] : 0;
-                        const floor = colIndices.floor !== undefined ? data[i][colIndices.floor] : 0;
-                        const refPrice = colIndices.ref_price !== undefined ? data[i][colIndices.ref_price] : 0;
-                        const matchPrice = colIndices.match_price !== undefined ? data[i][colIndices.match_price] : 0;
-                        const matchVol = colIndices.match_vol !== undefined ? data[i][colIndices.match_vol] : 0;
-                        
-                        tableHTML += `<tr title='Click để xem biểu đồ giá'>
-                            <td class="stock-symbol">${symbol}</td>
-                            <td class="price-ceiling">${formatPrice(ceiling)}</td>
-                            <td class="price-floor">${formatPrice(floor)}</td>
-                            <td class="price-reference">${formatPrice(refPrice)}</td>
-                            <td class="${getPriceClass(matchPrice, refPrice, ceiling, floor)}">${formatPrice(matchPrice)}</td>
-                            <td>${matchVol}</td>
-                        </tr>`;
-                    }
+                // Format functions
+                function formatPrice(price) {
+                    if (!price || isNaN(parseFloat(price))) return 'N/A';
+                    return parseFloat(price/1000).toFixed(2);
                 }
-            } else {
-                throw new Error('Định dạng dữ liệu không được hỗ trợ');
-            }
-            
-            if (tableHTML) {
-                tableBody.innerHTML = tableHTML;
-            } else {
-                throw new Error('Không tìm thấy dữ liệu cổ phiếu hợp lệ');
-            }
-            
-            // Add search functionality
-            const searchInput = document.getElementById('stockSearch');
-            searchInput.addEventListener('input', function() {
-                this.value = this.value.toUpperCase();
-                const searchText = this.value;
-                const rows = tableBody.querySelectorAll('tr');
                 
-                rows.forEach(row => {
-                    if (row.cells && row.cells.length > 0) {
-                        const stockSymbol = row.cells[0].textContent;
-                        if (stockSymbol.toUpperCase().includes(searchText)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
+                function getPriceClass(matchPrice, refPrice, ceiling, floor) {
+                    if (!matchPrice || !refPrice) return '';
+                    if (matchPrice === ceiling) return 'price-ceiling';
+                    if (matchPrice === floor) return 'price-floor';
+                    if (matchPrice === refPrice) return 'price-reference';
+                    if (matchPrice > refPrice) return 'price-up';
+                    if (matchPrice < refPrice) return 'price-down';
+                    return '';
+                }
+                
+                // Xử lý dữ liệu và tạo HTML cho bảng
+                let tableHTML = '';
+                if (Array.isArray(price_board)) {
+                    // Định dạng mới: Array of Objects (records)
+                    for (let i = 0; i < price_board.length; i++) {
+                        const item = price_board[i];
+                        // Kiểm tra xem item có phải là object không và có mã listing_symbol
+                        if (item && typeof item === 'object' && item.listing_symbol) {
+                            const symbol = item.listing_symbol;
+                            // console.log('Symbol:', symbol);
+                            const ceiling = formatPrice(item.listing_ceiling) || 0;
+                            const floor = formatPrice(item.listing_floor) || 0;
+                            const refPrice = formatPrice(item.listing_ref_price) || 0;
+                            const matchPrice = (item.match_match_price) ? formatPrice(item.match_match_price) : "";
+                            const matchVol = (item.match_match_vol) ? formatPrice(item.match_match_vol) : "";
+                            
+                            // console.log(symbol, matchPrice, refPrice, ceiling, floor, getPriceClass(matchPrice, refPrice, ceiling, floor));
+                            tableHTML += `<tr title='Click để xem biểu đồ giá'>
+                                <td class="${getPriceClass(matchPrice, refPrice, ceiling, floor)}">${symbol}</td>
+                                <td class="price-ceiling">${ceiling}</td>
+                                <td class="price-floor">${floor}</td>
+                                <td class="price-reference">${refPrice}</td>
+                                <td class="${getPriceClass(matchPrice, refPrice, ceiling, floor)}">${matchPrice}</td>
+                                <td class="${getPriceClass(matchPrice, refPrice, ceiling, floor)}">${matchVol}</td>
+                            </tr>`;
                         }
                     }
-                });
-            });
-            
-            // Add click event to stock symbols to show chart
-            const rows = tableBody.querySelectorAll('tr');
-            rows.forEach(row => {
-                if (row.cells && row.cells.length > 0) {
-                    row.addEventListener('click', function() {
-                        if (this.cells && this.cells.length > 0) {
-                            const stockSymbol = this.cells[0].textContent;
-                            console.log('Clicked stock:', stockSymbol);
-                            showChart(stockSymbol);
+
+                } else {
+                    throw new Error('Định dạng dữ liệu không được hỗ trợ');
+                }
+                
+                if (tableHTML) {
+                    tableBody.innerHTML = tableHTML;
+                } else {
+                    throw new Error('Không tìm thấy dữ liệu cổ phiếu hợp lệ');
+                }
+                
+                // Add search functionality
+                const searchInput = document.getElementById('stockSearch');
+                searchInput.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                    const searchText = this.value;
+                    const rows = tableBody.querySelectorAll('tr');
+                    
+                    rows.forEach(row => {
+                        if (row.cells && row.cells.length > 0) {
+                            const stockSymbol = row.cells[0].textContent;
+                            if (stockSymbol.toUpperCase().includes(searchText)) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
                         }
                     });
-                    row.style.cursor = 'pointer';
-                }
+                });
+                
+                // Add click event to stock symbols to show chart
+                const rows = tableBody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    if (row.cells && row.cells.length > 0) {
+                        row.addEventListener('click', function() {
+                            if (this.cells && this.cells.length > 0) {
+                                const stockSymbol = this.cells[0].textContent;
+                                console.log('Clicked stock:', stockSymbol);
+                                showChart(stockSymbol);
+                            }
+                        });
+                        row.style.cursor = 'pointer';
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Có lỗi xảy ra:', error);
             });
-            
         } catch (error) {
             console.error('Error processing price board data:', error);
             tableBody.innerHTML = `<tr><td colspan="6"><div class="error-message">

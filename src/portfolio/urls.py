@@ -37,16 +37,16 @@ urlpatterns = [
     path('api/historical-data/<str:symbol>/', views.get_stock_historical_data, name='get_stock_historical_data'),
     
     # URLs cho ví điện tử
-    path('wallet/', views_wallet.wallet, name='wallet'),
-    path('wallet/deposit/', views_wallet.deposit_money, name='deposit_money'),
-    path('wallet/deposit/verify/', views_wallet.verify_deposit, name='verify_deposit'),
-    path('wallet/withdraw/', views_wallet.withdraw_money, name='withdraw_money'),
-    path('wallet/transactions/', views_wallet.wallet_transactions, name='wallet_transactions'),
-    path('wallet/bank-accounts/', views_wallet.bank_account_list, name='bank_account_list'),
-    path('wallet/bank-accounts/create/', views_wallet.bank_account_create, name='bank_account_create'),
-    path('wallet/bank-accounts/<int:pk>/update/', views_wallet.update_bank_account, name='bank_account_update'),
-    path('wallet/bank-accounts/<int:pk>/delete/', views_wallet.delete_bank_account, name='bank_account_delete'),
-    path('wallet/bank-accounts/<int:pk>/set-default/', views_wallet.set_default_bank_account, name='bank_account_set_default'),
+    path('wallet/', views.wallet, name='wallet'),
+    path('wallet/deposit/', views.deposit_money, name='deposit_money'),
+    path('wallet/deposit/verify/', views.verify_deposit, name='verify_deposit'),
+    path('wallet/withdraw/', views.withdraw_money, name='withdraw_money'),
+    path('wallet/transactions/', views.wallet_transactions, name='wallet_transactions'),
+    path('wallet/bank-accounts/', views.bank_account_list, name='bank_account_list'),
+    path('wallet/bank-accounts/create/', views.bank_account_create, name='bank_account_create'),
+    path('wallet/bank-accounts/<int:pk>/update/', views.update_bank_account, name='bank_account_update'),
+    path('wallet/bank-accounts/<int:pk>/delete/', views.delete_bank_account, name='bank_account_delete'),
+    path('wallet/bank-accounts/<int:pk>/set-default/', views.set_default_bank_account, name='bank_account_set_default'),
     
     # API URLs
     path('api/historical-data/<str:symbol>/', views.get_historical_data_api, name='historical_data_api'),
@@ -56,6 +56,7 @@ urlpatterns = [
     path('api/stock-price/<str:symbol>/', views.get_stock_price, name='get_stock_price'),
     path('api/stock-historical-data/<str:symbol>/', views.get_stock_historical_data, name='get_stock_historical_data'),
     path('api/create-asset/', views.create_asset_from_symbol, name='create_asset_from_symbol'),
+    path('api/get-price-board/', views.get_price_board_api, name='get_price_board_api'),
     
     # Debug URLs
     path('debug/assets/', views.debug_assets, name='debug_assets'),
