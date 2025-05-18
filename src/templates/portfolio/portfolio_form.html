@@ -17,7 +17,7 @@
                     </ol>
                 </nav>
                 <h1 class="form-title">
-                    {% if form.instance.pk %}
+                    {% if is_update %}
                     <span class="highlight">Chỉnh sửa</span> danh mục đầu tư
                     {% else %}
                     <span class="highlight">Tạo mới</span> danh mục đầu tư
@@ -55,8 +55,10 @@
                                 </div>
                                 
                                 <div class="form-floating mb-4">
-                                    <input type="text" name="name" class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
-                                           id="id_name" placeholder="Tên danh mục" value="{{ form.name.value|default:'' }}" required>
+                                    <input type="text" name="name" class="form-control {% if form.name.errors or form_data.name %}is-invalid{% endif %}" 
+                                           id="id_name" placeholder="Tên danh mục" 
+                                           value="{% if is_update %}{{ portfolio.name }}{% else %}{% endif %}" 
+                                           required>
                                     <label for="id_name">Tên danh mục <span class="required-star">*</span></label>
                                     {% if form.name.errors %}
                                     <div class="invalid-feedback">
@@ -67,7 +69,7 @@
                                 
                                 <div class="form-floating mb-4">
                                     <textarea name="description" class="form-control {% if form.description.errors %}is-invalid{% endif %}" 
-                                              id="id_description" placeholder="Mô tả" style="height: 120px;">{{ form.description.value|default:'' }}</textarea>
+                                              id="id_description" placeholder="Mô tả" style="height: 120px;">{% if form_data.description %}{{ form_data.description }}{% elif form.description.value %}{{ form.description.value }}{% endif %}</textarea>
                                     <label for="id_description">Mô tả chi tiết</label>
                                     {% if form.description.errors %}
                                     <div class="invalid-feedback">
@@ -89,7 +91,8 @@
                                     <div class="col-md-6 mb-4">
                                         <div class="form-floating">
                                             <input type="text" name="investment_goal" class="form-control {% if form.investment_goal.errors %}is-invalid{% endif %}" 
-                                                   id="id_investment_goal" placeholder="Mục tiêu đầu tư" value="{{ form.investment_goal.value|default:'' }}">
+                                                   id="id_investment_goal" placeholder="Mục tiêu đầu tư" 
+                                                   value="{% if form_data.investment_goal %}{{ form_data.investment_goal }}{% elif form.investment_goal.value %}{{ form.investment_goal.value }}{% endif %}">
                                             <label for="id_investment_goal">Mục tiêu đầu tư</label>
                                             {% if form.investment_goal.errors %}
                                             <div class="invalid-feedback">
@@ -101,7 +104,8 @@
                                     <div class="col-md-6 mb-4">
                                         <div class="form-floating">
                                             <input type="number" name="target_value" class="form-control {% if form.target_value.errors %}is-invalid{% endif %}" 
-                                                   id="id_target_value" placeholder="Giá trị mục tiêu" value="{{ form.target_value.value|default:'' }}">
+                                                   id="id_target_value" placeholder="Giá trị mục tiêu" 
+                                                   value="{% if form_data.target_value %}{{ form_data.target_value }}{% elif form.target_value.value %}{{ form.target_value.value }}{% endif %}">
                                             <label for="id_target_value">Giá trị mục tiêu (VNĐ)</label>
                                             {% if form.target_value.errors %}
                                             <div class="invalid-feedback">
@@ -122,10 +126,11 @@
                                 </div>
                                 
                                 <div class="risk-selector">
-                                    <input type="hidden" name="risk_tolerance" id="id_risk_tolerance" value="{{ form.risk_tolerance.value|default:'medium' }}">
+                                    <input type="hidden" name="risk_tolerance" id="id_risk_tolerance"
+                                        value="{% if portfolio %}{{portfolio.risk_tolerance}}{% elif form_data.risk_tolerance %}{{ form_data.risk_tolerance }}{% else %}medium{% endif %}">
                                     
                                     <div class="risk-options">
-                                        <div class="risk-option {% if form.risk_tolerance.value == 'low' or not form.risk_tolerance.value %}active{% endif %}" data-value="low">
+                                        <div class="risk-option {% if form_data.risk_tolerance == 'low' or portfolio.risk_tolerance == 'low' %}active{% endif %}" data-value="low">
                                             <div class="risk-icon low">
                                                 <i class="fas fa-shield-alt"></i>
                                             </div>
@@ -135,7 +140,7 @@
                                             </div>
                                         </div>
                                         
-                                        <div class="risk-option {% if form.risk_tolerance.value == 'medium' %}active{% endif %}" data-value="medium">
+                                        <div class="risk-option {% if not portfolio %}{% if form_data.risk_tolerance == 'medium' or not form_data.risk_tolerance %}active{% endif %}{% elif portfolio.risk_tolerance == 'medium' %}active{% endif %}" data-value="medium">
                                             <div class="risk-icon medium">
                                                 <i class="fas fa-balance-scale"></i>
                                             </div>
@@ -145,7 +150,7 @@
                                             </div>
                                         </div>
                                         
-                                        <div class="risk-option {% if form.risk_tolerance.value == 'high' %}active{% endif %}" data-value="high">
+                                        <div class="risk-option {% if form_data.risk_tolerance == 'high' or portfolio.risk_tolerance == 'high' %}active{% endif %}" data-value="high">
                                             <div class="risk-icon high">
                                                 <i class="fas fa-rocket"></i>
                                             </div>
@@ -165,13 +170,13 @@
                             </div>
                             
                             <div class="form-actions">
-                                <a href="{% url 'portfolio_list' %}" class="btn-cancel">
+                                <a href="{% if is_update %}{% url 'portfolio_detail' pk=portfolio.id %}{% else %}{% url 'portfolio_list' %}{% endif %}" class="btn-cancel">
                                     <i class="fas fa-times"></i>
                                     <span>Hủy bỏ</span>
                                 </a>
                                 <button type="submit" class="btn-submit">
                                     <i class="fas {% if form.instance.pk %}fa-save{% else %}fa-plus-circle{% endif %}"></i>
-                                    <span>{% if form.instance.pk %}Cập nhật{% else %}Tạo mới{% endif %}</span>
+                                    <span>{% if is_update %}Cập nhật{% else %}Tạo mới{% endif %}</span>
                                 </button>
                             </div>
                         </form>

@@ -153,7 +153,7 @@ class Portfolio(models.Model):
     # Người dùng sở hữu danh mục
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='portfolios')
     # Tên danh mục
-    name = models.CharField(max_length=100, unique=True, verbose_name="Tên danh mục")
+    name = models.CharField(max_length=100, verbose_name="Tên danh mục")
     # Mô tả danh mục
     description = models.TextField(blank=True, verbose_name="Mô tả")
     # Mục tiêu đầu tư
@@ -170,6 +170,7 @@ class Portfolio(models.Model):
     profiss_loss = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name="Lãi/lỗ")
 
     class Meta:
+        unique_together = ('user', 'name')
         # Tạo chỉ mục cho người dùng
         indexes = [
             models.Index(fields=['user'])
@@ -264,7 +265,10 @@ class StockTransaction(models.Model):
         ('buy', 'Mua'),
         ('sell', 'Bán'),
     ]
-    
+    # người dùng sở hữu giao dịch
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='stock_transactions')
+    # danh mục sở hữu
+    portfolio = models.ForeignKey(Portfolio, null=True, on_delete=models.SET_NULL, related_name='stock_transactions')
     # Mã cổ phiếu
     symbol = models.CharField(max_length=3, verbose_name="Mã tài sản")
     # Số lượng
@@ -348,7 +352,7 @@ class StockTransaction(models.Model):
 class Assets(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assets')
     # Mã tài sản
-    symbol = models.CharField(max_length=10, unique=True)
+    symbol = models.CharField(max_length=10)
     # Số lượng
     quantity = models.IntegerField(default=0)
     # Giá hiện tại

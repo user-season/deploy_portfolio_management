@@ -26,25 +26,34 @@
                             </div>
                             <h3 class="mb-0">{{ portfolio.name }}</h3>
                         </div>
-                        <div class="d-flex align-items-center">
-                            <a href="{% url 'buy_stock' portfolio_id=portfolio.pk %}" class="btn btn-success rounded-pill me-2">
-                                <i class="fas fa-plus-circle me-1"></i> Mua
-                            </a>
-                            <a href="{% url 'sell_stock' portfolio_id=portfolio.pk %}" class="btn btn-danger rounded-pill me-2">
-                                <i class="fas fa-minus-circle me-1"></i> Bán
-                            </a>
-                            <div class="dropdown">
-                                <button class="btn btn-light rounded-pill" data-bs-toggle="dropdown">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'portfolio_update' pk=portfolio.pk %}">
-                                            <i class="fas fa-edit me-2 text-warning"></i>Chỉnh sửa
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
+                        <div class="dropdown dropstart"> <!-- Changed to dropstart -->
+                            <button class="btn btn-light rounded-pill" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'portfolio_update' pk=portfolio.id %}">
+                                        <i class="fas fa-edit me-2 text-warning"></i>Chỉnh sửa
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'buy_stock' portfolio_id=portfolio.id %}">
+                                        <i class="fas fa-plus me-2 text-success"></i>Mua cổ phiếu
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'sell_stock' portfolio_id=portfolio.id %}">
+                                        <i class="fas fa-minus me-2 text-danger"></i>Bán cổ phiếu
+                                    </a>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item text-danger delete-portfolio-btn" 
+                                        data-portfolio-id="{{ portfolio.id }}" 
+                                        data-portfolio-name="{{ portfolio.name }}">
+                                        <i class="fas fa-trash me-2"></i>Xóa danh mục
+                                    </button>
+                                </li>
+                            </ul>
                         </div>
                     </div>
 
@@ -52,19 +61,26 @@
                         <div class="col-md-6">
                             <div class="card bg-light border-0 rounded-4">
                                 <div class="card-body p-3">
-                                    <h6 class="text-muted mb-2 small text-uppercase">Tổng giá trị</h6>
-                                    <h4 class="mb-0 fw-bold">{{ total_current_value|default:"0"|dinh_dang_tien }} VND</h4>
+                                    <h6 class="text-muted mb-2 small text-uppercase">Tổng giá trị hiện tại</h6>
+                                    <h4 class="mb-0 fw-bold">{{ portfolio_value|dinh_dang_tien }} VND</h4>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card border-0 rounded-4 {% if total_profit_loss > 0 %}bg-success-light profit-border{% elif total_profit_loss < 0 %}bg-danger-light loss-border{% else %}bg-light{% endif %}">
+                            <div class="card border-0 rounded-4 bg-success-light profit-border">
                                 <div class="card-body p-3">
                                     <h6 class="text-muted mb-2 small text-uppercase">Lãi/Lỗ</h6>
-                                    <h4 class="mb-0 fw-bold {% if total_profit_loss > 0 %}profit-value{% elif total_profit_loss < 0 %}loss-value{% endif %}">
-                                        {% if total_profit_loss > 0 %}+{% endif %}{{ total_profit_loss|default:"0"|dinh_dang_tien }} VND
-                                        <small>({{ profit_percentage|floatformat:2 }}%)</small>
+                                    {% if profit_loss < 0 %}
+                                    <h4 class="mb-0 fw-bold loss-value">
+                                        {{ profit_loss|dinh_dang_tien }} VND
+                                        <small>({{ profit_loss_percentage }}%)</small>
                                     </h4>
+                                    {% else %}
+                                    <h4 class="mb-0 fw-bold profit-value">
+                                        {{ profit_loss|dinh_dang_tien }} VND
+                                        <small>({{ profit_loss_percentage }}%)</small>
+                                    </h4>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -86,19 +102,29 @@
                 <div class="card-body px-4 pt-0 pb-4">
                     <div class="mb-3 border-bottom pb-3">
                         <small class="text-muted d-block">Mục tiêu đầu tư</small>
-                        <p class="mb-0 fw-medium">{{ portfolio.investment_goal }}</p>
+                        <p class="mb-0 fw-medium">{{ portfolio.description }}</p>
                     </div>
                     <div class="mb-3 border-bottom pb-3">
                         <small class="text-muted d-block">Mức độ rủi ro</small>
                         <p class="mb-0">
-                            <span class="badge bg-{% if portfolio.risk_tolerance == 'high' %}danger{% elif portfolio.risk_tolerance == 'medium' %}warning{% else %}success{% endif %} rounded-pill">
-                                {{ portfolio.get_risk_tolerance_display }}
+                            {% if portfolio.risk_tolerance == 'high' %}
+                            <span class="badge bg-danger rounded-pill">
+                                Cao
                             </span>
+                            {% elif portfolio.risk_tolerance == 'medium' %}
+                            <span class="badge bg-warning rounded-pill">
+                                Trung bình
+                            </span>
+                            {% else %}
+                            <span class="badge bg-success rounded-pill">
+                                Thấp
+                            </span>
+                            {% endif %}
                         </p>
                     </div>
                     <div>
                         <small class="text-muted d-block">Ngày tạo</small>
-                        <p class="mb-0 fw-medium">{{ portfolio.created_at|date:"d/m/Y" }}</p>
+                        <p class="mb-0 fw-medium">{{ portfolio.created_at|date:"d/m/Y H:i" }}</p>
                     </div>
                 </div>
             </div>
@@ -115,7 +141,7 @@
                     </div>
                     <h5 class="mb-0">Danh sách tài sản</h5>
                 </div>
-                <a href="{% url 'buy_stock' portfolio_id=portfolio.pk %}" class="btn btn-primary btn-sm btn-rounded">
+                <a href="{% url 'buy_stock' portfolio_id=portfolio.id %}" class="btn btn-primary btn-sm btn-rounded">
                     <i class="fas fa-plus me-2"></i>Thêm tài sản
                 </a>
             </div>
@@ -128,7 +154,7 @@
                             <th class="ps-4">Mã CP</th>
                             <th>Tên</th>
                             <th class="text-end">Số lượng</th>
-                            <th class="text-end">Giá TB</th>
+                            <th class="text-end">Giá mua TB</th>
                             <th class="text-end">Giá hiện tại</th>
                             <th class="text-end">Tổng giá trị</th>
                             <th class="text-end">Lãi/Lỗ</th>
@@ -136,26 +162,27 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for pa in portfolio_assets %}
+                        {% for stock in portfolio_symbol_list %}
                         <tr>
-                            <td class="ps-4 fw-medium">{{ pa.asset.symbol }}</td>
-                            <td>{{ pa.asset.name }}</td>
-                            <td class="text-end">{{ pa.quantity }}</td>
-                            <td class="text-end">{{ pa.average_price|default:"0"|dinh_dang_tien }} VND</td>
-                            <td class="text-end">{{ pa.asset.current_price|default:"0"|dinh_dang_tien }} VND</td>
-                            <td class="text-end fw-medium">{{ pa.current_value|default:"0"|dinh_dang_tien }} VND</td>
-                            <td class="text-end fw-medium {% if pa.profit_loss > 0 %}profit-value{% elif pa.profit_loss < 0 %}loss-value{% endif %}">
-                                {% if pa.profit_loss > 0 %}+{% endif %}{{ pa.profit_loss|default:"0"|dinh_dang_tien }} VND
+                            <td class="ps-4 fw-medium">{{ stock.symbol }}</td>
+                            <td>{{ stock.company_name }}</td>
+                            <td class="text-end">{{ stock.quantity }}</td>
+                            <td class="text-end">{{ stock.average_price|dinh_dang_tien }}</td>
+                            <td class="text-end">{{ stock.current_price|dinh_dang_tien }}</td>
+                            <td class="text-end fw-medium">{{ stock.total_current_price|dinh_dang_tien }}</td>
+                            {% if stock.profit_loss < 0 %}
+                            <td class="text-end fw-medium loss-value">
+                                {{ stock.profit_loss|dinh_dang_tien }}
                             </td>
+                            {% else %}
+                            <td class="text-end fw-medium profit-value">
+                                +{{ stock.profit_loss|dinh_dang_tien }}
+                            </td>
+                            {% endif %}
                             <td class="text-end pe-4">
-                                <div class="d-flex justify-content-end">
-                                    <a href="{% url 'buy_stock' portfolio_id=portfolio.pk %}" class="btn btn-sm btn-success rounded-circle me-1" title="Mua thêm">
-                                        <i class="fas fa-plus"></i>
-                                    </a>
-                                    <a href="{% url 'sell_stock' portfolio_id=portfolio.pk %}" class="btn btn-sm btn-danger rounded-circle" title="Bán">
-                                        <i class="fas fa-minus"></i>
-                                    </a>
-                                </div>
+                                <a href="{% url 'sell_stock' portfolio_id=portfolio.id %}?symbol={{ stock.symbol }}" class="btn btn-sm btn-outline-danger btn-rounded">
+                                    <i class="fas fa-minus"></i> Bán
+                                </a>
                             </td>
                         </tr>
                         {% empty %}
@@ -187,7 +214,7 @@
                     </div>
                     <h5 class="mb-0">Giao dịch gần đây</h5>
                 </div>
-                <a href="{% url 'portfolio_transactions' portfolio_id=portfolio.pk %}" class="btn btn-link btn-sm">
+                <a href="{% url 'portfolio_transactions' portfolio_id=portfolio.id %}" class="btn btn-link btn-sm">
                     Xem tất cả <i class="fas fa-arrow-right ms-1"></i>
                 </a>
             </div>
@@ -208,16 +235,16 @@
                     <tbody>
                         {% for transaction in recent_transactions %}
                         <tr>
-                            <td class="ps-4">{{ transaction.transaction_date|date:"d/m/Y H:i" }}</td>
-                            <td class="fw-medium">{{ transaction.asset.symbol }}</td>
+                            <td class="ps-4">{{ transaction.transaction_time|date:"d/m/Y H:i" }}</td>
+                            <td class="fw-medium">{{ transaction.symbol }}</td>
                             <td>
                                 <span class="badge bg-{% if transaction.transaction_type == 'buy' %}success{% else %}danger{% endif %} rounded-pill">
                                     {{ transaction.get_transaction_type_display }}
                                 </span>
                             </td>
                             <td class="text-end">{{ transaction.quantity }}</td>
-                            <td class="text-end">{{ transaction.price|default:"0"|dinh_dang_tien }} VND</td>
-                            <td class="text-end pe-4 fw-medium">{{ transaction.total_amount|default:"0"|dinh_dang_tien }} VND</td>
+                            <td class="text-end">{{ transaction.price|dinh_dang_tien }} VND</td>
+                            <td class="text-end pe-4 fw-medium">{{ transaction.total_price|dinh_dang_tien }} VND</td>
                         </tr>
                         {% empty %}
                         <tr>
@@ -231,6 +258,38 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deletePortfolioModal" tabindex="-1" aria-labelledby="deletePortfolioModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title" id="deletePortfolioModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa danh mục
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p>Bạn có chắc chắn muốn xóa danh mục <strong id="portfolioNameToDelete"></strong>?</p>
+                <p class="text-danger">Lưu ý: Hành động này không thể khôi phục và sẽ xóa tất cả dữ liệu liên quan đến danh mục này!</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    Danh mục có chứa cổ phiếu không thể xóa. Bạn cần bán hết cổ phiếu trước khi xóa.
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light btn-rounded" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Hủy bỏ
+                </button>
+                <form id="deletePortfolioForm" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-rounded">
+                        <i class="fas fa-trash me-2"></i>Xác nhận xóa
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -252,5 +311,135 @@
     .bg-danger-light {
         background-color: rgba(239, 68, 68, 0.08) !important;
     }
+    
+    .profit-value {
+        color: #10b981;
+    }
+    
+    .loss-value {
+        color: #ef4444;
+    }
+    .breadcrumb {
+        background: rgba(5, 67, 90, 0.15);
+        display: inline-flex;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        backdrop-filter: blur(5px);
+        margin-bottom: 1.5rem;
+    }
+
+    .breadcrumb-item,
+    .breadcrumb-item a {
+        color: rgba(0, 0, 0, 0.85);
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+        color: rgb(0, 7, 197);
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    /* Fix for dropdown menu */
+    .dropstart .dropdown-menu {
+        position: absolute;
+        top: 0;
+        right: auto;
+        left: auto;
+        /* margin-right: 0.5rem; */
+        margin-top: 0;
+        /* transform: translate(-100%, 0) !important; */
+    }
+    
+    .dropstart .dropdown-menu.show {
+        display: block;
+        /* transform: translate(-100%, 0) !important; */
+        animation: fadeIn 0.2s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+    }
+    
+    .dropdown-item i {
+        margin-right: 0.5rem;
+        width: 18px;
+        text-align: center;
+    }
+    
+    /* Style for ellipsis button */
+    .btn-light.rounded-pill {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: all 0.2s ease;
+    }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle dropdown positioning
+    const dropdownToggle = document.querySelector('.btn-light.rounded-pill');
+    
+    // if (dropdownToggle) {
+    //     dropdownToggle.addEventListener('click', function(e) {
+            // Small delay to ensure Bootstrap's dropdown is initialized
+            // setTimeout(() => {
+            //     const dropdownMenu = document.querySelector('.dropdown-menu.show');
+                
+            //     if (dropdownMenu) {
+            //         // Get the button position
+            //         const buttonRect = this.getBoundingClientRect();
+                    
+            //         // Position the dropdown menu to the left of the button
+            //         dropdownMenu.style.top = `${buttonRect.top}px`;
+                    
+            //         // Add custom animation class
+            //         if (!dropdownMenu.classList.contains('dropdown-animated')) {
+            //             dropdownMenu.classList.add('dropdown-animated');
+            //         }
+            //     }
+            // }, 10);
+    //     });
+    // }
+    
+    // Portfolio deletion functionality
+    const deleteButtons = document.querySelectorAll('.delete-portfolio-btn');
+    const deleteModal = new bootstrap.Modal(document.getElementById('deletePortfolioModal'));
+    const portfolioNameElement = document.getElementById('portfolioNameToDelete');
+    const deleteForm = document.getElementById('deletePortfolioForm');
+    
+    // Add click event to all delete buttons
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const portfolioId = this.getAttribute('data-portfolio-id');
+            const portfolioName = this.getAttribute('data-portfolio-name');
+            
+            // Set the portfolio name in the modal
+            portfolioNameElement.textContent = portfolioName;
+            
+            // Update the form action URL
+            deleteForm.action = `/portfolios/${portfolioId}/delete/`;
+            
+            // Show the modal
+            deleteModal.show();
+        });
+    });
+});
+</script>
+
 {% endblock %}

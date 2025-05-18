@@ -12,6 +12,7 @@ urlpatterns = [
     path('portfolios/create/', views.portfolio_create, name='portfolio_create'),
     path('portfolios/<int:pk>/', views.portfolio_detail, name='portfolio_detail'),
     path('portfolios/<int:pk>/update/', views.portfolio_update, name='portfolio_update'),
+    path('portfolios/<int:pk>/delete/', views.portfolio_delete, name='portfolio_delete'),
     path('portfolios/<int:portfolio_id>/buy/', views.buy_stock, name='buy_stock'),
     path('portfolios/<int:portfolio_id>/sell/', views.sell_stock, name='sell_stock'),
     path('portfolios/<int:portfolio_id>/transactions/', views.portfolio_transactions, name='portfolio_transactions'),
@@ -49,7 +50,7 @@ urlpatterns = [
     path('wallet/bank-accounts/<int:pk>/set-default/', views.set_default_bank_account, name='bank_account_set_default'),
     
     # API URLs
-    path('api/historical-data/<str:symbol>/', views.get_historical_data_api, name='historical_data_api'),
+    # path('api/historical-data/<str:symbol>/', views.get_historical_data_api, name='historical_data_api'),
     path('api/ai-chat/', views.ai_chat_api, name='ai_chat_api'),
     path('api/stock-symbols/', views.get_stock_symbols, name='get_stock_symbols'),
     path('api/stock-symbols-info/', views.get_stock_symbols_info, name='get_stock_symbols_info'),
@@ -57,6 +58,7 @@ urlpatterns = [
     path('api/stock-historical-data/<str:symbol>/', views.get_stock_historical_data, name='get_stock_historical_data'),
     path('api/create-asset/', views.create_asset_from_symbol, name='create_asset_from_symbol'),
     path('api/get-price-board/', views.get_price_board_api, name='get_price_board_api'),
+    path('api/get-current-price-symbol/', views.get_current_price_symbol_api, name='get_current_price_symbol_api'),
     
     # Debug URLs
     path('debug/assets/', views.debug_assets, name='debug_assets'),

@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.conf import settings
+from rest_framework import status
 
 from .models import Portfolio, PortfolioSymbol, Assets, User, Wallet, StockTransaction, BankAccount, BankTransaction
 # from .forms import PortfolioForm, AssetForm, TransactionForm, UserRegistrationForm, UserProfileForm
@@ -267,7 +268,6 @@ def portfolio_list(request):
     for portfolio in portfolios:
         portfolio_symbol_list = PortfolioSymbol.objects.filter(portfolio=portfolio)
         # print(portfolio_symbol_list)
-
         # print(portfolio.id, portfolio_symbol_list)
         portfolio_value = portfolio_symbol_list.aggregate(total_value=Sum(F('quantity') * F('average_price')))['total_value'] or 0
         portfolio.portfolio_value = portfolio_value
@@ -291,6 +291,8 @@ def portfolio_create(request):
             'target_value': target_value,
             'risk_tolerance': risk_tolerance
         }
+        print("=" * 100)
+        print(form_data)
 
         # Kiểm tra điều kiện bắt buộc
         if (not name):
@@ -302,8 +304,8 @@ def portfolio_create(request):
             with transaction.atomic():
                 portfolio = Portfolio.objects.create(
                     name=name,
-                    # user=request.user,
-                    user=User.objects.get(pk=1),
+                    user=request.user,
+                    # user=User.objects.get(pk=1),
                     description=description,
                     investment_goal=investment_goal,
                     target_value=Decimal(float(target_value)) if target_value else 0,
@@ -325,8 +327,8 @@ def portfolio_detail(request, pk):
     context = {}
     try:
         portfolio = Portfolio.objects.get(pk=pk)
-        # user = request.user
-        user = User.objects.get(pk=1)
+        user = request.user
+        # user = User.objects.get(pk=1)
         # Đảm bảo người dùng hiện tại là chủ sở hữu danh mục
         if request.user.is_authenticated and portfolio.user == request.user:
             pass
@@ -521,9 +523,9 @@ def portfolio_delete(request, pk):
         portfolio = get_object_or_404(Portfolio, pk=pk)
         
         # Ensure the user owns this portfolio (commented out for development)
-        # if request.user != portfolio.user:
-        #     messages.error(request, "Bạn không có quyền xóa danh mục này")
-        #     return redirect('portfolio_list')
+        if request.user != portfolio.user:
+            messages.error(request, "Bạn không có quyền xóa danh mục này")
+            return redirect('portfolio_list')
         
         if request.method == 'POST':
             # Check if portfolio has any symbols associated with it
@@ -694,7 +696,8 @@ def buy_stock(request, portfolio_id):
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                user = User.objects.get(pk=1)       # test user
+                # user = User.objects.get(pk=1)       # test user
+                user = request.user
                 symbol = request.POST.get('symbol')
                 quantity = int(request.POST.get('quantity'))
                 price = Decimal(request.POST.get('price'))
@@ -735,6 +738,8 @@ def buy_stock(request, portfolio_id):
                 
                 # Lưu giao dịch vào StockTransaction
                 stock_transaction = StockTransaction(
+                    user=user,
+                    portfolio=portfolio,
                     transaction_type='buy',
                     price=price,
                     quantity=quantity,
@@ -951,7 +956,7 @@ def set_default_bank_account(request, pk):
 def market(request):
     return render(request, 'portfolio/market.html')
 
-
+# @api_view(['GET'])
 def get_historical_data_api(request, stock_code):
     try:
         data = get_historical_data(stock_code)
@@ -1421,7 +1426,7 @@ def create_asset_from_symbol(request):
 
 
 
-# ============ PRICE BOARD API =======
+# ============ API =======
 from rest_framework.decorators import api_view
 @api_view(['GET'])
 def get_price_board_api(request):
@@ -1439,4 +1444,26 @@ def get_price_board_api(request):
         return JsonResponse({'data': json.loads(price_board_json)}, safe=False)
     
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# API lấy giá cổ phiếu hiện tại theo mã
+@api_view(['GET'])
+def get_current_price_symbol_api(request):
+    """
+    API endpoint để lấy giá cổ phiếu hiện tại
+    """
+    try:
+        if request.method == 'GET':
+            symbol = request.GET.get('symbol')
+            # print('='*100)
+            # print(symbol)
+            price_df = get_current_price(symbol)
+            # print(price_df)
+            price = float(price_df.iloc[0,1])
+            # print(price)
+            if price is None:
+                raise ValueError("Không tìm thấy giá cổ phiếu")
+            return JsonResponse({'symbol': symbol, 'price': price}, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -81,14 +81,14 @@ DATABASES = {
 }
 
 # Kiểm tra xem có thể kết nối tới 'db' không, nếu không thì dùng localhost
-try:
-    # Thử phân giải tên host 'db' thành địa chỉ IP
-    if DATABASES['default']['HOST'] == 'db':
-        socket.gethostbyname('db')
-except socket.gaierror:
-    # Không phân giải được, có thể đang chạy ngoài Docker
-    print("Không thể kết nối tới host 'db'. Chuyển sang sử dụng 'localhost'...")
-    DATABASES['default']['HOST'] = 'localhost'
+# try:
+#     # Thử phân giải tên host 'db' thành địa chỉ IP
+#     if DATABASES['default']['HOST'] == 'db':
+#         socket.gethostbyname('db')
+# except socket.gaierror:
+#     # Không phân giải được, có thể đang chạy ngoài Docker
+#     print("Không thể kết nối tới host 'db'. Chuyển sang sử dụng 'localhost'...")
+#     DATABASES['default']['HOST'] = 'localhost'
 
 print(DATABASES)
 
