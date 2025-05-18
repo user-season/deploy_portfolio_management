@@ -30,6 +30,7 @@
                                     </div>
                                     <div>
                                         <span class="badge bg-primary-soft text-primary mb-2">Chào mừng trở lại</span>
+                                        <!-- <h2 class="fw-bold mb-0">Xin chào, Nguyễn Văn A!</h2> -->
                                         <h2 class="fw-bold mb-0">Xin chào, {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}!</h2>
                                     </div>
                                 </div>
@@ -46,13 +47,9 @@
                             <div class="col-lg-6">
                                 <div class="welcome-illustration">
                                     <div class="activity-chart">
-                                        {% if user.get_profile_picture %}
-                                        <img src="{{ user.get_profile_picture }}" alt="{{ user.username }}" class="img-fluid rounded-circle profile-image" style="width: 200px; height: 200px; object-fit: cover; border: 5px solid var(--primary-color); box-shadow: 0 10px 25px rgba(126, 87, 194, 0.3);">
-                                        {% else %}
                                         <div class="user-avatar-placeholder rounded-circle d-flex align-items-center justify-content-center" style="width: 200px; height: 200px; background: linear-gradient(135deg, var(--primary-light), var(--primary-color)); border: 5px solid var(--primary-color); box-shadow: 0 10px 25px rgba(126, 87, 194, 0.3);">
-                                            <span style="font-size: 72px; color: white;">{{ user.username.0|upper }}</span>
+                                            <span style="font-size: 72px; color: white;">N</span>
                                         </div>
-                                        {% endif %}
                                         <div class="profile-glow"></div>
                                     </div>
                                 </div>
@@ -72,13 +69,14 @@
                     </h4>
                     <div class="date-picker-wrapper">
                         <span class="badge bg-primary-soft text-primary px-3 py-2">
-                            <i class="far fa-calendar-alt me-2"></i>{{ today|date:"d/m/Y" }}
+                            <i class="far fa-calendar-alt me-2"></i>
+                            <span id="today-calender"></span>
                         </span>
                     </div>
                 </div>
             </div>
 
-            <!-- Thống kê tổng quan -->
+            <!-- Thống kê tổng quan với dữ liệu mẫu -->
             <div class="col-md-6 col-lg-3 mb-4">
                 <div class="stat-card stat-card-portfolio">
                     <div class="stat-card-body">
@@ -86,12 +84,11 @@
                             <i class="fas fa-sack-dollar"></i>
                         </div>
                         <div class="stat-card-info">
-                            <span class="stat-card-title">Tổng giá trị danh mục</span>
-                            <div class="stat-card-value">{{ total_value|default:"0"|dinh_dang_tien }} VND</div>
+                            <span class="stat-card-title">Tổng giá trị tài sản</span>
+                            <div class="stat-card-value">{{ total_assets_wallet|dinh_dang_tien }} VND</div>
                             <div class="stat-card-progress">
-                                <span class="badge {% if total_profit > 0 %}bg-success-soft text-success{% elif total_profit < 0 %}bg-danger-soft text-danger{% else %}bg-secondary-soft text-secondary{% endif %}">
-                                    <i class="fas {% if total_profit > 0 %}fa-arrow-up{% elif total_profit < 0 %}fa-arrow-down{% else %}fa-minus{% endif %} me-1"></i>
-                                    {% if total_profit > 0 %}+{% endif %}{{ total_profit|default:"0"|floatformat:2 }}%
+                                <span class="badge bg-success-soft text-success">
+                                    <i class="fas fa-arrow-up me-1"></i>{{ profit_loss_percentage }}%
                                 </span>
                             </div>
                         </div>
@@ -107,9 +104,9 @@
                         </div>
                         <div class="stat-card-info">
                             <span class="stat-card-title">Số dư ví điện tử</span>
-                            <div class="stat-card-value">{{ wallet.balance|default:"0"|dinh_dang_tien }} VND</div>
+                            <div class="stat-card-value">{{ user_balance|dinh_dang_tien }} VND</div>
                             <div class="stat-card-progress">
-                                <a href="{% url 'wallet' %}" class="btn btn-sm btn-outline-primary rounded-pill btn-link">Quản lý ví</a>
+                                <a href="{% url 'wallet' %}" class="btn btn-sm btn-outline-primary rounded-pill btn-link" style="text-decoration: none;">Quản lý ví</a>
                             </div>
                         </div>
                     </div>
@@ -124,7 +121,7 @@
                         </div>
                         <div class="stat-card-info">
                             <span class="stat-card-title">Số danh mục</span>
-                            <div class="stat-card-value">{{ portfolios.count }}</div>
+                            <div class="stat-card-value">{{ number_of_portfolio }}</div>
                             <div class="stat-card-progress">
                                 <span class="text-muted">Danh mục đang quản lý</span>
                             </div>
@@ -140,8 +137,8 @@
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <div class="stat-card-info">
-                            <span class="stat-card-title">Tổng số tài sản</span>
-                            <div class="stat-card-value">{{ total_assets|default:"0" }}</div>
+                            <span class="stat-card-title">Tổng số cổ phiếu</span>
+                            <div class="stat-card-value">{{ number_of_stock }}</div>
                             <div class="stat-card-progress">
                                 <span class="text-muted">Cổ phiếu đang nắm giữ</span>
                             </div>
@@ -171,7 +168,7 @@
                         </div>
                     </div>
                     <div class="card-body p-0">
-                        {% if portfolios %}
+                        <!-- Hiển thị danh mục đầu tư mẫu -->
                         <div class="table-responsive dashboard-table">
                             <table class="table table-hover align-middle mb-0">
                                 <thead>
@@ -193,55 +190,91 @@
                                                 </div>
                                                 <div>
                                                     <h6 class="mb-0">{{ portfolio.name }}</h6>
-                                                    <small class="text-muted">{{ portfolio.investment_goal|default:"Chưa có mục tiêu" }}</small>
+                                                    <small class="text-muted">Đầu tư dài hạn</small>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="portfolio-value">{{ portfolio.total_value|default:"0"|dinh_dang_tien }} VND</span>
+                                            <span class="portfolio-value">756,000,000 VND</span>
                                         </td>
                                         <td>
-                                            {% with profit=portfolio.profit_loss_percentage %}
                                             <div class="profit-badge-wrapper">
-                                                <span class="profit-badge {% if profit > 0 %}profit-up{% elif profit < 0 %}profit-down{% else %}profit-neutral{% endif %}">
-                                                    {% if profit > 0 %}<i class="fas fa-caret-up me-1"></i>+{% elif profit < 0 %}<i class="fas fa-caret-down me-1"></i>{% else %}<i class="fas fa-minus me-1"></i>{% endif %}{{ profit|default:"0"|dinh_dang_tien }}%
+                                                <span class="profit-badge profit-up">
+                                                    <i class="fas fa-caret-up me-1"></i>+15.32%
                                                 </span>
                                             </div>
-                                            {% endwith %}
                                         </td>
                                         <td>
-                                            <span class="risk-badge risk-{% if portfolio.risk_tolerance == 'high' %}high{% elif portfolio.risk_tolerance == 'medium' %}medium{% else %}low{% endif %}">
-                                                <i class="fas fa-circle me-1"></i>{{ portfolio.get_risk_tolerance_display }}
+                                            <span class="risk-badge risk-high">
+                                                <i class="fas fa-circle me-1"></i>Cao
                                             </span>
                                         </td>
                                         <td class="pe-4 text-end">
                                             <div class="action-buttons">
-                                                <a href="{% url 'portfolio_detail' pk=portfolio.pk %}" class="btn btn-sm action-btn view-btn" title="Chi tiết">
+                                                <a href="{% url 'portfolio_detail' pk=1 %}" class="btn btn-sm action-btn view-btn" title="Chi tiết">
                                                     <i class="fas fa-eye"></i> <span class="action-text">Chi tiết</span>
                                                 </a>
-                                                <a href="{% url 'portfolio_update' pk=portfolio.pk %}" class="btn btn-sm action-btn edit-btn" title="Chỉnh sửa">
+                                                <a href="{% url 'portfolio_update' pk=1 %}" class="btn btn-sm action-btn edit-btn" title="Chỉnh sửa">
                                                     <i class="fas fa-edit"></i> <span class="action-text">Sửa</span>
                                                 </a>
                                             </div>
                                         </td>
                                     </tr>
+                                    {% empty %}
+                                    <div class="text-center py-5">
+                                        <div class="empty-state-icon">
+                                            <img src="https://cdn-icons-png.flaticon.com/512/1903/1903162.png" alt="Empty portfolio" class="img-fluid mb-4" style="max-width: 150px;">
+                                            <div class="empty-state-pulse"></div>
+                                        </div>
+                                        <h5 class="fw-bold mb-2">Chưa có danh mục đầu tư nào</h5>
+                                        <p class="text-muted mb-4">Hãy tạo danh mục đầu tư đầu tiên của bạn để theo dõi hiệu suất</p>
+                                        <a href="{% url 'portfolio_create' %}" class="btn btn-primary btn-lg rounded-pill px-4 pulse-btn">
+                                            <i class="fas fa-plus me-2"></i>Tạo danh mục mới
+                                        </a>
+                                    </div>
                                     {% endfor %}
+                                    <!-- Danh mục 1 -->
+                                    <!-- <tr class="portfolio-row">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="portfolio-icon me-3">
+                                                    <i class="fas fa-folder"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">Danh mục Tăng trưởng</h6>
+                                                    <small class="text-muted">Đầu tư dài hạn</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="portfolio-value">756,000,000 VND</span>
+                                        </td>
+                                        <td>
+                                            <div class="profit-badge-wrapper">
+                                                <span class="profit-badge profit-up">
+                                                    <i class="fas fa-caret-up me-1"></i>+15.32%
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="risk-badge risk-high">
+                                                <i class="fas fa-circle me-1"></i>Cao
+                                            </span>
+                                        </td>
+                                        <td class="pe-4 text-end">
+                                            <div class="action-buttons">
+                                                <a href="{% url 'portfolio_detail' pk=1 %}" class="btn btn-sm action-btn view-btn" title="Chi tiết">
+                                                    <i class="fas fa-eye"></i> <span class="action-text">Chi tiết</span>
+                                                </a>
+                                                <a href="{% url 'portfolio_update' pk=1 %}" class="btn btn-sm action-btn edit-btn" title="Chỉnh sửa">
+                                                    <i class="fas fa-edit"></i> <span class="action-text">Sửa</span>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr> -->
                                 </tbody>
                             </table>
                         </div>
-                        {% else %}
-                        <div class="text-center py-5">
-                            <div class="empty-state-icon">
-                                <img src="https://cdn-icons-png.flaticon.com/512/1903/1903162.png" alt="Empty portfolio" class="img-fluid mb-4" style="max-width: 150px;">
-                                <div class="empty-state-pulse"></div>
-                            </div>
-                            <h5 class="fw-bold mb-2">Chưa có danh mục đầu tư nào</h5>
-                            <p class="text-muted mb-4">Hãy tạo danh mục đầu tư đầu tiên của bạn để theo dõi hiệu suất</p>
-                            <a href="{% url 'portfolio_create' %}" class="btn btn-primary btn-lg rounded-pill px-4 pulse-btn">
-                                <i class="fas fa-plus me-2"></i>Tạo danh mục mới
-                            </a>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -329,7 +362,7 @@
                         </div>
                     </div>
                     <div class="card-body p-0">
-                        {% if recent_transactions %}
+                        <!-- Hiển thị giao dịch mẫu -->
                         <div class="table-responsive dashboard-table">
                             <table class="table table-hover align-middle mb-0">
                                 <thead>
@@ -343,54 +376,148 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for transaction in recent_transactions %}
+                                    <!-- Giao dịch 1 -->
                                     <tr class="transaction-row">
                                         <td class="ps-4">
                                             <div class="d-flex align-items-center">
-                                                <div class="stock-icon me-3 {% if transaction.transaction_type == 'buy' %}stock-buy{% else %}stock-sell{% endif %}">
+                                                <div class="stock-icon me-3 stock-buy">
                                                     <i class="fas fa-chart-line"></i>
                                                 </div>
                                                 <div>
-                                                    <h6 class="mb-0">{{ transaction.asset.symbol }}</h6>
-                                                    <small class="text-muted">{{ transaction.asset.name }}</small>
+                                                    <h6 class="mb-0">VNM</h6>
+                                                    <small class="text-muted">Vinamilk</small>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="transaction-badge {% if transaction.transaction_type == 'buy' %}transaction-buy{% else %}transaction-sell{% endif %}">
-                                                {% if transaction.transaction_type == 'buy' %}<i class="fas fa-arrow-alt-circle-down me-1"></i>{% else %}<i class="fas fa-arrow-alt-circle-up me-1"></i>{% endif %}
-                                                {{ transaction.get_transaction_type_display }}
+                                            <span class="transaction-badge transaction-buy">
+                                                <i class="fas fa-arrow-alt-circle-down me-1"></i>
+                                                Mua
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="transaction-quantity">{{ transaction.quantity }}</span>
+                                            <span class="transaction-quantity">200</span>
                                         </td>
                                         <td>
-                                            <span class="transaction-price">{{ transaction.price|default:"0"|dinh_dang_tien }} VND</span>
+                                            <span class="transaction-price">85,000 VND</span>
                                         </td>
                                         <td>
-                                            <span class="transaction-total">{{ transaction.total_amount|default:"0"|dinh_dang_tien }} VND</span>
+                                            <span class="transaction-total">17,000,000 VND</span>
                                         </td>
                                         <td class="pe-4">
                                             <span class="transaction-date">
-                                                <i class="far fa-clock me-1"></i>{{ transaction.transaction_date|date:"d/m/Y H:i" }}
+                                                <i class="far fa-clock me-1"></i>15/05/2024 10:30
                                             </span>
                                         </td>
                                     </tr>
-                                    {% endfor %}
+                                    
+                                    <!-- Giao dịch 2 -->
+                                    <tr class="transaction-row">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="stock-icon me-3 stock-sell">
+                                                    <i class="fas fa-chart-line"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">FPT</h6>
+                                                    <small class="text-muted">FPT Corporation</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-badge transaction-sell">
+                                                <i class="fas fa-arrow-alt-circle-up me-1"></i>
+                                                Bán
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-quantity">150</span>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-price">110,500 VND</span>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-total">16,575,000 VND</span>
+                                        </td>
+                                        <td class="pe-4">
+                                            <span class="transaction-date">
+                                                <i class="far fa-clock me-1"></i>14/05/2024 14:15
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Giao dịch 3 -->
+                                    <tr class="transaction-row">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="stock-icon me-3 stock-buy">
+                                                    <i class="fas fa-chart-line"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">MWG</h6>
+                                                    <small class="text-muted">Mobile World</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-badge transaction-buy">
+                                                <i class="fas fa-arrow-alt-circle-down me-1"></i>
+                                                Mua
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-quantity">300</span>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-price">62,800 VND</span>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-total">18,840,000 VND</span>
+                                        </td>
+                                        <td class="pe-4">
+                                            <span class="transaction-date">
+                                                <i class="far fa-clock me-1"></i>13/05/2024 09:45
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Giao dịch 4 -->
+                                    <tr class="transaction-row">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="stock-icon me-3 stock-buy">
+                                                    <i class="fas fa-chart-line"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">HPG</h6>
+                                                    <small class="text-muted">Hòa Phát Group</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-badge transaction-buy">
+                                                <i class="fas fa-arrow-alt-circle-down me-1"></i>
+                                                Mua
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-quantity">500</span>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-price">25,400 VND</span>
+                                        </td>
+                                        <td>
+                                            <span class="transaction-total">12,700,000 VND</span>
+                                        </td>
+                                        <td class="pe-4">
+                                            <span class="transaction-date">
+                                                <i class="far fa-clock me-1"></i>12/05/2024 11:20
+                                            </span>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
-                        {% else %}
-                        <div class="text-center py-5">
-                            <div class="empty-state-icon">
-                                <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="No transactions" class="img-fluid mb-4" style="max-width: 150px;">
-                                <div class="empty-state-pulse"></div>
-                            </div>
-                            <h5 class="fw-bold mb-2">Chưa có giao dịch nào</h5>
-                            <p class="text-muted mb-1">Bắt đầu giao dịch để theo dõi lịch sử của bạn</p>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -1037,4 +1164,15 @@
     border-radius: 50rem !important;
 }
 </style>
-{% endblock %} 
+
+<script>
+    function updateDay(){
+        const today = `${(new Date()).toISOString().split('T')[0]}`;
+        document.getElementById('today-calender').textContent = today;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDay();
+    });
+</script>
+{% endblock %}

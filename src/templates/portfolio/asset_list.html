@@ -26,24 +26,24 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-xl" aria-labelledby="buyAssetDropdown">
                             <li>
-                                <a class="dropdown-item" href="{% if request.user.portfolios.first %}{% url 'buy_stock' portfolio_id=request.user.portfolios.first.id %}{% else %}{% url 'portfolio_list' %}{% endif %}">
+                                <a class="dropdown-item" href="{% url 'portfolio_list' %}">
                                     <i class="fas fa-shopping-cart text-success"></i>
                                     <span>Mua cổ phiếu</span>
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="{% if request.user.portfolios.first %}{% url 'sell_stock' portfolio_id=request.user.portfolios.first.id %}{% else %}{% url 'portfolio_list' %}{% endif %}">
+                                <a class="dropdown-item" href="{% url 'portfolio_list' %}">
                                     <i class="fas fa-hand-holding-usd text-danger"></i>
                                     <span>Bán cổ phiếu</span>
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li>
+                            <!-- <li>
                                 <a class="dropdown-item" href="{% url 'asset_create' %}">
                                     <i class="fas fa-plus text-primary"></i>
                                     <span>Thêm mã cổ phiếu mới</span>
                                 </a>
-                            </li>
+                            </li> -->
                         </ul>
                     </div>
                 </div>
@@ -61,7 +61,7 @@
                     </div>
                     <div class="card-info">
                         <h3 class="info-title">Tổng giá trị tài sản</h3>
-                        <div class="info-value">{{ total_current_value|default:"0"|dinh_dang_tien }} <span class="currency">VND</span></div>
+                        <div class="info-value">{{ total_assets|default:"0"|dinh_dang_tien }} <span class="currency">VND</span></div>
                         <div class="progress-bar">
                             <div class="progress-fill" style="width: 100%;"></div>
                         </div>
@@ -69,17 +69,17 @@
                 </div>
                 
                 <div class="analytics-card" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card-icon profit-loss {% if total_profit_loss > 0 %}positive{% elif total_profit_loss < 0 %}negative{% else %}neutral{% endif %}">
-                        <i class="fas {% if total_profit_loss > 0 %}fa-chart-line{% elif total_profit_loss < 0 %}fa-chart-line-down{% else %}fa-equals{% endif %}"></i>
+                    <div class="card-icon profit-loss {% if profit_loss > 0 %}positive{% elif profit_loss < 0 %}negative{% else %}neutral{% endif %}">
+                        <i class="fas {% if profit_loss > 0 %}fa-chart-line{% elif profit_loss < 0 %}fa-chart-line-down{% else %}fa-equals{% endif %}"></i>
                     </div>
                     <div class="card-info">
                         <h3 class="info-title">Lãi/Lỗ</h3>
-                        <div class="info-value {% if total_profit_loss > 0 %}text-success{% elif total_profit_loss < 0 %}text-danger{% endif %}">
-                            {% if total_profit_loss > 0 %}+{% endif %}{{ total_profit_loss|default:"0"|dinh_dang_tien }} <span class="currency">VND</span>
+                        <div class="info-value {% if profit_loss > 0 %}text-success{% elif profit_loss < 0 %}text-danger{% endif %}">
+                            {% if profit_loss > 0 %}+{% endif %}{{ profit_loss|default:"0"|dinh_dang_tien }} <span class="currency">VND</span>
                         </div>
-                        <div class="info-percent {% if total_profit_loss > 0 %}positive{% elif total_profit_loss < 0 %}negative{% else %}neutral{% endif %}">
-                            {% if total_profit_loss > 0 %}+{% endif %}{{ total_profit_loss_percent|floatformat:2|default:"0.00" }}%
-                            <i class="fas {% if total_profit_loss > 0 %}fa-arrow-up{% elif total_profit_loss < 0 %}fa-arrow-down{% else %}fa-minus{% endif %}"></i>
+                        <div class="info-percent {% if profit_loss > 0 %}positive{% elif profit_loss < 0 %}negative{% else %}neutral{% endif %}">
+                            {% if profit_loss > 0 %}+{% endif %}{{ profit_loss_percentage|floatformat:2|default:"0.00" }}%
+                            <i class="fas {% if profit_loss > 0 %}fa-arrow-up{% elif profit_loss < 0 %}fa-arrow-down{% else %}fa-minus{% endif %}"></i>
                         </div>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
                     </div>
                     <div class="card-info">
                         <h3 class="info-title">Số lượng tài sản</h3>
-                        <div class="info-value">{{ assets.count|default:"0" }} <span class="unit">mã CP</span></div>
+                        <div class="info-value">{{ number_of_stock|default:"0" }} <span class="unit">mã CP</span></div>
                         <div class="info-meta">Đa dạng hóa danh mục của bạn</div>
                     </div>
                 </div>
@@ -123,7 +123,7 @@
                                    placeholder="Tìm kiếm theo mã hoặc tên...">
                         </div>
                         
-                        <div class="form-group">
+                        <!-- <div class="form-group">
                             <select name="type" class="form-select">
                                 <option value="">-- Tất cả loại --</option>
                                 {% for type, label in asset_types %}
@@ -143,7 +143,7 @@
                                     </option>
                                 {% endfor %}
                             </select>
-                        </div>
+                        </div> -->
                         
                         <button type="submit" class="btn-filter">
                             <i class="fas fa-filter"></i>
@@ -198,8 +198,8 @@
                                 </td>
                                 <td>
                                     <div class="asset-name">
-                                        <span class="name-text">{{ asset.name }}</span>
-                                        <span class="asset-type">{{ asset.get_type_display }}</span>
+                                        <span class="name-text">{{ asset.company_name }}</span>
+                                        <!-- <span class="asset-type">{{ asset.get_type_display }}</span> -->
                                     </div>
                                 </td>
                                 <td class="text-end">
@@ -214,7 +214,7 @@
                                     <div class="price-unit">VND</div>
                                 </td>
                                 <td class="text-end">
-                                    <div class="total-value">{{ asset.total_value|default:"0"|dinh_dang_tien }}</div>
+                                    <div class="total-value">{{ asset.total_buy_price_symbol|default:"0"|dinh_dang_tien }}</div>
                                     <div class="price-unit">VND</div>
                                 </td>
                                 <td class="text-end">
@@ -224,7 +224,7 @@
                                             {% if asset.profit_loss > 0 %}+{% endif %}{{ asset.profit_loss|dinh_dang_tien }} VND
                                         </div>
                                         <div class="profit-percent {% if asset.profit_loss > 0 %}positive{% elif asset.profit_loss < 0 %}negative{% else %}neutral{% endif %}">
-                                            {% if asset.profit_loss > 0 %}+{% endif %}{{ asset.profit_loss_percent|floatformat:2 }}%
+                                            {% if asset.profit_loss > 0 %}+{% endif %}{{ asset.profit_loss_percentage|floatformat:2 }}%
                                         </div>
                                     </div>
                                     {% else %}
@@ -236,7 +236,7 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="action-buttons">
-                                        <a href="{% url 'asset_detail' pk=asset.pk %}" class="btn-action view" title="Xem chi tiết">
+                                        <!-- <a href="{% url 'asset_detail' pk=asset.pk %}" class="btn-action view" title="Xem chi tiết">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <a href="{% url 'asset_update' pk=asset.pk %}" class="btn-action edit" title="Chỉnh sửa">
@@ -244,7 +244,7 @@
                                         </a>
                                         <button type="button" class="btn-action trade" data-bs-toggle="modal" data-bs-target="#tradeModal{{ asset.pk }}" title="Giao dịch">
                                             <i class="fas fa-exchange-alt"></i>
-                                        </button>
+                                        </button> -->
                                     </div>
                                 </td>
                             </tr>
@@ -261,11 +261,11 @@
                 <h3 class="empty-title">Chưa có cổ phiếu nào trong danh mục</h3>
                 <p class="empty-desc">Hãy bắt đầu đầu tư bằng cách thêm cổ phiếu vào danh mục của bạn</p>
                 <div class="empty-actions">
-                    <a href="{% url 'asset_create' %}" class="btn-action-large primary">
+                    <a href="{% url 'portfolio_list' %}" class="btn-action-large primary">
                         <i class="fas fa-shopping-cart"></i>
                         <span>Mua cổ phiếu mới</span>
                     </a>
-                    <a href="{% url 'transaction_create' %}" class="btn-action-large secondary">
+                    <a href="{% url 'portfolio_list' %}" class="btn-action-large secondary">
                         <i class="fas fa-hand-holding-usd"></i>
                         <span>Bán cổ phiếu</span>
                     </a>
@@ -345,11 +345,11 @@
                 </div>
                 
                 <div class="trade-buttons">
-                    <a href="{% if request.user.portfolios.first %}{% url 'buy_stock' portfolio_id=request.user.portfolios.first.id %}{% else %}#{% endif %}" class="btn-trade buy">
+                    <a href="{% url 'portfolio_list' %}" class="btn-trade buy">
                         <i class="fas fa-shopping-cart"></i>
                         <span>Mua</span>
                     </a>
-                    <a href="{% if request.user.portfolios.first %}{% url 'sell_stock' portfolio_id=request.user.portfolios.first.id %}{% else %}#{% endif %}" class="btn-trade sell">
+                    <a href="{% url 'portfolio_list' %}" class="btn-trade sell">
                         <i class="fas fa-hand-holding-usd"></i>
                         <span>Bán</span>
                     </a>
@@ -962,11 +962,11 @@
 .qty-value {
     font-weight: 600;
 }
-
+/* 
 .price-value {
     font-weight: 700;
     margin-bottom: 2px;
-}
+} */
 
 .price-unit {
     font-size: 0.75rem;
@@ -1298,9 +1298,11 @@
 }
 
 .price-value {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 700;
     margin-bottom: 8px;
+    font-weight: 700;
+    margin-bottom: 2px;
 }
 
 .price-updated {

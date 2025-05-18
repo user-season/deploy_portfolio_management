@@ -357,16 +357,12 @@
         }
         
         const transactionType = "{{ transaction_type }}";
-        
-        // Calculate total amount based on quantity and price
+          // Calculate total amount based on quantity and price
         const calculateTotal = function() {
             const quantity = parseInt(document.getElementById('id_quantity').value) || 0;
-            const price = document.getElementById('id_price').value;
-            // if (price){
-            //     price = price.toString().replace(/,/g, '');
-            //     console.log(price);
-            // }
-            console.log("price get:",price);
+            // Make sure we handle price properly, converting any string to number
+            const priceStr = document.getElementById('id_price').value;
+            const price = parseFloat(priceStr.replace(/[.,\s]/g, '')) || 0;
             const total = quantity * price;
             
             // Update displayed total
@@ -445,30 +441,33 @@
                     if (data && data.price) {
                         const price = data.price;
                         // Format price as integer value (without decimal places)
-                        // new Intl.NumberFormat('vi-VN').format(price)
                         const formattedPrice = Math.round(price);
-                        // const formattedPrice = price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                        // console.log("formattedPrice:",formattedPrice, typeof formattedPrice);
                         document.getElementById('id_price').value = formattedPrice;
-                        // console.log("id_price:",document.getElementById('id_price').value, typeof document.getElementById('id_price').value);
+                        
                         // Update price display in stock info box if available
-                        // if (stockInfo && !stockInfo.classList.contains('d-none')) {
-                        //     // Format with Vietnamese locale and currency style
-                        //     stockInfo.querySelector('.stock-price-box').innerHTML = 
-                        //         `<i class="fas fa-tag me-1"></i> ${new Intl.NumberFormat('vi-VN').format(formattedPrice)} VNĐ`;
-                        // }
+                        if (stockInfo && !stockInfo.classList.contains('d-none')) {
+                            // Format with Vietnamese locale and currency style
+                            stockInfo.querySelector('.stock-price-box').innerHTML = 
+                                `<i class="fas fa-tag me-1"></i> ${new Intl.NumberFormat('vi-VN').format(formattedPrice)} VNĐ`;
+                        }
                         
                         calculateTotal();
                     } else {
                         console.error('Invalid price data returned from API');
                     }
-                })
-                .catch(error => {
+                })                .catch(error => {
                     console.error('Error fetching price:', error);
                     refreshIcon.classList.remove('fa-spin');
                     // Use fallback price as a default
-                    const fallbackPrice = "10.000";
+                    const fallbackPrice = 10000;
                     document.getElementById('id_price').value = fallbackPrice;
+                    
+                    // Also update the display with the fallback price
+                    if (stockInfo && !stockInfo.classList.contains('d-none')) {
+                        stockInfo.querySelector('.stock-price-box').innerHTML = 
+                            `<i class="fas fa-tag me-1"></i> ${new Intl.NumberFormat('vi-VN').format(fallbackPrice)} VNĐ`;
+                    }
+                    
                     calculateTotal();
                 });
         }
@@ -492,10 +491,18 @@
                         fetchCurrentPrice(symbol);
                     }
                 }
-            }, 500);
-        });// Additional event handling for sell transactions
+                }, 500);
+        });
+        
+        // Additional event handling for sell transactions
         if (transactionType === 'sell') {
             const symbolSelect = document.getElementById('id_symbol');
+            
+            // Automatically fetch the current price when the form loads with a preselected symbol
+            if (symbolSelect.selectedIndex > 0) {
+                const symbol = symbolSelect.value;
+                fetchCurrentPrice(symbol);
+            }
             
             symbolSelect.addEventListener('change', function() {
                 if (this.selectedIndex > 0) {
@@ -520,7 +527,7 @@
                         quantityInput.value = maxQuantity;
                     }
                     
-                    // Fetch current price from API
+                    // Automatically fetch current price from API when a stock is selected
                     fetchCurrentPrice(symbol);
                     
                     calculateTotal();

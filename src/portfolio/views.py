@@ -226,7 +226,9 @@ def dashboard(request):
     user_balance = wallet.balance
 
     list_stock = list(Assets.objects.filter(user=user).values_list('symbol', flat=True))
-    portfolios = Portfolio.objects.filter(user=user)
+    portfolios = Portfolio.objects.filter(user=user).values_list('id', flat=True).order_by('name')[:5]
+    print('='*100)
+    print(portfolios)
     if list_stock:
         current_price_stock = get_current_price(list_stock)
         # print(current_price_stock)
@@ -256,6 +258,7 @@ def dashboard(request):
         "user_balance": user_balance,
         "number_of_portfolio": number_of_portfolio,
         "number_of_stock": number_of_stock,
+        "portfolios": portfolios,
     }
     return render(request, 'portfolio/dashboard.html', context)
 
@@ -272,55 +275,6 @@ def portfolio_list(request):
         portfolio_value = portfolio_symbol_list.aggregate(total_value=Sum(F('quantity') * F('average_price')))['total_value'] or 0
         portfolio.portfolio_value = portfolio_value
     return render(request, 'portfolio/portfolio_list.html', {'portfolios': portfolios})
-
-@login_required
-def portfolio_create(request):
-    if request.method == 'POST':
-        # Lấy dữ liệu từ form
-        name = request.POST.get('name').strip()  # Loại bỏ khoảng trắng ở đầu và cuối
-        description = request.POST.get('description')
-        investment_goal = request.POST.get('investment_goal')
-        target_value = request.POST.get('target_value')
-        risk_tolerance = request.POST.get('risk_tolerance')
-
-        # Tạo context với dữ liệu form để sử dụng khi render lại form
-        form_data = {
-            'name': name,
-            'description': description,
-            'investment_goal': investment_goal,
-            'target_value': target_value,
-            'risk_tolerance': risk_tolerance
-        }
-        print("=" * 100)
-        print(form_data)
-
-        # Kiểm tra điều kiện bắt buộc
-        if (not name):
-            messages.error(request, 'Hãy đảm bảo đầy đủ thông tin!')
-            return render(request, 'portfolio/portfolio_form.html', context={'form_data': form_data})
-
-        try:
-            # Tạo danh mục đầu tư
-            with transaction.atomic():
-                portfolio = Portfolio.objects.create(
-                    name=name,
-                    user=request.user,
-                    # user=User.objects.get(pk=1),
-                    description=description,
-                    investment_goal=investment_goal,
-                    target_value=Decimal(float(target_value)) if target_value else 0,
-                    risk_tolerance=risk_tolerance
-                )
-
-                # Thông báo thành công
-                messages.success(request, f'Danh mục "{portfolio.name}" đã được tạo thành công!')
-                return redirect('portfolio_list')  # Chuyển hướng đến danh sách danh mục đầu tư
-
-        except IntegrityError:
-            # Xử lý trường hợp tên danh mục đã tồn tại
-            messages.error(request, f'Tên danh mục "{name}" đã tồn tại. Vui lòng chọn tên khác.')
-            return render(request, 'portfolio/portfolio_form.html', context={'form_data': form_data})
-    return render(request, 'portfolio/portfolio_form.html')
 
 @login_required
 def portfolio_detail(request, pk):
@@ -341,9 +295,9 @@ def portfolio_detail(request, pk):
         portfolio_symbols = PortfolioSymbol.objects.filter(portfolio=portfolio)
         symbols_in_portfolio = [ps.symbol for ps in portfolio_symbols]
         
-        # Lấy các giao dịch gần nhất của portfolio này dựa trên symbols
+        # Lấy các giao dịch gần nhất của portfolio này dựa trên portfolio_id
         recent_transactions = StockTransaction.objects.filter(
-            symbol__in=symbols_in_portfolio
+            portfolio=portfolio
         ).order_by('-transaction_time')[:5]  # Lấy 5 giao dịch gần nhất
 
         # Xử lý thông tin portfolio symbols
@@ -458,6 +412,55 @@ def portfolio_detail(request, pk):
     return render(request, 'portfolio/portfolio_detail.html', context)
 
 @login_required
+def portfolio_create(request):
+    if request.method == 'POST':
+        # Lấy dữ liệu từ form
+        name = request.POST.get('name').strip()  # Loại bỏ khoảng trắng ở đầu và cuối
+        description = request.POST.get('description')
+        investment_goal = request.POST.get('investment_goal')
+        target_value = request.POST.get('target_value')
+        risk_tolerance = request.POST.get('risk_tolerance')
+
+        # Tạo context với dữ liệu form để sử dụng khi render lại form
+        form_data = {
+            'name': name,
+            'description': description,
+            'investment_goal': investment_goal,
+            'target_value': target_value,
+            'risk_tolerance': risk_tolerance
+        }
+        print("=" * 100)
+        print(form_data)
+
+        # Kiểm tra điều kiện bắt buộc
+        if (not name):
+            messages.error(request, 'Hãy đảm bảo đầy đủ thông tin!')
+            return render(request, 'portfolio/portfolio_form.html', context={'form_data': form_data})
+
+        try:
+            # Tạo danh mục đầu tư
+            with transaction.atomic():
+                portfolio = Portfolio.objects.create(
+                    name=name,
+                    user=request.user,
+                    # user=User.objects.get(pk=1),
+                    description=description,
+                    investment_goal=investment_goal,
+                    target_value=Decimal(float(target_value)) if target_value else 0,
+                    risk_tolerance=risk_tolerance
+                )
+
+                # Thông báo thành công
+                messages.success(request, f'Danh mục "{portfolio.name}" đã được tạo thành công!')
+                return redirect('portfolio_list')  # Chuyển hướng đến danh sách danh mục đầu tư
+
+        except IntegrityError:
+            # Xử lý trường hợp tên danh mục đã tồn tại
+            messages.error(request, f'Tên danh mục "{name}" đã tồn tại. Vui lòng chọn tên khác.')
+            return render(request, 'portfolio/portfolio_form.html', context={'form_data': form_data})
+    return render(request, 'portfolio/portfolio_form.html')
+
+@login_required
 def portfolio_update(request, pk):
     try:
         portfolio = get_object_or_404(Portfolio, pk=pk)
@@ -562,17 +565,29 @@ def portfolio_delete(request, pk):
 
 @login_required
 def asset_list(request):
-    user = User.objects.get(pk=1)
+    # user = User.objects.get(pk=1)
+    user = request.user
 
-    list_stock = Assets.objects.filter(user=user)
-    for stock in list_stock:
+    assets = Assets.objects.filter(user=user)
+    # print(assets)
+    list_stocks = list(assets.values_list('symbol', flat=True))
+    company_name_df = get_company_name(list_stocks)
+    for i, stock in enumerate(assets):
+        # print(stock.symbol)
         current_price_stock_df = get_current_price(stock.symbol)
         current_price_stock = Decimal(float(current_price_stock_df.iloc[0,1]))
         Assets.objects.filter(user=user, symbol=stock.symbol).update(current_price=current_price_stock)
-    total_assets = list_stock.aggregate(
+        stock.company_name = company_name_df.iloc[i, 1]
+        # print('='*100)
+        # print(stock.company_name)
+        stock.total_buy_price_symbol = stock.quantity * stock.current_price
+        stock.profit_loss_percentage = (stock.current_price - stock.average_price)/stock.average_price * 100
+        # print(stock.current_price)
+    total_assets = assets.aggregate(
         total=Sum(F('quantity') * F('current_price'))
     )['total'] or 0
-    total_buy_price = list_stock.aggregate(total_buy=Sum(F('quantity') * F('average_price')))['total_buy'] or 0
+    # print(total_assets)
+    total_buy_price = assets.aggregate(total_buy=Sum(F('quantity') * F('average_price')))['total_buy'] or 0
     profit_loss = 0
     if total_buy_price!=0:
         profit_loss = ((total_assets - total_buy_price))
@@ -580,13 +595,14 @@ def asset_list(request):
     else:
         profit_loss_percentage=0
         profit_loss_percentage=0
-    number_of_stock = list_stock.count()
+    number_of_stock = assets.count()
 
     context = {
         "total_assets": total_assets,
         "profit_loss": profit_loss,
         "profit_loss_percentage": profit_loss_percentage,
         "number_of_stock": number_of_stock,
+        "assets" : assets,
     }
     return render(request, 'portfolio/asset_list.html', context)
 
@@ -703,6 +719,11 @@ def buy_stock(request, portfolio_id):
                 price = Decimal(request.POST.get('price'))
                 notes = request.POST.get('notes')
                 total_buy_price = float(quantity) * float(price)
+                user_balance = Wallet.objects.get(user=user).balance
+                if user_balance < total_buy_price:
+                    formatted = f"{float(user_balance):,.0f}".replace(",", ".")
+                    messages.error(request, f"Số dư không đủ để thực hiện giao dịch này. Số dư hiện tại: {formatted} VND")
+                    return render(request, 'portfolio/transaction_form.html', context)
                 
                 current_price_symbol = Decimal(float(get_current_price(symbol).iloc[0,1]))
                 # print(current_price_symbol, type(current_price_symbol))
@@ -786,6 +807,11 @@ def buy_stock(request, portfolio_id):
 @login_required
 def sell_stock(request, portfolio_id):
     portfolio = get_object_or_404(Portfolio, pk=portfolio_id)
+    user = request.user
+    if portfolio.user != user:
+        messages.error(request, "Bạn không có quyền truy cập vào danh mục này.")
+        return redirect('portfolio_list')
+    
     transaction_type = 'sell'
     
     # Get all stock symbols in this portfolio for the sell form dropdown
@@ -804,7 +830,7 @@ def sell_stock(request, portfolio_id):
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                user = User.objects.get(pk=1)  # test user
+                # user = User.objects.get(pk=1)  # test user
                 symbol = request.POST.get('symbol')
                 quantity = int(request.POST.get('quantity'))
                 price = Decimal(request.POST.get('price'))
@@ -846,6 +872,8 @@ def sell_stock(request, portfolio_id):
                 
                 # Create a transaction record
                 stock_transaction = StockTransaction(
+                    user=user,
+                    portfolio=portfolio if portfolio_symbol_exists else None,
                     transaction_type='sell',
                     price=price,
                     quantity=quantity,
@@ -871,6 +899,10 @@ def sell_stock(request, portfolio_id):
                         asset.save()
                 except Assets.DoesNotExist:
                     messages.warning(request, f'Không tìm thấy tài sản {symbol} trong cơ sở dữ liệu.')
+
+                Wallet.objects.filter(user=user).update(balance = F('balance') + total_sell_price)
+                user_wallet = Wallet.objects.get(user=user)
+                user_wallet.refresh_from_db()
                 
                 messages.success(request, f'Đã bán thành công {quantity} cổ phiếu {symbol} với giá {price:,} VND')
                 return redirect('portfolio_detail', pk=portfolio_id)
@@ -893,12 +925,15 @@ def portfolio_transactions(request, portfolio_id):
 
 # @login_required
 def wallet(request):
-    # user = request.user
-    user = User.objects.get(pk=1)
+    user = request.user
+    # user = User.objects.get(pk=1)
     wallet, created = Wallet.objects.get_or_create(user=user, defaults={'balance': 0})
     user_balance = wallet.balance
+    context = {
+        "user_balance": user_balance,
+    }
     
-    return render(request, 'portfolio/wallet.html')
+    return render(request, 'portfolio/wallet.html', context)
 
 # @login_required
 def deposit_money(request):

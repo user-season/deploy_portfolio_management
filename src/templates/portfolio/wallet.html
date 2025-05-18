@@ -77,7 +77,7 @@
                         </div>
                         <h5 class="mb-0">Số dư hiện tại</h5>
                     </div>
-                    <h2 class="display-6 fw-bold mb-0">{{ wallet.balance|default:0|dinh_dang_tien }} VNĐ</h2>
+                    <h2 class="display-6 fw-bold mb-0">{{ user_balance|default:0|dinh_dang_tien }} VNĐ</h2>
                     <p class="mt-2 mb-0 opacity-75">Cập nhật lúc: {{ wallet.last_updated|date:"H:i d/m/Y"|default:"--" }}</p>
                 </div>
             </div>
