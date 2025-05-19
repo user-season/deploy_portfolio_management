@@ -383,14 +383,7 @@
                     e.preventDefault();
                     e.stopPropagation();
                 });
-            }
-        });
-        
-        // Make sure bank account selection is visible on load
-        const bankAccountSection = document.querySelector('.card-header h5 i.fa-university');
-        if (bankAccountSection) {
-            bankAccountSection.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+            }        });
         
         // Bank name change for new account
         const bankNameSelect = document.getElementById('new_bank_name');
@@ -616,7 +609,7 @@
         </ol>
     </nav>
 
-    {% if messages %}
+    <!-- {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} rounded-4 mb-4">
                 <div class="d-flex">
@@ -630,7 +623,7 @@
                 </div>
             </div>
         {% endfor %}
-    {% endif %}
+    {% endif %} -->
 
     <div class="row">
         <div class="col-lg-8">
@@ -787,7 +780,6 @@
                                        class="form-control form-control-lg shadow-sm amount-input" 
                                        style="border-radius: 12px 0 0 12px; border: 2px solid #ced4da; border-right: none; font-size: 1.5rem; font-weight: 500;"
                                        placeholder="Nhập số tiền" 
-                                       value="{{ form.amount.value|default:'100000' }}" 
                                        min="10000" 
                                        required>
                                 <span class="input-group-text fw-bold" 
@@ -795,16 +787,16 @@
                                     VNĐ
                                 </span>
                             </div>
-                            {% if form.amount.errors %}
+                            <!-- {% if form.amount.errors %}
                                 <div class="text-danger small mt-1">
                                     {% for error in form.amount.errors %}
                                         {{ error }}
                                     {% endfor %}
                                 </div>
-                            {% endif %}
+                            {% endif %} -->
                             <div class="form-text mt-2 d-flex align-items-center">
                                 <i class="fas fa-info-circle text-primary me-2"></i>
-                                <span>Số tiền tối thiểu <span class="fw-bold">10,000 VNĐ</span></span>
+                                <span>Số tiền tối thiểu <span class="fw-bold">100,000 VNĐ</span></span>
                             </div>
                             <div class="mt-3 p-3 rounded-3" 
                                  style="background-color: rgba(248, 249, 250, 0.7); border-left: 4px solid #20c997;">
@@ -815,8 +807,8 @@
                                     <div>
                                         <div class="small text-muted">Số tiền bạn sẽ nhận:</div>
                                         <div class="fw-bold text-success">
-                                            <span class="amount-display" style="font-size: 1.1rem;">
-                                                {{ form.amount.value|default:'100000'|floatformat:0 }}
+                                            <span class="amount-display" style="font-size: 1.1rem;">0   
+                                                <!-- {{ form.amount.value|default:'100000'|floatformat:0 }} -->
                                             </span> VNĐ
                                         </div>
                                     </div>
@@ -937,13 +929,13 @@
                                                     <div class="row mb-2 bank-info-row">
                                                         <div class="col-5 text-muted">Số tiền:</div>
                                                         <div class="col-7 fw-bold text-success">
-                                                            <span class="amount-display">{{ form.amount.value|default:'100000'|floatformat:0 }}</span> VNĐ
+                                                            <span class="amount-display">0</span> VNĐ
                                                         </div>
                                                     </div>
                                                     <div class="row bank-info-row">
                                                         <div class="col-5 text-muted">Nội dung CK:</div>
                                                         <div class="col-7 fw-bold font-monospace">
-                                                            <span class="small transfer-content">{{ transaction_id }} {{ form.amount.value|default:'100000' }} {{ request.user.username }}</span>
+                                                            <span class="small transfer-content">{{ transaction_id }} 0 {{ request.user.username }}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -978,17 +970,17 @@
                                     <div class="mb-3">
                                         <label class="form-label">Chọn tài khoản ngân hàng hoặc thêm tài khoản mới</label>
                                         
-                                        {% if form.bank_account.field.queryset.exists %}
+                                        {% if bank_accounts %}
                                         <div class="row g-3 mb-4">
-                                            {% for account in form.bank_account.field.queryset %}
+                                            {% for account in bank_accounts %}
                                             <div class="col-md-6">
                                                 <div class="form-check">
                                                     <input class="form-check-input visually-hidden" 
                                                            type="radio" 
                                                            name="bank_account" 
-                                                           id="account_{{ account.id }}" 
+                                                           id="account_{{ account.id }}"
                                                            value="{{ account.id }}"
-                                                           {% if form.bank_account.value|stringformat:"s" == account.id|stringformat:"s" %}checked{% elif account.is_default and not form.bank_account.value %}checked{% endif %}>
+                                                           {% if account.is_default %}checked{% endif %}>
                                                     <label class="form-check-label w-100" for="account_{{ account.id }}">
                                                         <div class="card border shadow-sm rounded-4 p-3 {% if form.bank_account.value|stringformat:"s" == account.id|stringformat:"s" or account.is_default and not form.bank_account.value %}selected{% endif %}">
                                                             <div class="d-flex align-items-center">
@@ -996,13 +988,7 @@
                                                                     <i class="fas fa-university"></i>
                                                                 </div>
                                                                 <div>
-                                                                    <h6 class="mb-1">
-                                                                        {% if account.bank_name == 'other' %}
-                                                                            {{ account.other_bank_name }}
-                                                                        {% else %}
-                                                                            {{ account.get_bank_name_display }}
-                                                                        {% endif %}
-                                                                    </h6>
+                                                                    <h6 class="mb-1">{{ account.bank_name }}</h6>
                                                                     <div class="text-muted small">Chủ tài khoản: {{ account.account_name }}</div>
                                                                     <div class="text-monospace small">Số tài khoản: {{ account.account_number }}</div>
                                                                     {% if account.is_default %}
@@ -1023,11 +1009,11 @@
                                                     <input class="form-check-input visually-hidden" 
                                                            type="radio" 
                                                            name="bank_account" 
-                                                           id="newBankAccount" 
+                                                           id="newBankAccount"
                                                            value="new"
-                                                           {% if form.bank_account.value == 'new' %}checked{% endif %}>
+                                                           {% if request.POST.bank_account == 'new' %}checked{% endif %}>
                                                     <label class="form-check-label w-100" for="newBankAccount">
-                                                        <div class="card border border-dashed shadow-sm rounded-4 p-3 text-center {% if form.bank_account.value == 'new' %}selected{% endif %}">
+                                                        <div class="card border border-dashed shadow-sm rounded-4 p-3 text-center {% if request.POST.bank_account == 'new' %}selected{% endif %}">
                                                             <div class="py-3">
                                                                 <i class="fas fa-plus-circle fa-2x text-primary mb-2"></i>
                                                                 <h6 class="mb-0">Thêm tài khoản mới</h6>
@@ -1060,69 +1046,79 @@
                                                     <label for="new_bank_name" class="form-label">Ngân hàng <span class="text-danger">*</span></label>
                                                     <select name="new_bank_name" id="new_bank_name" class="form-select">
                                                         <option value="">-- Chọn ngân hàng --</option>
-                                                        {% for value, text in form.fields.new_bank_name.choices %}
-                                                            <option value="{{ value }}" {% if form.new_bank_name.value == value %}selected{% endif %}>{{ text }}</option>
-                                                        {% endfor %}
+                                                        <option value="Vietcombank" >Vietcombank</option>
+                                                        <option value="Techcombank" >Techcombank</option>
+                                                        <option value="BIDV" >BIDV</option>
+                                                        <option value="Vietinbank" >Vietinbank</option>
+                                                        <option value="MB Bank" >MB Bank</option>
+                                                        <option value="TPBank" >TPBank</option>
+                                                        <option value="ACB" >ACB</option>
+                                                        <option value="Sacombank" >Sacombank</option>
+                                                        <option value="VPBank" >VPBank</option>
+                                                        <option value="Ngân hàng khác" >Ngân hàng khác</option>
                                                     </select>
-                                                    {% if form.new_bank_name.errors %}
+                                                    <!-- {% if form.new_bank_name.errors %}
                                                     <div class="text-danger small mt-1">
                                                         {% for error in form.new_bank_name.errors %}
                                                             {{ error }}
                                                         {% endfor %}
                                                     </div>
-                                                    {% endif %}
+                                                    {% endif %} -->
                                                 </div>
                                                 
                                                 <div id="otherBankGroup" class="mb-3 {% if form.new_bank_name.value != 'other' %}d-none{% endif %}">
                                                     <label for="new_other_bank_name" class="form-label">Tên ngân hàng khác <span class="text-danger">*</span></label>
                                                     <input type="text" name="new_other_bank_name" id="new_other_bank_name" class="form-control" value="{{ form.new_other_bank_name.value|default:'' }}">
-                                                    {% if form.new_other_bank_name.errors %}
+                                                    <!-- {% if form.new_other_bank_name.errors %}
                                                     <div class="text-danger small mt-1">
                                                         {% for error in form.new_other_bank_name.errors %}
                                                             {{ error }}
                                                         {% endfor %}
                                                     </div>
-                                                    {% endif %}
+                                                    {% endif %} -->
                                                 </div>
                                                 
                                                 <div class="mb-3">
                                                     <label for="new_account_name" class="form-label">Chủ tài khoản <span class="text-danger">*</span></label>
-                                                    <input type="text" name="new_account_name" id="new_account_name" class="form-control" value="{{ form.new_account_name.value|default:'' }}">
+                                                    <input type="text" name="new_account_name" id="new_account_name" class="form-control" value="" placeholder="Nhập tên chủ tài khoản">
+                                                    <!-- {% if form.new_account_name.value %}
+                                                        <input type="hidden" name="new_account_name" value="{{ form.new_account_name.value }}">
+                                                    {% endif %}
                                                     {% if form.new_account_name.errors %}
                                                     <div class="text-danger small mt-1">
                                                         {% for error in form.new_account_name.errors %}
                                                             {{ error }}
                                                         {% endfor %}
                                                     </div>
-                                                    {% endif %}
+                                                    {% endif %} -->
                                                 </div>
                                                 
                                                 <div class="mb-3">
                                                     <label for="new_account_number" class="form-label">Số tài khoản <span class="text-danger">*</span></label>
-                                                    <input type="text" name="new_account_number" id="new_account_number" class="form-control" value="{{ form.new_account_number.value|default:'' }}">
-                                                    {% if form.new_account_number.errors %}
+                                                    <input type="text" name="new_account_number" id="new_account_number" class="form-control" value="" placeholder="Nhập số tài khoản">
+                                                    <!-- {% if form.new_account_number.errors %}
                                                     <div class="text-danger small mt-1">
                                                         {% for error in form.new_account_number.errors %}
                                                             {{ error }}
                                                         {% endfor %}
                                                     </div>
-                                                    {% endif %}
+                                                    {% endif %} -->
                                                 </div>
                                                 
                                                 <div class="mb-3">
                                                     <label for="new_branch" class="form-label">Chi nhánh</label>
-                                                    <input type="text" name="new_branch" id="new_branch" class="form-control" value="{{ form.new_branch.value|default:'' }}">
-                                                    {% if form.new_branch.errors %}
+                                                    <input type="text" name="new_branch" id="new_branch" class="form-control" value="" placeholder="Nhập tên chi nhánh">
+                                                    <!-- {% if form.new_branch.errors %}
                                                     <div class="text-danger small mt-1">
                                                         {% for error in form.new_branch.errors %}
                                                             {{ error }}
                                                         {% endfor %}
                                                     </div>
-                                                    {% endif %}
+                                                    {% endif %} -->
                                                 </div>
                                                 
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="new_is_default" id="new_is_default" {% if form.new_is_default.value %}checked{% endif %}>
+                                                    <input class="form-check-input" type="checkbox" name="new_is_default" id="new_is_default" {% if not bank_accounts %}checked{% endif %}>
                                                     <label class="form-check-label" for="new_is_default">
                                                         Đặt làm tài khoản mặc định
                                                     </label>
@@ -1135,21 +1131,21 @@
                         </div>
                         
                         <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="confirmTransfer" name="confirm_transfer" required {% if form.confirm_transfer.value %}checked{% endif %}>
+                            <input class="form-check-input" type="checkbox" id="confirmTransfer" name="confirm_transfer" required checked>
                             <label class="form-check-label" for="confirmTransfer">
                                 Tôi đã hoàn tất chuyển khoản theo hướng dẫn
                             </label>
-                            {% if form.confirm_transfer.errors %}
+                            <!-- {% if form.confirm_transfer.errors %}
                             <div class="text-danger small mt-1">
                                 {% for error in form.confirm_transfer.errors %}
                                     {{ error }}
                                 {% endfor %}
                             </div>
-                            {% endif %}
+                            {% endif %} -->
                         </div>
                         
                         <div class="form-check mb-4">
-                            <input class="form-check-input" type="checkbox" id="agreeTerms" name="agree_terms" required {% if form.agree_terms.value %}checked{% endif %}>
+                            <input class="form-check-input" type="checkbox" id="agreeTerms" name="agree_terms" required checked>
                             <label class="form-check-label" for="agreeTerms">
                                 Tôi đồng ý với <a href="#" class="text-primary">điều khoản nạp tiền</a> của ASTROLUX
                             </label>
