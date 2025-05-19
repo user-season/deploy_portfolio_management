@@ -1024,6 +1024,7 @@ def get_stock_historical_data(request, symbol):
         print(f"Data structure: {historical_data.head()}") if 'historical_data' in locals() else print("No data fetched") # Debug log để xem cấu trúc dữ liệu
         return JsonResponse({'error': str(e)}, status=500)
 
+
 @csrf_exempt
 @require_POST
 def ai_chat_api(request):
