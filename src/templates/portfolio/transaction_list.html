@@ -1,4 +1,5 @@
 {% extends 'portfolio/base.html' %}
+{% load currency_filters %}
 
 {% block title %}Lịch sử giao dịch | {{ block.super }}{% endblock %}
 
@@ -11,9 +12,9 @@
             </div>
             <h2 class="fw-bold mb-0">Lịch sử giao dịch</h2>
         </div>
-        <a href="{% url 'transaction_create' %}" class="btn btn-primary btn-rounded" data-aos="fade-left">
+        <!-- <a href="{% url 'transaction_create' %}" class="btn btn-primary btn-rounded" data-aos="fade-left">
             <i class="fas fa-plus me-2"></i>Tạo giao dịch mới
-        </a>
+        </a> -->
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 mb-4" data-aos="fade-up" data-aos-delay="100">
@@ -28,6 +29,7 @@
                                     {{ p.name }}
                                 </option>
                             {% endfor %}
+                            <option value="-1">Đã xóa</option>
                         </select>
                         <label for="portfolioSelect">Danh mục</label>
                     </div>
@@ -65,11 +67,12 @@
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden" data-aos="fade-up">
         <div class="card-body p-0">
-            {% if transactions %}
+            {% if stock_transactions %}
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
+                            <th class="border-0">STT</th>
                             <th class="border-0 ps-4">Danh mục</th>
                             <th class="border-0">Mã CP</th>
                             <th class="border-0">Loại GD</th>
@@ -81,16 +84,17 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for transaction in transactions %}
+                        {% for transaction in stock_transactions %}
                         <tr>
-                            <td class="ps-4">{{ transaction.portfolio.name }}</td>
+                            <td class="ps-4">{{ forloop.counter }}</td>
+                            <td class="ps-4">{{ transaction.portfolio.name|default:"Đã xóa" }}</td>
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="icon-circle me-2">
                                         <i class="fas fa-chart-line text-primary"></i>
                                     </div>
                                     <div>
-                                        <h6 class="mb-0">{{ transaction.asset.symbol }}</h6>
+                                        <h6 class="mb-0">{{ transaction.symbol }}</h6>
                                         <small class="text-muted">{{ transaction.asset.name }}</small>
                                     </div>
                                 </div>
@@ -101,13 +105,13 @@
                                 </span>
                             </td>
                             <td class="text-end">{{ transaction.quantity }}</td>
-                            <td class="text-end">{{ transaction.price|floatformat:0 }}</td>
-                            <td class="text-end fw-medium">{{ transaction.total_amount|floatformat:0 }}</td>
-                            <td>{{ transaction.transaction_date|date:"d/m/Y H:i" }}</td>
+                            <td class="text-end">{{ transaction.price|dinh_dang_tien }} VND</td>
+                            <td class="text-end fw-medium">{{ transaction.total_value|dinh_dang_tien }} VND</td>
+                            <td>{{ transaction.transaction_time|date:"d/m/Y H:i" }}</td>
                             <td class="pe-4">
-                                {% if transaction.notes %}
-                                <span class="text-muted" data-bs-toggle="tooltip" title="{{ transaction.notes }}">
-                                    {{ transaction.notes|truncatechars:20 }}
+                                {% if transaction.description %}
+                                <span class="text-muted" data-bs-toggle="tooltip" title="{{ transaction.description }}">
+                                    {{ transaction.description|truncatechars:20 }}
                                 </span>
                                 {% else %}
                                 <span class="text-muted">-</span>
@@ -123,27 +127,27 @@
                 <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="No transactions" class="img-fluid mb-4" style="max-width: 150px; opacity: 0.7;">
                 <h5>Chưa có giao dịch nào</h5>
                 <p class="text-muted">Bắt đầu giao dịch để theo dõi lịch sử của bạn</p>
-                <a href="{% url 'transaction_create' %}" class="btn btn-primary btn-rounded px-4 mt-2">
+                <!-- <a href="{% url 'transaction_create' %}" class="btn btn-primary btn-rounded px-4 mt-2">
                     <i class="fas fa-plus me-2"></i>Tạo giao dịch mới
-                </a>
+                </a> -->
             </div>
             {% endif %}
         </div>
     </div>
 
-    {% if transactions.has_other_pages %}
+    {% if stock_transactions.has_other_pages %}
     <nav aria-label="Page navigation" class="mt-4" data-aos="fade-up" data-aos-delay="100">
         <ul class="pagination justify-content-center">
-            {% if transactions.has_previous %}
+            {% if stock_transactions.has_previous %}
             <li class="page-item">
-                <a class="page-link rounded-start" href="?page={{ transactions.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                <a class="page-link rounded-start" href="?page={{ stock_transactions.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
                     <span aria-hidden="true">&laquo;</span>
                 </a>
             </li>
             {% endif %}
 
-            {% for i in transactions.paginator.page_range %}
-            {% if transactions.number == i %}
+            {% for i in stock_transactions.paginator.page_range %}
+            {% if stock_transactions.number == i %}
             <li class="page-item active">
                 <span class="page-link">{{ i }}</span>
             </li>
@@ -154,9 +158,9 @@
             {% endif %}
             {% endfor %}
 
-            {% if transactions.has_next %}
+            {% if stock_transactions.has_next %}
             <li class="page-item">
-                <a class="page-link rounded-end" href="?page={{ transactions.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                <a class="page-link rounded-end" href="?page={{ stock_transactions.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
                     <span aria-hidden="true">&raquo;</span>
                 </a>
             </li>

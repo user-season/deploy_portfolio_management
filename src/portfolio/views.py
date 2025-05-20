@@ -3,7 +3,7 @@ from django.db import IntegrityError, transaction
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Q, F, Sum
+from django.db.models import Q, F, Sum, ExpressionWrapper, FloatField
 from django.utils import timezone
 from django.contrib.auth import login, logout, authenticate
 from django.http import JsonResponse
@@ -654,38 +654,51 @@ def asset_update(request, pk):
 
 @login_required
 def transaction_list(request):
-    # transactions = Transaction.objects.filter(portfolio__user=request.user)
+    user = request.user
+    portfolios = Portfolio.objects.filter(user=user)
+    # print(portfolios)
+    # bank_transactions = BankTransaction.objects.filter(user=user)
+    stock_transactions = StockTransaction.objects.filter(user=user)
+    stock_transactions = (
+    StockTransaction.objects
+        .filter(user=user)
+        .annotate(total_value=ExpressionWrapper(F('quantity') * F('price'), output_field=FloatField()))
+    )
+    # Lọc theo danh mục
+    portfolio_id = request.GET.get('portfolio')
+    if portfolio_id:
+        if portfolio_id == "-1":
+            # Lọc theo danh mục không có cổ phiếu
+            stock_transactions = stock_transactions.filter(portfolio__isnull=True)
+            print(portfolio_id, stock_transactions)
+        else:
+            stock_transactions = stock_transactions.filter(portfolio_id=portfolio_id)
     
-    # # Lọc theo danh mục
-    # portfolio_id = request.GET.get('portfolio')
-    # if portfolio_id:
-    #     transactions = transactions.filter(portfolio_id=portfolio_id)
+    # Lọc theo loại giao dịch
+    transaction_type = request.GET.get('type')
+    if transaction_type:
+        stock_transactions = stock_transactions.filter(transaction_type=transaction_type)
     
-    # # Lọc theo loại giao dịch
-    # transaction_type = request.GET.get('type')
-    # if transaction_type:
-    #     transactions = transactions.filter(transaction_type=transaction_type)
+    # Lọc theo ngày
+    from_date = request.GET.get('from_date')
+    if from_date:
+        stock_transactions = stock_transactions.filter(transaction_time__gte=from_date)
     
-    # # Lọc theo ngày
-    # from_date = request.GET.get('from_date')
-    # if from_date:
-    #     transactions = transactions.filter(transaction_time__gte=from_date)
+    to_date = request.GET.get('to_date')
+    if to_date:
+        stock_transactions = stock_transactions.filter(transaction_time__lte=to_date)
     
-    # to_date = request.GET.get('to_date')
-    # if to_date:
-    #     transactions = transactions.filter(transaction_time__lte=to_date)
+    # Phân trang
+    paginator = Paginator(stock_transactions.order_by('-transaction_time'), 10)
+    page = request.GET.get('page')
+    stock_transactions = paginator.get_page(page)
     
-    # # Phân trang
-    # paginator = Paginator(transactions.order_by('-transaction_time'), 10)
-    # page = request.GET.get('page')
-    # transactions = paginator.get_page(page)
-    
-    # context = {
-    #     'transactions': transactions,
-    #     'portfolios': Portfolio.objects.filter(user=request.user)
-    # }
-    # return render(request, 'portfolio/transaction_list.html', context)
-    return render(request, 'portfolio/transaction_list.html')
+    context = {
+        'stock_transactions': stock_transactions,
+        'portfolios': portfolios,
+    }
+    return render(request, 'portfolio/transaction_list.html', context)
+    # return render(request, 'portfolio/transaction_list.html')
 
 @login_required
 def transaction_create(request):
