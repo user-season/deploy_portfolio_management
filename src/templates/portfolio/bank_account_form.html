@@ -3,163 +3,20 @@
 
 {% block title %}{{ title }} | {{ block.super }}{% endblock %}
 
-{% block extra_css %}
-<style>
-    /* Header */
-    .form-header {
-        background: linear-gradient(120deg, #4f46e5, #6366f1);
-        padding: 60px 0 100px;
-        color: white;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .header-content {
-        position: relative;
-        z-index: 2;
-    }
-
-    .breadcrumb {
-        background: rgba(255, 255, 255, 0.15);
-        display: inline-flex;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-        backdrop-filter: blur(5px);
-        margin-bottom: 1.5rem;
-    }
-
-    .breadcrumb-item,
-    .breadcrumb-item a {
-        color: rgba(255, 255, 255, 0.85);
-        font-size: 0.85rem;
-        font-weight: 500;
-        text-decoration: none;
-    }
-
-    .breadcrumb-item.active {
-        color: white;
-    }
-
-    .breadcrumb-item + .breadcrumb-item::before {
-        color: rgba(255, 255, 255, 0.5);
-    }
-
-    .form-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0;
-    }
-
-    .form-title .highlight {
-        position: relative;
-        display: inline-block;
-        z-index: 1;
-    }
-
-    .form-title .highlight::after {
-        content: '';
-        position: absolute;
-        bottom: 5px;
-        left: 0;
-        width: 100%;
-        height: 10px;
-        background-color: rgba(16, 185, 129, 0.4);
-        z-index: -1;
-        transform: skewX(-10deg);
-    }
-
-    .header-shapes .shape {
-        position: absolute;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    .shape-1 {
-        width: 300px;
-        height: 300px;
-        top: -100px;
-        right: 10%;
-    }
-
-    .shape-2 {
-        width: 200px;
-        height: 200px;
-        bottom: -50px;
-        right: 20%;
-    }
-
-    .shape-3 {
-        width: 150px;
-        height: 150px;
-        top: 50%;
-        left: 10%;
-    }
-
-    /* Form Content */
-    .form-content {
-        margin-top: -50px;
-        position: relative;
-        z-index: 3;
-        padding-bottom: 80px;
-    }
-
-    /* Responsive styles */
-    @media (max-width: 992px) {
-        .form-title {
-            font-size: 2rem;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .form-header {
-            padding: 40px 0 80px;
-        }
-        
-        .form-title {
-            font-size: 1.8rem;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block extra_js %}
 <script src="{% static 'portfolio/js/wallet.js' %}"></script>
-<script src="{% static 'portfolio/js/bank_account_form.js' %}"></script>
 {% endblock %}
 
 {% block content %}
-<div class="bank-account-form-page">
-    <!-- Breadcrumb và tiêu đề -->
-    <div class="form-header">
-        <div class="container">
-            <div class="header-content" data-aos="fade-down">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Bảng điều khiển</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'wallet' %}">Ví điện tử</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'bank_account_list' %}">Tài khoản ngân hàng</a></li>
-                        <li class="breadcrumb-item active">{{ title }}</li>
-                    </ol>
-                </nav>
-                <h1 class="form-title">
-                    <!-- {% if bank_account %}
-                    <span class="highlight">Chỉnh sửa</span> tài khoản ngân hàng
-                    {% else %}
-                    <span class="highlight">Thêm mới</span> tài khoản ngân hàng
-                    {% endif %} -->
-                    <span class="highlight">Thêm </span> tài khoản ngân hàng
-                </h1>
-            </div>
-        </div>
-        <!-- <div class="header-shapes">
-            <div class="shape shape-1"></div>
-            <div class="shape shape-2"></div>
-            <div class="shape shape-3"></div>
-        </div> -->
-    </div>
-
-    <div class="form-content">
-        <div class="container">
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-right">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Bảng điều khiển</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'wallet' %}">Ví điện tử</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'bank_account_list' %}">Tài khoản ngân hàng</a></li>
+            <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
+    </nav>
 
     <!-- {% if messages %}
         {% for message in messages %}
@@ -187,7 +44,8 @@
                         </div>
                         <h4 class="mb-0">{{ title }}</h4>
                     </div>
-                </div>                <div class="card-body p-4">
+                </div>
+                <div class="card-body p-4">
                     <form method="post" id="bankAccountForm" action="">
                         {% csrf_token %}
                         
@@ -252,79 +110,85 @@
                             <div class="form-text">Tài khoản này sẽ được chọn mặc định khi giao dịch</div>
                         </div> -->
                         <div class="card border border-dashed p-3 mb-3">
-                            <h6 class="mb-3">{% if bank_account %}Thông tin tài khoản{% else %}Thông tin tài khoản mới{% endif %}</h6>
-                              <div class="mb-3">
+                            <h6 class="mb-3">Thông tin tài khoản mới</h6>
+                            
+                            <div class="mb-3">
                                 <label for="new_bank_name" class="form-label">Ngân hàng <span class="text-danger">*</span></label>
                                 <select name="new_bank_name" id="new_bank_name" class="form-select">
                                     <option value="">-- Chọn ngân hàng --</option>
-                                    <option value="Vietcombank" {% if bank_account and bank_account.bank_name == 'Vietcombank' %}selected{% endif %}>Vietcombank</option>
-                                    <option value="Techcombank" {% if bank_account and bank_account.bank_name == 'Techcombank' %}selected{% endif %}>Techcombank</option>
-                                    <option value="BIDV" {% if bank_account and bank_account.bank_name == 'BIDV' %}selected{% endif %}>BIDV</option>
-                                    <option value="Vietinbank" {% if bank_account and bank_account.bank_name == 'Vietinbank' %}selected{% endif %}>Vietinbank</option>
-                                    <option value="MB Bank" {% if bank_account and bank_account.bank_name == 'MB Bank' %}selected{% endif %}>MB Bank</option>
-                                    <option value="TPBank" {% if bank_account and bank_account.bank_name == 'TPBank' %}selected{% endif %}>TPBank</option>
-                                    <option value="ACB" {% if bank_account and bank_account.bank_name == 'ACB' %}selected{% endif %}>ACB</option>
-                                    <option value="Sacombank" {% if bank_account and bank_account.bank_name == 'Sacombank' %}selected{% endif %}>Sacombank</option>
-                                    <option value="VPBank" {% if bank_account and bank_account.bank_name == 'VPBank' %}selected{% endif %}>VPBank</option>
-                                    <option value="Ngân hàng khác" {% if bank_account and bank_account.bank_name == 'Ngân hàng khác' %}selected{% endif %}>Ngân hàng khác</option>
+                                    <option value="Vietcombank" >Vietcombank</option>
+                                    <option value="Techcombank" >Techcombank</option>
+                                    <option value="BIDV" >BIDV</option>
+                                    <option value="Vietinbank" >Vietinbank</option>
+                                    <option value="MB Bank" >MB Bank</option>
+                                    <option value="TPBank" >TPBank</option>
+                                    <option value="ACB" >ACB</option>
+                                    <option value="Sacombank" >Sacombank</option>
+                                    <option value="VPBank" >VPBank</option>
+                                    <option value="Ngân hàng khác" >Ngân hàng khác</option>
                                 </select>
-                                {% if messages %}
-                                    {% for message in messages %}
-                                        {% if 'new_bank_name' in message.tags %}
-                                        <div class="text-danger small mt-1">{{ message }}</div>
-                                        {% endif %}
+                                <!-- {% if form.new_bank_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.new_bank_name.errors %}
+                                        {{ error }}
                                     {% endfor %}
-                                {% endif %}
+                                </div>
+                                {% endif %} -->
                             </div>
-                              <div id="otherBankGroup" class="mb-3">
+                            
+                            <div id="otherBankGroup" class="mb-3 {% if form.new_bank_name.value != 'other' %}d-none{% endif %}">
                                 <label for="new_other_bank_name" class="form-label">Tên ngân hàng khác <span class="text-danger">*</span></label>
-                                <input type="text" name="new_other_bank_name" id="new_other_bank_name" class="form-control" 
-                                       value="{% if bank_account and bank_account.bank_name not in bank_choices %}{{ bank_account.bank_name }}{% endif %}" 
-                                       placeholder="Nhập tên ngân hàng">
-                                {% if messages %}
-                                    {% for message in messages %}
-                                        {% if 'new_other_bank_name' in message.tags %}
-                                        <div class="text-danger small mt-1">{{ message }}</div>
-                                        {% endif %}
+                                <input type="text" name="new_other_bank_name" id="new_other_bank_name" class="form-control" value="{{ form.new_other_bank_name.value|default:'' }}">
+                                <!-- {% if form.new_other_bank_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.new_other_bank_name.errors %}
+                                        {{ error }}
                                     {% endfor %}
-                                {% endif %}
+                                </div>
+                                {% endif %} -->
                             </div>
-                              <div class="mb-3">
+                            
+                            <div class="mb-3">
                                 <label for="new_account_name" class="form-label">Chủ tài khoản <span class="text-danger">*</span></label>
-                                <input type="text" name="new_account_name" id="new_account_name" class="form-control" value="{% if bank_account %}{{ bank_account.account_name }}{% endif %}" placeholder="Nhập tên chủ tài khoản">
-                                {% if messages %}
-                                    {% for message in messages %}
-                                        {% if 'new_account_name' in message.tags %}
-                                        <div class="text-danger small mt-1">{{ message }}</div>
-                                        {% endif %}
-                                    {% endfor %}
+                                <input type="text" name="new_account_name" id="new_account_name" class="form-control" value="" placeholder="Nhập tên chủ tài khoản">
+                                <!-- {% if form.new_account_name.value %}
+                                    <input type="hidden" name="new_account_name" value="{{ form.new_account_name.value }}">
                                 {% endif %}
+                                {% if form.new_account_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.new_account_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %} -->
                             </div>
-                              <div class="mb-3">
+                            
+                            <div class="mb-3">
                                 <label for="new_account_number" class="form-label">Số tài khoản <span class="text-danger">*</span></label>
-                                <input type="text" name="new_account_number" id="new_account_number" class="form-control" value="{% if bank_account %}{{ bank_account.account_number }}{% endif %}" placeholder="Nhập số tài khoản">
-                                {% if messages %}
-                                    {% for message in messages %}
-                                        {% if 'new_account_number' in message.tags %}
-                                        <div class="text-danger small mt-1">{{ message }}</div>
-                                        {% endif %}
+                                <input type="text" name="new_account_number" id="new_account_number" class="form-control" value="" placeholder="Nhập số tài khoản">
+                                <!-- {% if form.new_account_number.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.new_account_number.errors %}
+                                        {{ error }}
                                     {% endfor %}
-                                {% endif %}
+                                </div>
+                                {% endif %} -->
                             </div>
-                              <div class="mb-3">
+                            
+                            <div class="mb-3">
                                 <label for="new_branch" class="form-label">Chi nhánh</label>
-                                <input type="text" name="new_branch" id="new_branch" class="form-control" value="{% if bank_account %}{{ bank_account.branch|default:'' }}{% endif %}" placeholder="Nhập tên chi nhánh">
-                                {% if messages %}
-                                    {% for message in messages %}
-                                        {% if 'new_branch' in message.tags %}
-                                        <div class="text-danger small mt-1">{{ message }}</div>
-                                        {% endif %}
+                                <input type="text" name="new_branch" id="new_branch" class="form-control" value="" placeholder="Nhập tên chi nhánh">
+                                <!-- {% if form.new_branch.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.new_branch.errors %}
+                                        {{ error }}
                                     {% endfor %}
-                                {% endif %}
+                                </div>
+                                {% endif %} -->
                             </div>
-                              <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="new_is_default" id="new_is_default" 
-                                    {% if bank_account and bank_account.is_default %}checked{% elif not bank_accounts %}checked{% endif %}>
+                            
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="new_is_default" id="new_is_default" {% if not bank_accounts %}checked{% endif %}>
                                 <label class="form-check-label" for="new_is_default">
                                     Đặt làm tài khoản mặc định
                                 </label>

@@ -188,30 +188,43 @@ def register(request):
 @login_required
 def user_profile(request):
     user = request.user
-    
+
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, request.FILES, instance=user)
-        if form.is_valid():
-            user_data = form.save(commit=False)
-            
-            # Check if a new profile picture was uploaded
-            if 'profile_picture' in request.FILES and request.FILES['profile_picture']:
-                # If user uploads a local picture, prioritize it over the Auth0 URL
-                user_data.profile_picture = request.FILES['profile_picture']
-                # Clear Auth0 profile picture URL to use the uploaded one
-                user_data.profile_picture_url = None
-            
-            user_data.save()
-            messages.success(request, 'Thông tin cá nhân đã được cập nhật thành công!')
-            return redirect('user_profile')
+        # Lấy dữ liệu từ form gửi lên
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        address = request.POST.get('address', '').strip()
+        gender = request.POST.get('gender', '').strip()
+
+        # Gán dữ liệu cho user
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.phone = phone
+        user.address = address
+        user.gender = gender
+
+        # Xử lý upload ảnh
+        if 'profile_picture' in request.FILES and request.FILES['profile_picture']:
+            user.profile_picture = request.FILES['profile_picture']
+            # Nếu bạn có trường profile_picture_url (ví dụ dùng Auth0), hãy xử lý nếu cần
+            if hasattr(user, 'profile_picture_url'):
+                user.profile_picture_url = None
+
+        user.save()
+        messages.success(request, 'Thông tin cá nhân đã được cập nhật thành công!')
+        return redirect('user_profile')
     else:
-        form = UserProfileForm(instance=user)
-    
-    # Get Auth0 user info from session
+        # Hiển thị thông tin user hiện tại để render lên template
+        pass  # Không cần gì đặc biệt
+
+    # Lấy thông tin user từ Auth0 nếu có
     auth0_userinfo = request.session.get('userinfo', {})
-    
+
     return render(request, 'portfolio/user_profile.html', {
-        'form': form,
+        'user': user,
         'auth0_userinfo': auth0_userinfo
     })
 
@@ -223,8 +236,8 @@ def home(request):
 
 @login_required
 def dashboard(request):
-    # user = request.user
-    user = User.objects.get(pk=1)
+    user = request.user
+    # user = User.objects.get(pk=1)
     wallet = Wallet.objects.get(user=user)
     user_balance = wallet.balance
 
