@@ -77,13 +77,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Đảm bảo nút chat hiển thị đúng cách
     aiChatButton.style.display = 'flex';
     aiChatPopup.style.display = 'none';
-    
-    // Toggle chat popup with enhanced animations
+      // Toggle chat popup with enhanced animations
     aiChatButton.addEventListener('click', function() {
         console.log("Chat button clicked");
         aiChatPopup.style.display = 'flex';
         
-        // Add animation after display is set
+        // Add animation after display is set - changed to 5ms for faster response
         setTimeout(() => {
             aiChatPopup.classList.add('show-animation');
             // Stop pulse animation after first click
@@ -91,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 aiChatButton.classList.remove('pulse-animation');
                 isFirstInteraction = false;
             }
-        }, 10);
+        }, 5);
         
         aiChatButton.style.display = 'none';
         
@@ -158,13 +157,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Đóng chat
         minimizeChatWithAnimation();
     });
-    
-    function minimizeChatWithAnimation() {
+      function minimizeChatWithAnimation() {
         console.log("Minimizing chat");
         // First remove the animation class
         aiChatPopup.classList.remove('show-animation');
         
-        // Then hide after animation completes
+        // Then hide after animation completes - reduced from 300ms to 200ms
         setTimeout(() => {
             aiChatPopup.style.display = 'none';
             
@@ -175,10 +173,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 aiChatButton.style.transform = 'scale(1.1)';
                 setTimeout(() => {
                     aiChatButton.style.transform = '';
-                }, 200);
-            }, 100);
+                }, 150); // changed from 200ms to 150ms
+            }, 80); // changed from 100ms to 80ms
             
-        }, 300);
+        }, 200); // changed from 300ms to 200ms
     }
     
     // Thêm sự kiện chạm/nhấn cho thiết bị di động

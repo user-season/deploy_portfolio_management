@@ -225,43 +225,51 @@ def home(request):
 def dashboard(request):
     # user = request.user
     user = User.objects.get(pk=1)
-    wallet, created = Wallet.objects.get_or_create(user=user, defaults={'balance': 0})
+    wallet = Wallet.objects.get(user=user)
     user_balance = wallet.balance
 
-    list_stock = list(Assets.objects.filter(user=user).values_list('symbol', flat=True))
-    portfolios = Portfolio.objects.filter(user=user).values_list('id', flat=True).order_by('name')[:5]
-    print('='*100)
-    print(portfolios)
-    if list_stock:
-        current_price_stock = get_current_price(list_stock)
-        # print(current_price_stock)
-        # for i, stock in enumerate(list_stock):
-        #     Assets.objects.get(user=user, symbol=stock.symbol).update(current_price=current_price_stock[i])
-    total_assets = 0
-    # list_stock.aggregate(
-    #     total=Sum(F('quantity') * F('current_price'))
-    # )['total'] or 0
-    total_buy_price = 0
-    # list_stock.aggregate(total_buy=Sum(F('quantity') * F('average_price')))['total_buy'] or 0
-    if total_buy_price!=0:
-        profit_loss_percentage = round(((total_assets - total_buy_price) / total_buy_price) * 100, 2)
-    else:
-        profit_loss_percentage=0
-    if profit_loss_percentage > 0:
-        profit_loss_percentage = f"+{profit_loss_percentage}"
-    number_of_stock = 0
-    # list_stock.count()
-    number_of_portfolio = Portfolio.objects.filter(user=user).count()
+    user_assets = Assets.objects.filter(user=user)
+    number_of_symbol = user_assets.count()
+    list_stock = list(user_assets.values_list('symbol', flat=True))
 
-    total_assets_wallet = total_assets + user_balance
+    portfolios = Portfolio.objects.filter(user=user)
+    number_of_portfolio = portfolios.count()
+    # print('='*100)
+    # print(portfolios)
+    if list_stock:
+        current_price_symbol = get_current_price(list_stock)
+        # current_price_symbol = get_current_price(list_stock).set_index('symbol')['ref_price'].to_dict()
+    total_assets_value = user_balance
+    total_profit_loss = 0
+    for portfolio in portfolios:
+        portfolio_symbol = PortfolioSymbol.objects.filter(portfolio=portfolio)
+        symbol_quantity_df = pd.DataFrame(portfolio_symbol.values_list('symbol', 'quantity', 'average_price'), columns=['symbol', 'quantity', 'average_price'])
+        current_price_df = current_price_symbol[current_price_symbol.symbol.isin(symbol_quantity_df['symbol'])]
+        total_df = pd.merge(symbol_quantity_df, current_price_df, on='symbol', how='inner')
+        # print(total_df)
+        
+        portfolio.portfolio_value = sum(total_df['quantity'] * total_df['ref_price'])
+        portfolio.profit_loss_percentage = sum((total_df['ref_price'] - total_df['average_price']) / total_df['average_price'] * 100)
+        total_assets_value += portfolio.portfolio_value
+        total_profit_loss += ((total_df['ref_price'] - total_df['average_price']) * total_df['quantity']).sum()
+    total_profit_loss_percentage = round(total_profit_loss / total_assets_value * 100, 2) if total_assets_value != 0 else 0
+
+    recent_transactions = StockTransaction.objects.filter(user=user).order_by('-transaction_time')[:5]
+    list_symbol_recent_transactions = list(recent_transactions.values_list('symbol', flat=True))
+    list_company_name_recent_transactions_df = get_company_name(list_symbol_recent_transactions)
+    for i, transaction in enumerate(recent_transactions):
+        transaction.total_value = transaction.quantity * transaction.price
+        # print(list_company_name_recent_transactions.isin([transaction.symbol])['organ_name'])
+        transaction.company_name = list_company_name_recent_transactions_df[list_company_name_recent_transactions_df.ticker.isin([transaction.symbol])].iloc[0, 1]
 
     context = {
-        "total_assets_wallet": total_assets_wallet,
-        "profit_loss_percentage": profit_loss_percentage,
+        "total_assets_value": total_assets_value,
+        "total_profit_loss_percentage": total_profit_loss_percentage,
         "user_balance": user_balance,
         "number_of_portfolio": number_of_portfolio,
-        "number_of_stock": number_of_stock,
+        "number_of_symbol": number_of_symbol,
         "portfolios": portfolios,
+        "recent_transactions": recent_transactions,
     }
     return render(request, 'portfolio/dashboard.html', context)
 
@@ -930,218 +938,23 @@ def portfolio_transactions(request, portfolio_id):
 def wallet(request):
     user = request.user
     # user = User.objects.get(pk=1)
-    wallet, created = Wallet.objects.get_or_create(user=user, defaults={'balance': 0})
-    user_balance = wallet.balance
+    user_wallet = Wallet.objects.get(user=user)
+    user_balance = user_wallet.balance
+    user_bank_accounts = BankAccount.objects.filter(user=user).order_by('-is_default', '-created_at')
     context = {
         "user_balance": user_balance,
+        "user_bank_accounts": user_bank_accounts,
     }
     
     return render(request, 'portfolio/wallet.html', context)
 
 @login_required
 def deposit_money(request):
-    # # Lấy hoặc tạo ví cho người dùng
-    # user = request.user
-    # wallet, created = Wallet.objects.get_or_create(user=user)
-    
-    # # Lấy danh sách tài khoản ngân hàng
-    # bank_accounts = BankAccount.objects.filter(user=user).order_by('-is_default', '-created_at')
-    
-    # # Xử lý transaction_id trong form
-    # if request.method == 'POST' and 'transaction_id' in request.POST and request.POST.get('transaction_id'):
-    #     transaction_id = request.POST.get('transaction_id')
-    # else:
-    #     # Tạo transaction_id duy nhất
-    #     transaction_id = f"DEP{uuid.uuid4().hex[:8].upper()}"
-    
-    # # Mặc định amount
-    # default_amount = Decimal('100000')
-    
-    # # Tạo URL mã QR VietQR
-    # qr_code_url = generate_qr_code(
-    #     amount=default_amount,
-    #     transaction_id=transaction_id,
-    #     username=request.user.username
-    # )
-    
-    # # Kiểm tra nếu có xác nhận nạp tiền
-    # verification_result = None
-    # if 'verify_deposit' in request.POST:
-    #     # Lấy thông tin giao dịch cần xác nhận
-    #     verify_transaction_id = request.POST.get('verify_transaction_id', transaction_id)
-    #     verify_amount = request.POST.get('verify_amount')
-        
-    #     print(f"Xác minh nạp tiền: ID={verify_transaction_id}, Số tiền={verify_amount}")
-        
-    #     if verify_transaction_id and verify_amount:
-    #         # Kiểm tra thông tin giao dịch
-    #         verification_result = check_paid(
-    #             transaction_id=verify_transaction_id,
-    #             amount=Decimal(verify_amount)
-    #         )
-            
-    #         # Nếu xác nhận thành công
-    #         if verification_result['success']:
-    #             # Tạo transaction_obj trong DB
-    #             with transaction.atomic():
-    #                 # Tạo giao dịch nạp tiền
-    #                 transaction_obj = BankTransaction.objects.create(
-    #                     user=request.user,
-    #                     wallet=wallet,
-    #                     type='deposit',
-    #                     quantity=Decimal(verify_amount),
-    #                     fee=0,  # Miễn phí nạp tiền
-    #                     status='completed',  # Trạng thái hoàn thành
-    #                     transaction_id=verify_transaction_id,
-    #                     description=f"Nạp tiền xác nhận thủ công: {verification_result['message']}"
-    #                 )
-                    
-    #                 # Cập nhật số dư ví
-    #                 wallet.balance += Decimal(verify_amount)
-    #                 wallet.save()
-                
-    #             messages.success(request, verification_result['message'])
-    #             return redirect('wallet')
-    #         else:
-    #             messages.error(request, verification_result['message'])
-    
-    # # Xử lý form deposit bình thường
-    # if request.method == 'POST' and 'confirm_transfer' in request.POST:
-    #     print("Nhận yêu cầu POST cho deposit_money")
-    #     print("Dữ liệu POST:", request.POST)
-        
-    #     # Lấy dữ liệu form trực tiếp từ request.POST
-    #     amount = request.POST.get('amount')
-    #     payment_method = request.POST.get('payment_method')
-    #     bank_account_id = request.POST.get('bank_account')
-    #     agree_terms = request.POST.get('agree_terms')
-        
-    #     errors = []
-        
-    #     # Xác thực dữ liệu nhập
-    #     if not amount or not amount.isdigit():
-    #         errors.append("Vui lòng nhập số tiền hợp lệ")
-    #     else:
-    #         amount = Decimal(amount)
-    #         if amount < 50000:
-    #             errors.append("Số tiền nạp tối thiểu là 50.000 VND")
-        
-    #     if not payment_method:
-    #         errors.append("Vui lòng chọn phương thức thanh toán")
-        
-    #     if not agree_terms:
-    #         errors.append("Bạn phải đồng ý với điều khoản nạp tiền")
-        
-    #     # Nếu là phương thức chuyển khoản ngân hàng, kiểm tra tài khoản ngân hàng
-    #     bank_account = None
-    #     if payment_method == 'bank_transfer':
-    #         if bank_account_id and bank_account_id != 'new':
-    #             try:
-    #                 bank_account = BankAccount.objects.get(id=bank_account_id, user=request.user)
-    #             except BankAccount.DoesNotExist:
-    #                 errors.append("Tài khoản ngân hàng không tồn tại")
-    #         else:
-    #             # Xử lý tài khoản ngân hàng mới
-    #             new_bank_name = request.POST.get('new_bank_name')
-    #             new_other_bank_name = request.POST.get('new_other_bank_name')
-    #             new_account_name = request.POST.get('new_account_name')
-    #             new_account_number = request.POST.get('new_account_number')
-    #             new_branch = request.POST.get('new_branch')
-    #             new_is_default = request.POST.get('new_is_default') == 'on'
-    #             if new_is_default:
-    #                 # Đặt tất cả các tài khoản khác thành không mặc định
-    #                 BankAccount.objects.filter(user=request.user, is_default=True).update(is_default=False)
-
-    #             if not new_bank_name:
-    #                 if not new_other_bank_name:
-    #                     errors.append("Vui lòng chọn ngân hàng")
-    #                 else:
-    #                     new_bank_name = new_other_bank_name
-                
-    #             if not new_account_name:
-    #                 errors.append("Vui lòng nhập tên chủ tài khoản")
-                
-    #             if not new_account_number:
-    #                 errors.append("Vui lòng nhập số tài khoản")
-    #             elif not new_account_number.isdigit():
-    #                 errors.append("Số tài khoản chỉ được chứa các chữ số")
-                
-    #             # Nếu không có lỗi, tạo tài khoản mới
-    #             # if not errors:
-    #             #     display_name = new_bank_name
-    #                 # if new_bank_name == 'other' and new_other_bank_name:
-    #                 #     display_name = new_other_bank_name
-    #                 # else:
-    #                 # if not new_bank_name:
-    #                 #     if new_other_bank_name:
-    #                 #         new_bank_name = new_other_bank_name
-    #                 #         display_name = dict(BankAccount.BANK_CHOICES)[new_bank_name]
-    #                 #     else:
-    #                 #         display_name = "Ngân hàng khác"
-                    
-    #                 # Tạo tài khoản ngân hàng mới
-    #                 bank_account = BankAccount.objects.create(
-    #                     user=request.user,
-    #                     bank_name=new_bank_name,
-    #                     # other_bank_name=new_other_bank_name,
-    #                     account_name=new_account_name,
-    #                     account_number=new_account_number,
-    #                     branch=new_branch,
-    #                     is_default=new_is_default
-    #                 )
-                    
-    #                 messages.success(request, f'Đã thêm tài khoản {new_account_number}')
-        
-    #     # Kiểm tra nếu có lỗi
-    #     if errors:
-    #         for error in errors:
-    #             messages.error(request, error)
-    #     else:
-    #         # Kiểm tra xem giao dịch có trùng lặp không (trong vòng 5 phút gần đây)
-    #         five_minutes_ago = timezone.now() - timedelta(minutes=5)
-    #         recent_deposits = BankTransaction.objects.filter(
-    #             user=request.user,
-    #             type='deposit',
-    #             quantity=amount,
-    #             created_at__gte=five_minutes_ago
-    #         )
-            
-    #         if recent_deposits.exists():
-    #             messages.warning(request, 'Một giao dịch nạp tiền tương tự đã được thực hiện trong vòng 5 phút qua. Vui lòng đợi một lát và kiểm tra số dư của bạn trước khi thử lại.')
-    #             return redirect('wallet')
-            
-    #         # Chuyển sang trang xác nhận nạp tiền
-    #         context = {
-    #             'wallet': wallet,
-    #             'amount': amount,
-    #             'transaction_id': transaction_id,
-    #             'payment_method': payment_method,
-    #             'qr_code_url': generate_qr_code(
-    #                 amount=amount,
-    #                 transaction_id=transaction_id,
-    #                 username=request.user.username
-    #             ),
-    #             'bank_account': bank_account,
-    #             'verify_mode': True
-    #         }
-            
-            # return render(request, 'portfolio/deposit.html', context)
-    
-    # Form mặc định - Hiển thị form ban đầu
-    # context = {
-    #     'wallet': wallet,
-    #     'bank_accounts': bank_accounts,
-    #     'qr_code_url': qr_code_url,
-    #     'transaction_id': transaction_id,
-    #     'verification_result': verification_result,
-    #     'verify_mode': False,
-    #     # Các tùy chọn cho form
-    #     'payment_methods': BankTransaction.TYPE_CHOICES,
-    #     'default_amount': default_amount,
-    #     # 'bank_choices': BankAccount.BANK_CHOICES
-    # }
-    # return render(request, 'portfolio/deposit.html', context)
-    return render(request, 'portfolio/deposit.html')
+    user_bank_accounts = BankAccount.objects.filter(user=request.user).order_by('-is_default', '-created_at')
+    context = {
+        "user_bank_accounts": user_bank_accounts,
+    }
+    return render(request, 'portfolio/deposit.html', context)
 
 # @login_required
 def verify_deposit(request, transaction_id=None):
@@ -1175,7 +988,8 @@ def bank_account_list(request):
 def bank_account_create(request):
     """View để tạo mới tài khoản ngân hàng"""
     # Lấy danh sách các tài khoản ngân hàng của người dùng
-    bank_accounts = BankAccount.objects.filter(user=request.user).order_by('-is_default', '-created_at')
+    user = request.user
+    bank_accounts = BankAccount.objects.filter(user=user).order_by('-is_default', '-created_at')
     
     if request.method == 'POST':
         # Lấy dữ liệu từ form
@@ -1204,7 +1018,7 @@ def bank_account_create(request):
             errors.append("Số tài khoản chỉ được chứa các chữ số")
         
         # Kiểm tra xem số tài khoản đã tồn tại chưa
-        if account_number and BankAccount.objects.filter(user=request.user, account_number=account_number).exists():
+        if account_number and BankAccount.objects.filter(user=user, account_number=account_number).exists():
             errors.append("Số tài khoản này đã được đăng ký với tài khoản của bạn")
         
         # Nếu có lỗi, hiển thị thông báo lỗi
@@ -1214,7 +1028,7 @@ def bank_account_create(request):
         else:
             # Nếu đánh dấu là tài khoản mặc định hoặc đây là tài khoản đầu tiên, đặt tất cả các tài khoản khác là không mặc định
             if is_default or not bank_accounts.exists():
-                BankAccount.objects.filter(user=request.user).update(is_default=False)
+                BankAccount.objects.filter(user=user).update(is_default=False)
                 is_default = True  # Đảm bảo tài khoản đầu tiên luôn là mặc định
             
             # Xử lý trường hợp ngân hàng khác
@@ -1224,7 +1038,7 @@ def bank_account_create(request):
             
             # Tạo tài khoản mới
             bank_account = BankAccount.objects.create(
-                user=request.user,
+                user=user,
                 bank_name=final_bank_name,
                 account_name=account_name,
                 account_number=account_number,
@@ -1234,25 +1048,8 @@ def bank_account_create(request):
             
             messages.success(request, f'Đã thêm tài khoản ngân hàng {final_bank_name} - {account_number}')
             return redirect('bank_account_list')
-    
-    context = {
-        'title': 'Thêm tài khoản ngân hàng',
-        'bank_accounts': bank_accounts,
-        'bank_choices': [
-            ('Vietcombank', 'Vietcombank'),
-            ('Techcombank', 'Techcombank'),
-            ('BIDV', 'BIDV'),
-            ('Vietinbank', 'Vietinbank'),
-            ('MB Bank', 'MB Bank'),
-            ('TPBank', 'TPBank'),
-            ('ACB', 'ACB'),
-            ('Sacombank', 'Sacombank'),
-            ('VPBank', 'VPBank'),
-            ('Ngân hàng khác', 'Ngân hàng khác')
-        ]
-    }
-    
-    return render(request, 'portfolio/bank_account_form.html', context)
+
+    return render(request, 'portfolio/bank_account_form.html')
 
 @login_required
 def update_bank_account(request, pk):

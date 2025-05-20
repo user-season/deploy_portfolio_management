@@ -287,6 +287,9 @@ class StockTransaction(models.Model):
     # def __str__(self):
     #     return f"{self.get_transaction_type_display()} {self.asset.symbol}"
 
+    def get_transaction_type_display(self):
+        """Trả về tên loại giao dịch"""
+        return dict(self.TYPE_CHOICES).get(self.transaction_type)
     # # Lưu giao dịch
     # def save(self, *args, **kwargs):
     #     # Tính tổng giá trị giao dịch

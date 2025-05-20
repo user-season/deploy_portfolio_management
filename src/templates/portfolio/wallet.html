@@ -130,7 +130,7 @@
             </div>
         </div>
         <div class="card-body p-0">
-            {% if bank_accounts %}
+            {% if user_bank_accounts %}
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
@@ -139,32 +139,25 @@
                             <th>Chủ tài khoản</th>
                             <th>Số tài khoản</th>
                             <th>Chi nhánh</th>
-                            <th class="text-center">Mặc định</th>
+                            <th class="text-center">Trạng thái</th>
                             <th class="text-end pe-4">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for account in bank_accounts %}
+                        {% for account in user_bank_accounts %}
                         <tr>
                             <td class="ps-4">
                                 <div class="d-flex align-items-center">
                                     <div class="bank-logo me-3">
-                                        {% if account.bank_logo %}
-                                        <img src="{{ account.bank_logo }}" alt="{{ account.bank_name }}" width="40" height="40" class="rounded">
-                                        {% else %}
-                                        <div class="icon-circle">
+                                        <div class="icon-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background-color: #f8f9fa;">
                                             <i class="fas fa-university text-primary"></i>
                                         </div>
-                                        {% endif %}
                                     </div>
-                                    <div>
+                                    <div>                                        
                                         <h6 class="mb-0">
-                                            {% if account.bank_name == 'other' %}
-                                                {{ account.other_bank_name }}
-                                            {% else %}
-                                                {{ account.get_bank_name_display }}
-                                            {% endif %}
+                                            {{account.bank_name}}
                                         </h6>
+                                        <div class="small text-muted">Cập nhật: {{ account.updated_at|date:"d/m/Y H:i" }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -177,8 +170,8 @@
                                 {% else %}
                                 <form method="post" action="{% url 'bank_account_set_default' pk=account.pk %}" class="d-inline">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-light" title="Đặt làm mặc định">
-                                        <i class="far fa-star"></i>
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Đặt làm mặc định">
+                                        <i class="far fa-star me-1"></i>Đặt mặc định
                                     </button>
                                 </form>
                                 {% endif %}
