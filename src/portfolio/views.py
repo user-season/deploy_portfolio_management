@@ -813,6 +813,8 @@ def buy_stock(request, portfolio_id):
                     # Removed portfolio_symbol reference as it's no longer in the model
                 )
                 stock_transaction.save()
+                # Cập nhật số dư ví
+                Wallet.objects.filter(user=user).update(balance=F('balance') - total_buy_price)
 
                 assets, created_assets = Assets.objects.get_or_create(
                     user=user,
