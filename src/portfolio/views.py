@@ -249,6 +249,7 @@ def dashboard(request):
     number_of_portfolio = portfolios.count()
     # print('='*100)
     # print(portfolios)
+    current_price_symbol = None
     if list_stock:
         current_price_symbol = get_current_price(list_stock)
         # current_price_symbol = get_current_price(list_stock).set_index('symbol')['ref_price'].to_dict()
@@ -298,6 +299,7 @@ def portfolio_list(request):
         # print(portfolio.id, portfolio_symbol_list)
         portfolio_value = portfolio_symbol_list.aggregate(total_value=Sum(F('quantity') * F('average_price')))['total_value'] or 0
         portfolio.portfolio_value = portfolio_value
+        portfolio.progress = round(portfolio_value / portfolio.target_value * 100) if portfolio.target_value!=0 else 100
     return render(request, 'portfolio/portfolio_list.html', {'portfolios': portfolios})
 
 @login_required
