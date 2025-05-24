@@ -249,24 +249,27 @@ def dashboard(request):
     number_of_portfolio = portfolios.count()
     # print('='*100)
     # print(portfolios)
-    current_price_symbol = None
     if list_stock:
         current_price_symbol = get_current_price(list_stock)
         # current_price_symbol = get_current_price(list_stock).set_index('symbol')['ref_price'].to_dict()
-    total_assets_value = user_balance
-    total_profit_loss = 0
-    for portfolio in portfolios:
-        portfolio_symbol = PortfolioSymbol.objects.filter(portfolio=portfolio)
-        symbol_quantity_df = pd.DataFrame(portfolio_symbol.values_list('symbol', 'quantity', 'average_price'), columns=['symbol', 'quantity', 'average_price'])
-        current_price_df = current_price_symbol[current_price_symbol.symbol.isin(symbol_quantity_df['symbol'])]
-        total_df = pd.merge(symbol_quantity_df, current_price_df, on='symbol', how='inner')
-        # print(total_df)
-        
-        portfolio.portfolio_value = sum(total_df['quantity'] * total_df['ref_price'])
-        portfolio.profit_loss_percentage = sum((total_df['ref_price'] - total_df['average_price']) / total_df['average_price'] * 100)
-        total_assets_value += portfolio.portfolio_value
-        total_profit_loss += ((total_df['ref_price'] - total_df['average_price']) * total_df['quantity']).sum()
-    total_profit_loss_percentage = round(total_profit_loss / total_assets_value * 100, 2) if total_assets_value != 0 else 0
+        total_assets_value = user_balance
+        total_profit_loss = 0
+        for portfolio in portfolios:
+            portfolio_symbol = PortfolioSymbol.objects.filter(portfolio=portfolio)
+            symbol_quantity_df = pd.DataFrame(portfolio_symbol.values_list('symbol', 'quantity', 'average_price'), columns=['symbol', 'quantity', 'average_price'])
+            current_price_df = current_price_symbol[current_price_symbol.symbol.isin(symbol_quantity_df['symbol'])]
+            total_df = pd.merge(symbol_quantity_df, current_price_df, on='symbol', how='inner')
+            # print(total_df)
+            
+            portfolio.portfolio_value = sum(total_df['quantity'] * total_df['ref_price'])
+            portfolio.profit_loss_percentage = sum((total_df['ref_price'] - total_df['average_price']) / total_df['average_price'] * 100)
+            total_assets_value += portfolio.portfolio_value
+            total_profit_loss += ((total_df['ref_price'] - total_df['average_price']) * total_df['quantity']).sum()
+        total_profit_loss_percentage = round(total_profit_loss / total_assets_value * 100, 2) if total_assets_value != 0 else 0
+    else:
+        total_assets_value = user_balance
+        total_profit_loss = 0
+        total_profit_loss_percentage = 0
 
     recent_transactions = StockTransaction.objects.filter(user=user).order_by('-transaction_time')[:5]
     list_symbol_recent_transactions = list(recent_transactions.values_list('symbol', flat=True))
