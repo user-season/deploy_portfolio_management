@@ -5,14 +5,17 @@ services:
     build: .
     ports:
       - 8000:8000
-    env_file:
-      - .env
     environment:
-      DB_NAME         : ${DATABASE_NAME}
-      DB_USER         : ${DATABASE_USER}
-      DB_PASSWORD     : ${DATABASE_PASSWORD}
-      DB_HOST         : ${DATABASE_HOST}
-      DB_PORT         : ${DATABASE_PORT}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      admin_username: ${admin_username}
+      admin_password: ${admin_password}
+      DEBUG: ${DEBUG}
+      SECRET_KEY: ${SECRET_KEY}
+      ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
     volumes:
       - ./src:/app/src
       # - ./data:/app/data
@@ -26,15 +29,15 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_DB         : ${DATABASE_NAME}
-      POSTGRES_USER       : ${DATABASE_USER}
-      POSTGRES_PASSWORD   : ${DATABASE_PASSWORD}
+      POSTGRES_DB: portfolio_management
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
     ports:
       - 5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 3
