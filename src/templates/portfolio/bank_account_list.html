@@ -22,7 +22,7 @@
         </div>
     </div>
     
-    {% if messages %}
+    <!-- {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} rounded-4 mb-4">
                 <div class="d-flex">
@@ -36,7 +36,7 @@
                 </div>
             </div>
         {% endfor %}
-    {% endif %}
+    {% endif %} -->
 
     {% if bank_accounts %}
     <div class="card border-0 shadow-sm rounded-4" data-aos="fade-up">
@@ -63,15 +63,11 @@
                                             <i class="fas fa-university text-primary"></i>
                                         </div>
                                     </div>
-                                    <div>
+                                    <div>                                        
                                         <h6 class="mb-0">
-                                            {% if account.bank_name == 'other' %}
-                                                {{ account.other_bank_name }}
-                                            {% else %}
-                                                {{ account.get_bank_name_display }}
-                                            {% endif %}
+                                            {{account.bank_name}}
                                         </h6>
-                                        <div class="small text-muted">Cập nhật: {{ account.updated_at|date:"d/m/Y" }}</div>
+                                        <div class="small text-muted">Cập nhật: {{ account.updated_at|date:"d/m/Y H:i" }}</div>
                                     </div>
                                 </div>
                             </td>

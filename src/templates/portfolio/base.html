@@ -73,6 +73,15 @@
             --navbar-shadow: 0 4px 20px rgba(126, 87, 194, 0.15);
             --navbar-brand-size: 1.75rem;
             --navbar-padding: 0.75rem 1.5rem;
+            --chat-primary: #7e57c2;
+            --chat-secondary: #5e35b1;
+            --chat-accent: #f3e5f5;
+            --chat-success: #4caf50;
+            --chat-shadow: 0 20px 60px rgba(126, 87, 194, 0.15);
+            --chat-shadow-hover: 0 30px 80px rgba(126, 87, 194, 0.25);
+            --chat-radius: 16px;
+            --chat-radius-sm: 12px;
+            --chat-radius-lg: 24px;
         }
         
         body {
@@ -223,6 +232,22 @@
             color: var(--primary-color);
         }
         
+        /* Custom icon styles for navigation */
+        .nav-link img {
+            transition: all 0.35s ease;
+            filter: brightness(0) saturate(100%) invert(40%) sepia(10%) saturate(300%) hue-rotate(200deg) brightness(95%) contrast(90%);
+        }
+        
+        .nav-link:hover img,
+        .nav-link.active img {
+            transform: translateY(-2px);
+            filter: brightness(0) saturate(100%) invert(51%) sepia(88%) saturate(1570%) hue-rotate(261deg) brightness(91%) contrast(88%);
+        }
+        
+        .nav-link.active img {
+            filter: brightness(0) saturate(100%) invert(51%) sepia(88%) saturate(1570%) hue-rotate(261deg) brightness(91%) contrast(88%);
+        }
+        
         .navbar-toggler {
             border: none;
             padding: 0.75rem;
@@ -354,8 +379,17 @@
         }
         
         .icon-circle {
-            transition: all 0.35s ease;
-            box-shadow: 0 5px 15px rgba(126, 87, 194, 0.2);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            border: 2px solid var(--primary-color, #7e57c2);
+            background: linear-gradient(135deg, #7e57c2, #5e35b1);
+            color: white;
         }
         
         .navbar {
@@ -559,112 +593,524 @@
         }
         
         .ai-chat-button {
-            background: linear-gradient(135deg, #7e57c2 0%, #5e35b1 100%);
-            box-shadow: 0 5px 15px rgba(126, 87, 194, 0.4);
-            transition: all 0.3s ease;
-            width: 60px;
-            height: 60px;
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 68px;
+            height: 68px;
+            background: linear-gradient(135deg, var(--chat-primary) 0%, var(--chat-secondary) 100%);
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            position: relative;
+            box-shadow: var(--chat-shadow);
             border: none;
-        }
-        
-        .ai-chat-button:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(126, 87, 194, 0.5);
-        }
-        
-        .ai-chat-icon {
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 1040;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
             overflow: hidden;
-            position: relative;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 5px;
         }
         
-        .ai-chat-icon::after {
+        .ai-chat-button::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2), transparent 70%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
             opacity: 0;
-            transition: all 0.3s ease;
+            transition: all 0.4s ease;
+            border-radius: 50%;
         }
         
-        .ai-chat-button:hover .ai-chat-icon::after {
+        .ai-chat-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--chat-shadow-hover);
+        }
+        
+        .ai-chat-button:hover::before {
             opacity: 1;
         }
         
-        .ai-chat-icon img {
-            width: 40px !important;
-            height: 40px !important;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 0 15px rgba(94, 53, 177, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        .ai-chat-button:hover .ai-chat-icon img {
-            transform: scale(1.1) rotate(5deg);
-            border-color: white;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        }
-        
-        /* Pulse animation for chat button */
-        .pulse-animation {
-            animation: pulse-button 2s infinite;
-        }
-        
-        @keyframes pulse-button {
-            0% {
-                box-shadow: 0 0 0 0 rgba(126, 87, 194, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 15px rgba(126, 87, 194, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(126, 87, 194, 0);
-            }
-        }
-        
-        /* Styling for the chat popup */
-        .chatbot-avatar {
-            width: 40px;
-            height: 40px;
+        .ai-chat-button .ai-chat-icon {
+            position: relative;
+            z-index: 2;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.2);
-            margin-right: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
         }
         
-        .chatbot-avatar img {
-            width: 100%;
-            height: 100%;
+        .ai-chat-button .ai-chat-icon img {
+            width: 34px !important;
+            height: 34px !important;
+            border-radius: 50%;
             object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.8);
             transition: all 0.3s ease;
         }
         
-        .chat-header:hover .chatbot-avatar img {
+        .ai-chat-button:hover .ai-chat-icon img {
             transform: scale(1.1);
+            border-color: white;
         }
         
+        /* Pulse animation */
+        .ai-chat-button.pulse-animation {
+            animation: chatPulse 2s infinite;
+        }
+        
+        @keyframes chatPulse {
+            0% {
+                box-shadow: var(--chat-shadow), 0 0 0 0 rgba(126, 87, 194, 0.7);
+            }
+            70% {
+                box-shadow: var(--chat-shadow), 0 0 0 12px rgba(126, 87, 194, 0);
+            }
+            100% {
+                box-shadow: var(--chat-shadow), 0 0 0 0 rgba(126, 87, 194, 0);
+            }
+        }
+        
+        /* Chat Popup - ULTIMATE DESIGN */
+        #aiChatPopup {
+            width: 420px;
+            height: 580px;
+            border-radius: var(--chat-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--chat-shadow);
+            background: #ffffff;
+            border: 1px solid rgba(126, 87, 194, 0.08);
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1050;
+            display: none;
+            flex-direction: column;
+        }
+        
+        #aiChatPopup.show-animation {
+            animation: chatSlideUpWow 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        @keyframes chatSlideUpWow {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* Chat Header - PERFECT ALIGNMENT */
+        .chat-header {
+            background: linear-gradient(135deg, var(--chat-primary) 0%, var(--chat-secondary) 100%);
+            padding: 20px 24px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .chat-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            animation: shimmer 4s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .chat-header-left {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .chat-header .chatbot-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-right: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-header .chatbot-avatar:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .chat-header .chatbot-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .chat-header-info h6 {
+            font-weight: 700;
+            font-size: 17px;
+            margin-bottom: 2px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+        
+        .chat-header-info small {
+            font-size: 12px;
+            opacity: 0.9;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .chat-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .chat-header button {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .chat-header button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        /* Chat Container */
+        #chatContainer {
+            flex: 1;
+            padding: 20px;
+            background: #fafafa;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(126, 87, 194, 0.3) transparent;
+        }
+        
+        #chatContainer::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #chatContainer::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        #chatContainer::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--chat-primary), var(--chat-secondary));
+            border-radius: 3px;
+        }
+        
+        /* Message Containers */
+        .message-container {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            animation: messageSlideIn 0.4s ease-out;
+        }
+        
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .user-container {
+            align-items: flex-end;
+        }
+        
+        .ai-container {
+            align-items: flex-start;
+        }
+        
+        .message-content {
+            padding: 14px 18px;
+            max-width: 80%;
+            font-size: 14px;
+            line-height: 1.5;
+            border-radius: 18px;
+            word-wrap: break-word;
+            position: relative;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, var(--chat-primary) 0%, var(--chat-secondary) 100%);
+            color: white;
+            border-radius: 18px 18px 6px 18px;
+            margin-left: auto;
+        }
+        
+        .ai-message {
+            background: #ffffff;
+            color: #333;
+            border-radius: 18px 18px 18px 6px;
+            border: 1px solid rgba(126, 87, 194, 0.08);
+            position: relative;
+        }
+        
+        .ai-message::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(126, 87, 194, 0.02) 50%, transparent 70%);
+            border-radius: inherit;
+            pointer-events: none;
+        }
+        
+        /* Typing Indicator */
+        .typing-message {
+            background: #f5f5f5;
+            border: 1px solid rgba(126, 87, 194, 0.12);
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 0;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(var(--chat-primary), var(--chat-secondary));
+            margin: 0 3px;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typingBounce {
+            0%, 80%, 100% {
+                transform: scale(0.7);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* Suggested Questions - BEAUTIFUL DESIGN */
+        .suggested-questions {
+            padding: 18px 20px;
+            background: #ffffff;
+            border-top: 1px solid rgba(126, 87, 194, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .suggested-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--chat-primary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .suggested-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .suggested-item {
+            font-size: 12px;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border: 1px solid rgba(126, 87, 194, 0.12);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--chat-primary);
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(126, 87, 194, 0.06);
+        }
+        
+        .suggested-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(126, 87, 194, 0.1), transparent);
+            transition: all 0.3s ease;
+        }
+        
+        .suggested-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(126, 87, 194, 0.15);
+            border-color: var(--chat-primary);
+            background: linear-gradient(135deg, var(--chat-accent) 0%, #ffffff 100%);
+        }
+        
+        .suggested-item:hover::before {
+            left: 100%;
+        }
+        
+        /* Chat Input - PERFECT DESIGN */
+        .chat-input {
+            padding: 20px 24px 24px 24px;
+            background: #ffffff;
+            border-top: 1px solid rgba(126, 87, 194, 0.08);
+        }
+        
+        .chat-input-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 8px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(126, 87, 194, 0.06);
+        }
+        
+        .chat-input-container:focus-within {
+            border-color: var(--chat-primary);
+            background: #ffffff;
+            box-shadow: 0 4px 16px rgba(126, 87, 194, 0.12);
+        }
+        
+        .chat-input-field {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #333;
+            resize: none;
+            min-height: 20px;
+            max-height: 80px;
+            line-height: 1.4;
+            font-family: inherit;
+        }
+        
+        .chat-input-field::placeholder {
+            color: #999;
+        }
+        
+        .send-button {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--chat-primary) 0%, var(--chat-secondary) 100%);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 12px rgba(126, 87, 194, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .send-button:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 20px rgba(126, 87, 194, 0.4);
+        }
+        
+        .send-button:active {
+            transform: scale(0.95);
+        }
+        
+        .send-button i {
+            color: white;
+            font-size: 16px;
+        }
+        
+        /* Responsive improvements */
+        @media (max-width: 576px) {
+            #aiChatButton {
+                width: 60px;
+                height: 60px;
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            #aiChatPopup {
+                width: calc(100vw - 24px);
+                height: calc(100vh - 100px);
+                bottom: 12px;
+                right: 12px;
+                left: 12px;
+                max-width: none;
+                border-radius: var(--chat-radius);
+            }
+            
+            .message-content {
+                max-width: 85%;
+                padding: 12px 16px;
+            }
+            
+            .suggested-item {
+                font-size: 11px;
+                padding: 8px 12px;
+            }
+            
+            .chat-header {
+                padding: 16px 20px;
+            }
+            
+            .chat-input {
+                padding: 16px 20px 20px 20px;
+            }
+        }
+        
+        /* Hide suggested questions when user starts typing their own message */
+        .suggested-questions.hidden {
+            display: none;
+        }
+        
+        /* Footer and other essential styles */
         footer {
             background: linear-gradient(135deg, #4a148c 0%, #7b1fa2 100%);
             color: #fff;
@@ -692,6 +1138,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
+        /* Stat cards */
         .stat-card {
             border-radius: var(--radius-lg);
             padding: 1.5rem;
@@ -727,51 +1174,45 @@
             border-left-color: var(--success-color);
         }
         
-        .stat-card-value {
-            border-left-color: var(--warning-color);
-        }
-        
         .stat-card-transactions {
             border-left-color: var(--info-color);
         }
         
         /* Price colors for market */
         .price-up {
-            color: #4CAF50 !important; /* Green */
+            color: #4CAF50 !important;
             font-weight: bold;
         }
         
         .price-down {
-            color: #F44336 !important; /* Red */
+            color: #F44336 !important;
             font-weight: bold;
         }
         
         .price-ceiling {
-            color: #9333ea !important; /* Purple */
+            color: #9333ea !important;
             font-weight: bold;
         }
         
         .price-floor {
-            color: #0891b2 !important; /* Blue */
+            color: #0891b2 !important;
             font-weight: bold;
         }
         
         .price-reference {
-            color: #f59e0b !important; /* Orange */
+            color: #f59e0b !important;
         }
         
-        /* Profit and Loss specific styling */
         .profit-value {
-            color: #4CAF50 !important; /* Green */
+            color: #4CAF50 !important;
             font-weight: bold;
         }
         
         .loss-value {
-            color: #F44336 !important; /* Red */
+            color: #F44336 !important;
             font-weight: bold;
         }
         
-        /* Special colors for percentage changes */
         .text-profit {
             color: #4CAF50 !important;
         }
@@ -780,278 +1221,255 @@
             color: #F44336 !important;
         }
         
-        /* Nâng cao chất lượng UI */
-        .navbar-nav .nav-item {
-            margin: 0 2px;
+        /* Enhanced Toast Notification System */
+        #notification-container {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 1060;
+            max-width: 400px;
+            width: 100%;
         }
         
-        .navbar-nav .nav-link {
-            border-radius: 6px;
-        }
-        
-        .navbar-nav .nav-link:hover {
-            background-color: rgba(126, 87, 194, 0.08);
-        }
-        
-        @keyframes navbarSlideDown {
-            from {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        .navbar-animation-down {
-            animation: navbarSlideDown 0.5s ease forwards;
-        }
-        
-        .nav-item.has-notification {
-            position: relative;
-        }
-        
-        .nav-item.has-notification::after {
-            content: '';
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            width: 8px;
-            height: 8px;
-            background-color: var(--danger-color);
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% {
-                transform: scale(0.8);
-                box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
-            }
-            70% {
-                transform: scale(1);
-                box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
-            }
-            100% {
-                transform: scale(0.8);
-                box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
-            }
-        }
-        
-        /* Custom chat widget styles - Enhanced */
-        #aiChatPopup {
-            width: 420px;
-            height: 600px;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        }
-        
-        .chat-header {
-            background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%);
-            border-radius: 20px 20px 0 0;
-            padding: 18px 20px;
-        }
-        
-        .chat-messages {
-            padding: 20px;
-            height: calc(100% - 180px);
-            background-color: #f8f9fa;
-        }
-        
-        .message-container {
+        .notification-toast {
+            background: rgba(255, 255, 255, 0.98);
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .user-container {
-            align-items: flex-end;
-        }
-        
-        .ai-container {
-            align-items: flex-start;
-        }
-        
-        .message-content {
-            padding: 12px 18px;
-            max-width: 85%;
-            font-size: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            border-radius: 18px;
-            word-wrap: break-word;
-        }
-        
-        .user-message {
-            background-color: #2563eb;
-            color: white;
-            border-radius: 18px 18px 0 18px;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
-        }
-        
-        .ai-message {
-            background-color: #ffffff;
-            color: #333;
-            border-radius: 18px 18px 18px 0;
-            line-height: 1.5;
-        }
-        
-        .message-content p {
-            margin-bottom: 8px;
-        }
-        
-        .message-content p:last-child {
-            margin-bottom: 0;
-        }
-        
-        /* Đơn giản hóa các thẻ định dạng */
-        .ai-message strong {
-            color: #5b21b6;
-            font-weight: bold;
-        }
-        
-        .ai-message ul, 
-        .ai-message ol {
-            padding-left: 20px;
-            margin-bottom: 8px;
-        }
-        
-        .ai-message li {
-            margin-bottom: 4px;
-        }
-        
-        /* Đơn giản hóa card styles */
-        .ai-message .card-info,
-        .ai-message .card-warning,
-        .ai-message .card-success {
-            padding: 10px;
-            margin: 8px 0;
-            border-radius: 10px;
-            border-left: 3px solid;
-            background-color: #f8f9fa;
-        }
-        
-        .ai-message .card-info {
-            border-left-color: #3b82f6;
-        }
-        
-        .ai-message .card-warning {
-            border-left-color: #f59e0b;
-        }
-        
-        .ai-message .card-success {
-            border-left-color: #10b981;
-        }
-        
-        /* Media query for mobile devices */
-        @media (max-width: 576px) {
-            #aiChatPopup {
-                width: 92%;
-                max-width: 400px;
-                height: 85vh;
-                right: 4%;
-                left: auto;
-                bottom: 80px;
-            }
-            
-            .ai-message, .user-message {
-                max-width: 90%;
-            }
-        }
-        
-        /* Phần CSS cho suggested-questions và chat-input */
-        .suggested-questions {
-            padding: 10px 15px;
-            background-color: #f8f9fa;
-            border-top: 1px solid rgba(0,0,0,0.05);
-        }
-        
-        .suggested-title {
-            font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 8px;
-        }
-        
-        .suggested-items {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        
-        .suggested-item {
-            font-size: 0.9rem;
-            padding: 8px 12px;
-            white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-            background-color: #fff;
-            border-radius: 15px;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform: translateX(100%);
+            opacity: 0;
+            border-left: 4px solid transparent;
         }
         
-        .suggested-item:hover {
-            background-color: #ede9fe;
-            transform: translateY(-2px);
+        .notification-toast.show {
+            transform: translateX(0);
+            opacity: 1;
         }
         
-        .chat-input {
-            padding: 12px 15px;
-            background-color: #fff;
-            border-top: 1px solid rgba(0,0,0,0.05);
-        }
-        
-        #userMessage {
-            border-radius: 24px;
-            padding: 12px 18px;
-            border: 1px solid rgba(0,0,0,0.1);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            font-size: 15px;
-        }
-        
-        .send-button {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
+        .notification-toast.removing {
+            transform: translateX(100%);
+            opacity: 0;
+            margin-bottom: 0;
             padding: 0;
+            min-height: 0;
+        }
+        
+        .notification-toast.success {
+            border-left-color: var(--success-color);
+        }
+        
+        .notification-toast.error {
+            border-left-color: var(--danger-color);
+        }
+        
+        .notification-toast.warning {
+            border-left-color: var(--warning-color);
+        }
+        
+        .notification-toast.info {
+            border-left-color: var(--info-color);
+        }
+        
+        .notification-header {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px 12px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        
+        .notification-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-left: 10px;
-            box-shadow: 0 2px 8px rgba(91, 33, 182, 0.2);
-            background-color: #5b21b6;
-            border: none;
-            transition: all 0.2s ease;
+            margin-right: 12px;
+            position: relative;
+            overflow: hidden;
         }
         
-        .send-button:hover {
-            background-color: #4c1d95;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(91, 33, 182, 0.3);
+        .notification-icon::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .notification-toast.success .notification-icon {
+            background: linear-gradient(135deg, var(--success-color), #66bb6a);
+            color: white;
+        }
+        
+        .notification-toast.error .notification-icon {
+            background: linear-gradient(135deg, var(--danger-color), #ef5350);
+            color: white;
+        }
+        
+        .notification-toast.warning .notification-icon {
+            background: linear-gradient(135deg, var(--warning-color), #ffa726);
+            color: white;
+        }
+        
+        .notification-toast.info .notification-icon {
+            background: linear-gradient(135deg, var(--info-color), #42a5f5);
+            color: white;
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .notification-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+        
+        .notification-close:hover {
+            background: rgba(0, 0, 0, 0.08);
+            color: var(--text-primary);
+        }
+        
+        .notification-body {
+            padding: 12px 20px 16px 20px;
+        }
+        
+        .notification-message {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        
+        .notification-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.1);
+            transition: width 0.1s linear;
+        }
+        
+        .notification-toast.success .notification-progress {
+            background: var(--success-color);
+        }
+        
+        .notification-toast.error .notification-progress {
+            background: var(--danger-color);
+        }
+        
+        .notification-toast.warning .notification-progress {
+            background: var(--warning-color);
+        }
+        
+        .notification-toast.info .notification-progress {
+            background: var(--info-color);
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 576px) {
+            #notification-container {
+                top: 80px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+            
+            .notification-toast {
+                margin-bottom: 10px;
+            }
+            
+            .notification-header {
+                padding: 14px 16px 10px 16px;
+            }
+            
+            .notification-body {
+                padding: 10px 16px 14px 16px;
+            }
+        }
+        
+        /* Avatar fallback styles */
+        .profile-avatar-circle {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7e57c2, #5e35b1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            border: 3px solid #7e57c2;
+        }
+        
+        .avatar-container img {
+            transition: transform 0.3s ease;
+        }
+        
+        .avatar-container img:hover {
+            transform: scale(1.05);
         }
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Alert message -->
+    <!-- Enhanced Notification Container -->
+    <div id="notification-container"></div>
+    
+    <!-- Process Django Messages into Toast Notifications -->
     {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} rounded-4 mb-4">
-                <div class="d-flex">
-                    <div class="me-3">
-                        <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} fa-2x"></i>
-                    </div>
-                    <div>
-                        <h6 class="alert-heading">Thông báo</h6>
-                        <p class="mb-0">{{ message|safe }}</p>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const messages = [
+                    {% for message in messages %}
+                    {
+                        type: '{% if message.tags == "error" %}error{% else %}{{ message.tags }}{% endif %}',
+                        message: `{{ message|safe|escapejs }}`,
+                        timestamp: new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ];
+                
+                messages.forEach((msg, index) => {
+                    setTimeout(() => {
+                        showNotification(msg.message, msg.type, msg.timestamp);
+                    }, index * 200);
+                });
+            });
+        </script>
     {% endif %}
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
@@ -1070,32 +1488,32 @@
                     {% if user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}" href="{% url 'dashboard' %}">
-                            <i class="fas fa-tachometer-alt me-1"></i> Bảng điều khiển
+                            <img src="{% static 'portfolio/img/icons/icon_dashboard.png' %}" alt="Dashboard" style="width: 18px; height: 18px; margin-right: 8px;"> Bảng điều khiển
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/portfolios/' in request.path %}active{% endif %}" href="{% url 'portfolio_list' %}">
-                            <i class="fas fa-folder me-1"></i> Danh mục
+                            <img src="{% static 'portfolio/img/icons/icon_portfolio.png' %}" alt="Portfolio" style="width: 18px; height: 18px; margin-right: 8px;"> Danh mục
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/assets/' in request.path %}active{% endif %}" href="{% url 'asset_list' %}">
-                            <i class="fas fa-chart-bar me-1"></i> Tài sản
+                            <img src="{% static 'portfolio/img/icons/icon_asset.png' %}" alt="Assets" style="width: 18px; height: 18px; margin-right: 8px;"> Tài sản
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/transactions/' in request.path %}active{% endif %}" href="{% url 'transaction_list' %}">
-                            <i class="fas fa-exchange-alt me-1"></i> Giao dịch
+                            <img src="{% static 'portfolio/img/icons/icon_transaction.png' %}" alt="Transactions" style="width: 18px; height: 18px; margin-right: 8px;"> Giao dịch
                         </a>
                     </li>
                     <li class="nav-item has-notification">
                         <a class="nav-link {% if '/wallet/' in request.path %}active{% endif %}" href="{% url 'wallet' %}">
-                            <i class="fas fa-wallet me-1"></i> Ví điện tử
+                            <img src="{% static 'portfolio/img/icons/icons_wallet.png' %}" alt="Wallet" style="width: 18px; height: 18px; margin-right: 8px;"> Ví điện tử
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/market/' in request.path %}active{% endif %}" href="{% url 'market' %}">
-                            <i class="fas fa-chart-line me-1"></i> Thị trường
+                            <img src="{% static 'portfolio/img/icons/icon_market.png' %}" alt="Market" style="width: 18px; height: 18px; margin-right: 8px;"> Thị trường
                         </a>
                     </li>
                     {% endif %}
@@ -1120,9 +1538,9 @@
                             <li><a class="dropdown-item py-2" href="{% url 'user_profile' %}">
                                 <i class="fas fa-user-cog me-2 text-primary"></i>Tài khoản</a>
                             </li>
-                            <li><a class="dropdown-item py-2" href="#">
-                                <i class="fas fa-cog me-2 text-primary"></i>Cài đặt</a>
-                            </li>
+                            <!-- <li><a class="dropdown-item py-2" href="#">
+                                <i class="fas fa-cog me-2 text-primary"></i>Quên mật khẩu</a>
+                            </li> -->
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item py-2" href="{% url 'logout' %}">
                                 <i class="fas fa-sign-out-alt me-2 text-danger"></i>Đăng xuất</a>
@@ -1156,17 +1574,6 @@
                         ASTROLUX
                     </h5>
                     <p class="mb-3 pe-lg-4">Hệ thống quản lý danh mục đầu tư chứng khoán hiện đại giúp bạn theo dõi và tối ưu hóa tài sản đầu tư.</p>
-                    <div class="d-flex gap-3">
-                        <a href="#" class="btn btn-sm btn-outline-light rounded-circle p-2">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="btn btn-sm btn-outline-light rounded-circle p-2">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="btn btn-sm btn-outline-light rounded-circle p-2">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                    </div>
                 </div>
                 <div class="col-md-2 mb-4 mb-md-0">
                     <h6 class="mb-3">Liên kết</h6>
@@ -1212,10 +1619,11 @@
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
+    <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- AOS Animation Library -->
-    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    
+    <!-- AOS Animation -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
         AOS.init({
             duration: 800,
@@ -1223,124 +1631,262 @@
             once: true
         });
     </script>
+    
+    <!-- Realtime Updates -->
+    <script src="{% static 'portfolio/js/realtime.js' %}"></script>
+    
+    <!-- Chat Widget Script -->
     <script src="{% static 'portfolio/js/chat.js' %}"></script>
+    
+    <!-- Page-specific scripts -->
     {% block extra_js %}{% endblock %}
 
-    <!-- Chat Widget -->
-    <div class="chat-widget-container" id="chatContainer">
-        <div class="ai-chat-popup" id="aiChatPopup">
-            <div class="chat-header">
-                <div class="d-flex align-items-center">
-                    <div class="chatbot-avatar me-2">
-                        <img src="{% static 'portfolio/img/astrobot.jpg' %}" alt="AstroBot" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 10px rgba(94, 53, 177, 0.3);">
-                    </div>
-                    <div>
-                        <h5 class="mb-0">AstroBot</h5>
-                        <div class="status-indicator">
-                            <span class="status-dot"></span>
-                            <span class="status-text">Online</span>
-                        </div>
-                    </div>
+    <!-- AI Chat Widget -->
+    <div id="aiChatButton" class="ai-chat-button">
+        <div class="ai-chat-icon">
+            <img src="{% static 'portfolio/img/astrobot.jpg' %}" alt="AstroBot" 
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <i class="fas fa-robot" style="display: none; color: white; font-size: 24px;"></i>
+        </div>
+    </div>
+
+    <!-- AI Chat Popup -->
+    <div id="aiChatPopup" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1050; flex-direction: column;">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <div class="chatbot-avatar">
+                    <img src="{% static 'portfolio/img/astrobot.jpg' %}" alt="AstroBot"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <i class="fas fa-robot" style="display: none; color: white; font-size: 20px;"></i>
                 </div>
-                <div>
-                    <button class="btn btn-sm btn-light rounded-circle" id="minimizeChat">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                    <button class="btn btn-sm btn-light rounded-circle" id="closeChat">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <!-- Tin nhắn sẽ được thêm động qua JavaScript -->
-            </div>
-            <div class="suggested-questions" id="suggestedQuestions">
-                <h6 class="suggested-title">Câu hỏi gợi ý:</h6>
-                <div class="suggested-items">
-                    <button class="suggested-item" data-question="Tôi cần mua cổ phiếu ở đâu?">
-                        <i class="fas fa-question-circle me-2"></i>Tôi cần mua cổ phiếu ở đâu?
-                    </button>
-                    <button class="suggested-item" data-question="Tôi nên đầu tư vào cổ phiếu ngành nào ở Việt Nam?">
-                        <i class="fas fa-question-circle me-2"></i>Tôi nên đầu tư vào ngành nào?
-                    </button>
-                    <button class="suggested-item" data-question="Làm thế nào để phân tích một cổ phiếu?">
-                        <i class="fas fa-question-circle me-2"></i>Cách phân tích cổ phiếu?
-                    </button>
-                    <button class="suggested-item" data-question="Chỉ số P/E là gì?">
-                        <i class="fas fa-question-circle me-2"></i>Chỉ số P/E là gì?
-                    </button>
+                <div class="chat-header-info">
+                    <h6 class="mb-0">AstroBot</h6>
+                    <small>Trợ lý AI tài chính</small>
                 </div>
             </div>
-            <div class="chat-input">
-                <form id="chatForm">
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="userMessage" placeholder="Nhập câu hỏi của bạn..." autocomplete="off">
-                        <button class="btn btn-primary send-button" type="submit">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </form>
+            <div class="chat-header-controls">
+                <button id="minimizeChat" title="Thu nhỏ">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button id="closeChat" title="Đóng (Nhấp đôi để xóa lịch sử)">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </div>
 
-        <button class="ai-chat-button" id="aiChatButton">
-            <div class="ai-chat-icon">
-                <img src="{% static 'portfolio/img/astrobot.jpg' %}" alt="AstroBot" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
-            </div>
-            <span class="ai-chat-indicator"></span>
-        </button>
-    </div>
-    
-    <!-- Script để hiển thị chat popup khi click vào nút -->
-    <script>
-        // Thêm function kiểm tra khi trang tải xong
-        document.addEventListener('DOMContentLoaded', function() {
-            const aiChatButton = document.getElementById('aiChatButton');
-            const aiChatPopup = document.getElementById('aiChatPopup');
-            
-            // Đảm bảo nút chat hiển thị đúng cách
-            if (aiChatButton && aiChatPopup) {
-                aiChatButton.style.display = 'flex';
-                aiChatPopup.style.display = 'none';
-                
-                console.log("Chat elements initialized");
-            }
-        });
-    </script>
+        <!-- Chat Container -->
+        <div id="chatContainer" class="bg-light" style="height: 400px; overflow-y: auto; padding: 15px; border-radius: 0;">
+            <!-- Chat Messages -->
+            <div id="chatMessages"></div>
+        </div>
 
-    <!-- Script để xử lý hiệu ứng thanh navbar khi cuộn -->
+        <!-- Suggested Questions -->
+        <div id="suggestedQuestions" class="suggested-questions" style="background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
+            <div class="suggested-title">Gợi ý câu hỏi:</div>
+            <div class="suggested-items">
+                <span class="suggested-item" data-question="Làm sao để đầu tư chứng khoán hiệu quả?">💡 Đầu tư hiệu quả</span>
+                <span class="suggested-item" data-question="Phân tích kỹ thuật là gì?">📊 Phân tích kỹ thuật</span>
+                <span class="suggested-item" data-question="Cách quản lý rủi ro trong đầu tư?">⚡ Quản lý rủi ro</span>
+                <span class="suggested-item" data-question="So sánh cổ phiếu blue chip và penny stock?">🔥 Blue chip vs Penny</span>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input">
+            <form id="chatForm">
+                <div class="chat-input-container">
+                    <textarea id="userMessage" class="chat-input-field" placeholder="Nhập tin nhắn..." 
+                             maxlength="500" rows="1"></textarea>
+                    <button type="submit" class="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const navbar = document.querySelector('.navbar');
-            let lastScrollTop = 0;
+        // Enhanced Notification System
+        function showNotification(message, type = 'info', timestamp = null) {
+            const container = document.getElementById('notification-container');
+            if (!container) return;
             
-            window.addEventListener('scroll', function() {
-                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                
-                // Thêm class 'scrolled' khi cuộn xuống
-                if (scrollTop > 10) {
-                    navbar.classList.add('scrolled');
-                } else {
-                    navbar.classList.remove('scrolled');
+            // Generate timestamp if not provided
+            if (!timestamp) {
+                timestamp = new Date().toLocaleTimeString('vi-VN', {
+                    hour: '2-digit', 
+                    minute: '2-digit'
+                });
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification-toast ${type}`;
+            
+            // Set notification content
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <div class="notification-icon">
+                        <i class="fas fa-${getIconByType(type)}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <h6 class="notification-title">${getTitleByType(type)}</h6>
+                        <div class="notification-time">${timestamp}</div>
+                    </div>
+                    <button class="notification-close" onclick="removeNotification(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="notification-body">
+                    <p class="notification-message">${message}</p>
+                </div>
+                <div class="notification-progress" style="width: 100%;"></div>
+            `;
+            
+            // Add to container
+            container.appendChild(notification);
+            
+            // Trigger show animation
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            // Auto dismiss after 6 seconds (unless it's an error)
+            if (type !== 'error') {
+                autoRemoveNotification(notification, 6000);
+            } else {
+                // Errors stay for 10 seconds
+                autoRemoveNotification(notification, 10000);
+            }
+            
+            return notification;
+        }
+        
+        function getIconByType(type) {
+            const icons = {
+                'success': 'check-circle',
+                'error': 'exclamation-circle', 
+                'warning': 'exclamation-triangle',
+                'info': 'info-circle'
+            };
+            return icons[type] || 'bell';
+        }
+        
+        function getTitleByType(type) {
+            const titles = {
+                'success': 'Thành công',
+                'error': 'Lỗi',
+                'warning': 'Cảnh báo', 
+                'info': 'Thông báo'
+            };
+            return titles[type] || 'Thông báo';
+        }
+        
+        function removeNotification(button) {
+            const notification = button.closest('.notification-toast');
+            if (notification) {
+                notification.classList.add('removing');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 400);
+            }
+        }
+        
+        function autoRemoveNotification(notification, delay) {
+            const progressBar = notification.querySelector('.notification-progress');
+            let width = 100;
+            const interval = 50;
+            const step = (interval / delay) * 100;
+            
+            const progressInterval = setInterval(() => {
+                width -= step;
+                if (progressBar) {
+                    progressBar.style.width = Math.max(0, width) + '%';
                 }
                 
-                // Hiệu ứng ẩn/hiện thanh navbar khi cuộn
-                if (scrollTop > lastScrollTop && scrollTop > 150) {
-                    // Cuộn xuống
-                    navbar.style.transform = 'translateY(-100%)';
-                } else {
-                    // Cuộn lên
-                    navbar.style.transform = 'translateY(0)';
-                    navbar.classList.add('navbar-animation-down');
-                    
-                    // Xóa class animation sau khi hoàn thành
-                    setTimeout(() => {
-                        navbar.classList.remove('navbar-animation-down');
-                    }, 500);
+                if (width <= 0) {
+                    clearInterval(progressInterval);
+                    if (notification.parentNode) {
+                        notification.classList.add('removing');
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 400);
+                    }
                 }
-                
-                lastScrollTop = scrollTop;
+            }, interval);
+            
+            // Store interval ID for potential cancellation
+            notification.progressInterval = progressInterval;
+            
+            // Pause on hover
+            notification.addEventListener('mouseenter', () => {
+                clearInterval(progressInterval);
             });
+            
+            // Resume on mouse leave
+            notification.addEventListener('mouseleave', () => {
+                autoRemoveNotification(notification, width * delay / 100);
+            });
+        }
+        
+        // Global function for backward compatibility and new features
+        window.showRealtimeNotification = function(message, type = 'info') {
+            return showNotification(message, type);
+        };
+        
+        // Enhanced notification with more options
+        window.showNotificationWithOptions = function(options) {
+            const {
+                message,
+                type = 'info',
+                title = null,
+                duration = 6000,
+                persistent = false
+            } = options;
+            
+            const notification = showNotification(message, type);
+            
+            if (title) {
+                const titleElement = notification.querySelector('.notification-title');
+                if (titleElement) {
+                    titleElement.textContent = title;
+                }
+            }
+            
+            if (persistent && notification.progressInterval) {
+                clearInterval(notification.progressInterval);
+                const progressBar = notification.querySelector('.notification-progress');
+                if (progressBar) {
+                    progressBar.style.display = 'none';
+                }
+            }
+            
+            return notification;
+        };
+
+        // Initialize chat bot positioning
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing AstroBot chat widget...');
+            
+            // Ensure chat button is positioned correctly
+            const chatButton = document.getElementById('aiChatButton');
+            if (chatButton) {
+                chatButton.style.position = 'fixed';
+                chatButton.style.bottom = '20px';
+                chatButton.style.right = '20px';
+                chatButton.style.zIndex = '1040';
+                console.log('AstroBot chat button positioned successfully');
+            } else {
+                console.error('AstroBot chat button not found');
+            }
+            
+            // Initialize notification system
+            console.log('Enhanced notification system initialized');
         });
     </script>
 </body>

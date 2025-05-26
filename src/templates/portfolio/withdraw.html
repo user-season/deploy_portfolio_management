@@ -1,5 +1,6 @@
 {% extends 'portfolio/base.html' %}
 {% load static %}
+{% load currency_filters %}
 
 {% block title %}Rút tiền | {{ block.super }}{% endblock %}
 
@@ -48,29 +49,6 @@
                     <form method="post" id="withdrawForm" action="{% url 'withdraw_money' %}">
                         {% csrf_token %}
                         
-                        {% if form.errors %}
-                        <div class="alert alert-danger rounded-4 mb-4">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <i class="fas fa-exclamation-circle fa-2x"></i>
-                                </div>
-                                <div>
-                                    <h6 class="alert-heading">Lỗi xử lý form</h6>
-                                    <ul class="mb-0">
-                                        {% for field in form %}
-                                            {% for error in field.errors %}
-                                                <li>{{ field.label }}: {{ error }}</li>
-                                            {% endfor %}
-                                        {% endfor %}
-                                        {% for error in form.non_field_errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-                        
                         <div class="alert alert-primary rounded-4 mb-4">
                             <div class="d-flex">
                                 <div class="me-3">
@@ -78,7 +56,7 @@
                                 </div>
                                 <div>
                                     <h6 class="alert-heading">Thông tin số dư</h6>
-                                    <p class="mb-0">Số dư khả dụng của bạn: <span class="fw-bold">{{ wallet.balance|default:"0"|floatformat:0 }} VNĐ</span></p>
+                                    <p class="mb-0">Số dư khả dụng của bạn: <span class="fw-bold">{{ wallet.balance|default:"0"|dinh_dang_tien }} VNĐ</span></p>
                                 </div>
                             </div>
                         </div>
@@ -86,10 +64,12 @@
                         <div class="mb-4">
                             <label for="amount" class="form-label">Số tiền muốn rút <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <input type="number" name="amount" class="form-control form-control-lg" id="amount" min="100000" max="{{ wallet.balance|default:0 }}" step="50000" value="{{ form.amount.value|default:'' }}" required>
+                                <input type="number" name="amount" class="form-control form-control-lg" id="amount" 
+                                       min="100000" max="{{ wallet.balance|default:0 }}" step="50000" 
+                                       value="{{ form.amount.value|default:'' }}" required>
                                 <span class="input-group-text">VNĐ</span>
                             </div>
-                            <div class="form-text">Số tiền tối thiểu: 100,000 VNĐ</div>
+                            <div class="form-text">Số tiền tối thiểu: 100,000 VNĐ. Phí rút tiền: 0.5% (tối thiểu 10,000 VNĐ, tối đa 50,000 VNĐ)</div>
                         </div>
                         
                         <h5 class="mb-3">Chọn tài khoản nhận tiền</h5>
@@ -97,10 +77,11 @@
                         {% if bank_accounts %}
                         <div class="mb-4">
                             <div class="row g-3">
-                                {% for account in form.fields.bank_account.queryset %}
+                                {% for account in bank_accounts %}
                                 <div class="col-md-6">
                                     <div class="form-check bank-account-card">
-                                        <input class="form-check-input" type="radio" name="bank_account" id="bank{{ account.id }}" value="{{ account.id }}" {% if form.bank_account.value|stringformat:"s" == account.id|stringformat:"s" %}checked{% elif account.is_default and not form.bank_account.value %}checked{% endif %}>
+                                        <input class="form-check-input" type="radio" name="bank_account" id="bank{{ account.id }}" 
+                                               value="{{ account.id }}" {% if account.is_default and not form.bank_account.value %}checked{% endif %}>
                                         <label class="form-check-label w-100" for="bank{{ account.id }}">
                                             <div class="card border shadow-sm rounded-4 p-3">
                                                 <div class="d-flex align-items-center">
@@ -110,13 +91,7 @@
                                                         </div>
                                                     </div>
                                                     <div>
-                                                        <h6 class="mb-1">
-                                                            {% if account.bank_name == 'other' %}
-                                                                {{ account.other_bank_name }}
-                                                            {% else %}
-                                                                {{ account.get_bank_name_display }}
-                                                            {% endif %}
-                                                        </h6>
+                                                        <h6 class="mb-1">{{ account.bank_name }}</h6>
                                                         <div class="text-monospace small">{{ account.account_number }}</div>
                                                         <div class="small text-muted">{{ account.account_name }}</div>
                                                     </div>
@@ -129,7 +104,7 @@
                                 
                                 <div class="col-md-6">
                                     <div class="form-check bank-account-card">
-                                        <input class="form-check-input" type="radio" name="bank_account" id="newBankAccount" value="new" {% if form.bank_account.value == 'new' %}checked{% endif %}>
+                                        <input class="form-check-input" type="radio" name="bank_account" id="newBankAccount" value="">
                                         <label class="form-check-label w-100" for="newBankAccount">
                                             <div class="card border border-dashed shadow-sm rounded-4 p-3 text-center">
                                                 <div class="py-2">
@@ -152,34 +127,46 @@
                                     <label for="new_bank_name" class="form-label">Ngân hàng <span class="text-danger">*</span></label>
                                     <select name="new_bank_name" id="new_bank_name" class="form-select">
                                         <option value="">-- Chọn ngân hàng --</option>
-                                        {% for value, text in form.fields.new_bank_name.choices %}
-                                            <option value="{{ value }}" {% if form.new_bank_name.value == value %}selected{% endif %}>{{ text }}</option>
-                                        {% endfor %}
+                                        <option value="Vietcombank">Vietcombank</option>
+                                        <option value="Techcombank">Techcombank</option>
+                                        <option value="BIDV">BIDV</option>
+                                        <option value="Vietinbank">Vietinbank</option>
+                                        <option value="MB Bank">MB Bank</option>
+                                        <option value="TPBank">TPBank</option>
+                                        <option value="ACB">ACB</option>
+                                        <option value="Sacombank">Sacombank</option>
+                                        <option value="VPBank">VPBank</option>
+                                        <option value="Ngân hàng khác">Ngân hàng khác</option>
                                     </select>
                                 </div>
                                 
-                                <div class="mb-3 {% if form.new_bank_name.value != 'other' %}d-none{% endif %}" id="otherBankGroup">
+                                <div class="mb-3 d-none" id="otherBankGroup">
                                     <label for="new_other_bank_name" class="form-label">Tên ngân hàng khác <span class="text-danger">*</span></label>
-                                    <input type="text" name="new_other_bank_name" id="new_other_bank_name" class="form-control" value="{{ form.new_other_bank_name.value|default:'' }}">
+                                    <input type="text" name="new_other_bank_name" id="new_other_bank_name" class="form-control" 
+                                           value="{{ form.new_other_bank_name.value|default:'' }}">
                                 </div>
                                 
                                 <div class="mb-3">
                                     <label for="new_account_name" class="form-label">Chủ tài khoản <span class="text-danger">*</span></label>
-                                    <input type="text" name="new_account_name" id="new_account_name" class="form-control" value="{{ form.new_account_name.value|default:'' }}">
+                                    <input type="text" name="new_account_name" id="new_account_name" class="form-control" 
+                                           value="{{ form.new_account_name.value|default:'' }}">
                                 </div>
                                 
                                 <div class="mb-3">
                                     <label for="new_account_number" class="form-label">Số tài khoản <span class="text-danger">*</span></label>
-                                    <input type="text" name="new_account_number" id="new_account_number" class="form-control" value="{{ form.new_account_number.value|default:'' }}">
+                                    <input type="text" name="new_account_number" id="new_account_number" class="form-control" 
+                                           value="{{ form.new_account_number.value|default:'' }}">
                                 </div>
                                 
                                 <div class="mb-3">
                                     <label for="new_branch" class="form-label">Chi nhánh</label>
-                                    <input type="text" name="new_branch" id="new_branch" class="form-control" value="{{ form.new_branch.value|default:'' }}">
+                                    <input type="text" name="new_branch" id="new_branch" class="form-control" 
+                                           value="{{ form.new_branch.value|default:'' }}">
                                 </div>
                                 
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="new_is_default" id="new_is_default" {% if form.new_is_default.value %}checked{% endif %}>
+                                    <input class="form-check-input" type="checkbox" name="new_is_default" id="new_is_default" 
+                                           {% if form.new_is_default.value %}checked{% endif %}>
                                     <label class="form-check-label" for="new_is_default">
                                         Đặt làm tài khoản mặc định
                                     </label>
@@ -207,30 +194,41 @@
                                 <label for="new_bank_name" class="form-label">Ngân hàng <span class="text-danger">*</span></label>
                                 <select name="new_bank_name" id="new_bank_name" class="form-select">
                                     <option value="">-- Chọn ngân hàng --</option>
-                                    {% for value, text in form.fields.new_bank_name.choices %}
-                                        <option value="{{ value }}" {% if form.new_bank_name.value == value %}selected{% endif %}>{{ text }}</option>
-                                    {% endfor %}
+                                    <option value="Vietcombank">Vietcombank</option>
+                                    <option value="Techcombank">Techcombank</option>
+                                    <option value="BIDV">BIDV</option>
+                                    <option value="Vietinbank">Vietinbank</option>
+                                    <option value="MB Bank">MB Bank</option>
+                                    <option value="TPBank">TPBank</option>
+                                    <option value="ACB">ACB</option>
+                                    <option value="Sacombank">Sacombank</option>
+                                    <option value="VPBank">VPBank</option>
+                                    <option value="Ngân hàng khác">Ngân hàng khác</option>
                                 </select>
                             </div>
                             
-                            <div class="mb-3 {% if form.new_bank_name.value != 'other' %}d-none{% endif %}" id="otherBankGroup">
+                            <div class="mb-3 d-none" id="otherBankGroup">
                                 <label for="new_other_bank_name" class="form-label">Tên ngân hàng khác <span class="text-danger">*</span></label>
-                                <input type="text" name="new_other_bank_name" id="new_other_bank_name" class="form-control" value="{{ form.new_other_bank_name.value|default:'' }}">
+                                <input type="text" name="new_other_bank_name" id="new_other_bank_name" class="form-control" 
+                                       value="{{ form.new_other_bank_name.value|default:'' }}">
                             </div>
                             
                             <div class="mb-3">
                                 <label for="new_account_name" class="form-label">Chủ tài khoản <span class="text-danger">*</span></label>
-                                <input type="text" name="new_account_name" id="new_account_name" class="form-control" value="{{ form.new_account_name.value|default:'' }}">
+                                <input type="text" name="new_account_name" id="new_account_name" class="form-control" 
+                                       value="{{ form.new_account_name.value|default:'' }}">
                             </div>
                             
                             <div class="mb-3">
                                 <label for="new_account_number" class="form-label">Số tài khoản <span class="text-danger">*</span></label>
-                                <input type="text" name="new_account_number" id="new_account_number" class="form-control" value="{{ form.new_account_number.value|default:'' }}">
+                                <input type="text" name="new_account_number" id="new_account_number" class="form-control" 
+                                       value="{{ form.new_account_number.value|default:'' }}">
                             </div>
                             
                             <div class="mb-3">
                                 <label for="new_branch" class="form-label">Chi nhánh</label>
-                                <input type="text" name="new_branch" id="new_branch" class="form-control" value="{{ form.new_branch.value|default:'' }}">
+                                <input type="text" name="new_branch" id="new_branch" class="form-control" 
+                                       value="{{ form.new_branch.value|default:'' }}">
                             </div>
                             
                             <div class="form-check">
@@ -243,13 +241,14 @@
                         {% endif %}
                         
                         <div class="mb-4">
-                            <label for="withdrawNote" class="form-label">Ghi chú (Không bắt buộc)</label>
-                            <textarea name="notes" id="withdrawNote" class="form-control" rows="3" placeholder="Nhập ghi chú của bạn (nếu có)">{{ form.notes.value|default:'' }}</textarea>
+                            <label for="description" class="form-label">Ghi chú (Không bắt buộc)</label>
+                            <textarea name="description" id="description" class="form-control" rows="3" 
+                                      placeholder="Nhập ghi chú của bạn (nếu có)">{{ form.description.value|default:'' }}</textarea>
                         </div>
                         
                         <div class="form-check mb-4">
-                            <input class="form-check-input" type="checkbox" id="agreeTerms" name="agree_terms" required {% if form.agree_terms.value %}checked{% endif %}>
-                            <label class="form-check-label" for="agreeTerms">
+                            <input class="form-check-input" type="checkbox" id="agree_terms" name="agree_terms" required>
+                            <label class="form-check-label" for="agree_terms">
                                 Tôi đồng ý với <a href="#" class="text-primary">điều khoản rút tiền</a> của ASTROLUX
                             </label>
                         </div>
@@ -278,15 +277,15 @@
                     <div class="mb-4">
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Số tiền rút:</span>
-                            <span class="fw-bold amount-display">0</span>
+                            <span class="fw-bold amount-display">0 VNĐ</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Phí rút tiền:</span>
-                            <span class="fee-display fw-bold">0</span>
+                            <span class="fee-display fw-bold">0 VNĐ</span>
                         </div>
                         <div class="d-flex justify-content-between mb-0">
-                            <span class="text-muted">Tổng tiền nhận:</span>
-                            <span class="fw-bold total-amount-display">0</span>
+                            <span class="text-muted">Tổng tiền trừ:</span>
+                            <span class="fw-bold total-amount-display">0 VNĐ</span>
                         </div>
                     </div>
                     
@@ -365,4 +364,46 @@
         </div>
     </div>
 </div>
+
+<script>
+// Toggle new bank account form
+document.getElementById('newBankAccount')?.addEventListener('change', function() {
+    const form = document.getElementById('newBankAccountForm');
+    if (this.checked) {
+        form.classList.remove('d-none');
+    } else {
+        form.classList.add('d-none');
+    }
+});
+
+// Hide new bank account form when existing account is selected
+document.querySelectorAll('input[name="bank_account"]:not(#newBankAccount)').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+        if (this.checked) {
+            document.getElementById('newBankAccountForm')?.classList.add('d-none');
+        }
+    });
+});
+
+// Toggle other bank name field
+document.getElementById('new_bank_name')?.addEventListener('change', function() {
+    const otherBankGroup = document.getElementById('otherBankGroup');
+    if (this.value === 'Ngân hàng khác') {
+        otherBankGroup.classList.remove('d-none');
+    } else {
+        otherBankGroup.classList.add('d-none');
+    }
+});
+
+// Calculate fee and total
+document.getElementById('amount')?.addEventListener('input', function() {
+    const amount = parseFloat(this.value) || 0;
+    const fee = Math.max(10000, Math.min(50000, amount * 0.005));
+    const total = amount + fee;
+    
+    document.querySelector('.amount-display').textContent = amount.toLocaleString('vi-VN') + ' VNĐ';
+    document.querySelector('.fee-display').textContent = fee.toLocaleString('vi-VN') + ' VNĐ';
+    document.querySelector('.total-amount-display').textContent = total.toLocaleString('vi-VN') + ' VNĐ';
+});
+</script>
 {% endblock %}

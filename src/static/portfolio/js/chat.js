@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let chatHistory = [];
     let isFirstInteraction = true;
+    let hasUsedSuggestedQuestion = false; // Biến để theo dõi xem đã dùng gợi ý chưa
     let emojis = ['👍', '✨', '🎉', '🚀', '💡', '🔥', '⭐', '😊'];
     
     // Lưu trữ câu trả lời gần đây để tránh lặp lại
@@ -77,13 +78,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Đảm bảo nút chat hiển thị đúng cách
     aiChatButton.style.display = 'flex';
     aiChatPopup.style.display = 'none';
-    
-    // Toggle chat popup with enhanced animations
+      // Toggle chat popup with enhanced animations
     aiChatButton.addEventListener('click', function() {
         console.log("Chat button clicked");
         aiChatPopup.style.display = 'flex';
         
-        // Add animation after display is set
+        // Add animation after display is set - changed to 5ms for faster response
         setTimeout(() => {
             aiChatPopup.classList.add('show-animation');
             // Stop pulse animation after first click
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 aiChatButton.classList.remove('pulse-animation');
                 isFirstInteraction = false;
             }
-        }, 10);
+        }, 5);
         
         aiChatButton.style.display = 'none';
         
@@ -158,13 +158,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Đóng chat
         minimizeChatWithAnimation();
     });
-    
-    function minimizeChatWithAnimation() {
+      function minimizeChatWithAnimation() {
         console.log("Minimizing chat");
         // First remove the animation class
         aiChatPopup.classList.remove('show-animation');
         
-        // Then hide after animation completes
+        // Then hide after animation completes - reduced from 300ms to 200ms
         setTimeout(() => {
             aiChatPopup.style.display = 'none';
             
@@ -175,10 +174,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 aiChatButton.style.transform = 'scale(1.1)';
                 setTimeout(() => {
                     aiChatButton.style.transform = '';
-                }, 200);
-            }, 100);
+                }, 150); // changed from 200ms to 150ms
+            }, 80); // changed from 100ms to 80ms
             
-        }, 300);
+        }, 200); // changed from 300ms to 200ms
     }
     
     // Thêm sự kiện chạm/nhấn cho thiết bị di động
@@ -187,20 +186,14 @@ document.addEventListener('DOMContentLoaded', function() {
         aiChatButton.click();
     });
     
-    // Ẩn phần gợi ý khi người dùng nhập nội dung
-    userMessage.addEventListener('input', function() {
-        if (this.value.trim() !== '' && chatHistory.length <= 1) {
-            suggestedQuestionsSection.style.display = 'none';
-        } else if (this.value.trim() === '' && chatHistory.length <= 1) {
-            suggestedQuestionsSection.style.display = 'block';
-        }
-    });
-    
     // Handle suggested questions with enhanced interaction
     suggestedItems.forEach(item => {
         item.addEventListener('click', function() {
             const question = this.getAttribute('data-question');
             userMessage.value = question;
+            
+            // Đánh dấu đã sử dụng gợi ý
+            hasUsedSuggestedQuestion = true;
             
             // Add ripple effect
             createRippleEffect(this);
@@ -243,6 +236,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const message = userMessage.value.trim();
         if (message) {
+            // Kiểm tra xem đây có phải tin nhắn đầu tiên và không dùng gợi ý không
+            if (chatHistory.length <= 1 && !hasUsedSuggestedQuestion) {
+                // Ẩn phần gợi ý vì người dùng tự nhập tin nhắn
+                if (suggestedQuestionsSection) {
+                    suggestedQuestionsSection.classList.add('hidden');
+                    suggestedQuestionsSection.style.display = 'none';
+                }
+            }
+            
             // Add user message to chat
             addMessage(message, 'user');
             userMessage.value = '';
@@ -258,7 +260,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Xử lý sự kiện nhấn phím Enter để gửi tin nhắn
+    // Thêm auto-resize cho textarea
+    function autoResizeTextarea() {
+        userMessage.style.height = 'auto';
+        userMessage.style.height = Math.min(userMessage.scrollHeight, 80) + 'px';
+    }
+    
+    // Xử lý sự kiện nhấn phím Enter để gửi tin nhắn (Shift+Enter để xuống dòng)
     userMessage.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -545,4 +553,25 @@ document.addEventListener('DOMContentLoaded', function() {
             addMessage("Rất tiếc, đã có lỗi xảy ra khi kết nối với AI. Vui lòng thử lại sau.", 'ai');
         }
     }
+    
+    // Ẩn phần gợi ý khi người dùng bắt đầu nhập tin nhắn đầu tiên
+    userMessage.addEventListener('input', function() {
+        // Auto-resize textarea
+        autoResizeTextarea();
+        
+        // Chỉ ẩn khi là tin nhắn đầu tiên và chưa dùng gợi ý
+        if (chatHistory.length <= 1 && !hasUsedSuggestedQuestion) {
+            if (this.value.trim() !== '') {
+                if (suggestedQuestionsSection && !suggestedQuestionsSection.classList.contains('hidden')) {
+                    suggestedQuestionsSection.style.opacity = '0.5';
+                    suggestedQuestionsSection.style.pointerEvents = 'none';
+                }
+            } else {
+                if (suggestedQuestionsSection && !suggestedQuestionsSection.classList.contains('hidden')) {
+                    suggestedQuestionsSection.style.opacity = '1';
+                    suggestedQuestionsSection.style.pointerEvents = 'auto';
+                }
+            }
+        }
+    });
 }); 

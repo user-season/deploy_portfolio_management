@@ -21,7 +21,7 @@ def dinh_dang_tien(so):
     formatted = "{:,.0f}".format(so)  # No decimal places for currency
     
     # Replace commas with dots for thousand separators
-    return formatted.replace(",", ".")
+    return formatted
 
 @register.filter(name='maximum')
 def maximum(value, arg):

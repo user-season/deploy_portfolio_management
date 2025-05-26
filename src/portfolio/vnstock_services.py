@@ -55,17 +55,22 @@ def get_company_name(stock_codes):
 def get_current_price(stock_code):
     """Lấy giá tham chiếu của cổ phiếu
         Param :
-            stock_codes: là một list hoặc một chuỗi
+            stock_code: là một list hoặc một chuỗi
         return :
             DataFrame: 'ticker', 'price'
     """
     try:
         if not isinstance(stock_code, list):
             stock_code = stock_code.split()
-        data = stock.trading.price_board(symbols_list=stock_code)['listing']
+        data_board = stock.trading.price_board(symbols_list=stock_code)
+        data = data_board[[('listing', 'symbol'), 
+                        ('listing', 'ref_price'), 
+                        ('match', 'match_price')]]
+        data.columns = ['symbol', 'ref_price', 'match_price']
         if data.empty:
             return f'Không tìm thấy giá!'
-        data_price = data[['symbol', 'ref_price']]
+        data.loc[data['match_price'] != 0, 'ref_price'] = data['match_price']
+        data_price = data[['symbol', 'ref_price', 'match_price']]
         return data_price
     except Exception as e:
         print(f"Error in get current price.")

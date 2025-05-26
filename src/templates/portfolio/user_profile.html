@@ -57,41 +57,46 @@
                 <div class="card-body p-4">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-                        
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                {{ form.first_name|as_crispy_field }}
+                                <label for="first_name" class="form-label">Tên</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Nhập tên của bạn" value="{{ user.first_name|default:'' }}">
                             </div>
                             <div class="col-md-6 mb-3">
-                                {{ form.last_name|as_crispy_field }}
+                                <label for="last_name" class="form-label">Họ</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Nhập họ của bạn" value="{{ user.last_name|default:'' }}">
                             </div>
                         </div>
-                        
                         <div class="mb-3">
-                            {{ form.email|as_crispy_field }}
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Nhập email của bạn" value="{{ user.email|default:'' }}">
                         </div>
-                        
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                {{ form.phone|as_crispy_field }}
+                                <label for="phone" class="form-label">Số điện thoại</label>
+                                <input type="text" class="form-control" id="phone" name="phone" placeholder="Nhập số điện thoại của bạn" value="{{ user.phone|default:'' }}">
                             </div>
                             <div class="col-md-6 mb-3">
-                                {{ form.gender|as_crispy_field }}
+                                <label for="gender" class="form-label">Giới tính <span class="text-danger">*</span></label>
+                                <select class="form-control" id="gender" name="gender">
+                                    <option value="" {% if not user.gender %}selected{% endif %}>-- Chọn giới tính --</option>
+                                    <option value="male" {% if user.gender == 'male' %}selected{% endif %}>Nam</option>
+                                    <option value="female" {% if user.gender == 'female' %}selected{% endif %}>Nữ</option>
+                                    <option value="other" {% if user.gender == 'other' %}selected{% endif %}>Khác</option>
+                                </select>
                             </div>
                         </div>
-                        
                         <div class="mb-3">
-                            {{ form.address|as_crispy_field }}
+                            <label for="address" class="form-label">Địa chỉ</label>
+                            <textarea class="form-control" id="address" name="address" rows="3" placeholder="Nhập địa chỉ của bạn">{{ user.address|default:'' }}</textarea>
                         </div>
-                        
                         <div class="mb-4">
                             <label for="profilePictureInput" class="form-label">Ảnh đại diện</label>
                             <div class="input-group">
-                                {{ form.profile_picture }}
+                                <input type="file" class="form-control" id="profilePictureInput" name="profile_picture" accept="image/*">
                             </div>
                             <div class="form-text">Tải lên ảnh đại diện mới. Định dạng hỗ trợ: JPG, PNG. Kích thước tối đa: 5MB.</div>
                         </div>
-                        
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Lưu thay đổi
@@ -103,4 +108,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

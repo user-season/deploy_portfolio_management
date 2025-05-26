@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
-from . import views_wallet
+# from . import views_wallet
 import portfolio.views
 
 urlpatterns = [
@@ -40,7 +40,6 @@ urlpatterns = [
     # URLs cho ví điện tử
     path('wallet/', views.wallet, name='wallet'),
     path('wallet/deposit/', views.deposit_money, name='deposit_money'),
-    path('wallet/deposit/verify/', views.verify_deposit, name='verify_deposit'),
     path('wallet/withdraw/', views.withdraw_money, name='withdraw_money'),
     path('wallet/transactions/', views.wallet_transactions, name='wallet_transactions'),
     path('wallet/bank-accounts/', views.bank_account_list, name='bank_account_list'),
@@ -64,4 +63,19 @@ urlpatterns = [
     path('debug/assets/', views.debug_assets, name='debug_assets'),
     path('debug/assets/sync/', views.sync_assets, name='sync_assets'),
     path('debug/assets/update-prices/', views.update_stock_prices, name='update_stock_prices'),
+    
+    # Admin URLs
+    path('admin/', views.admin_login, name='admin_login'),
+    path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('admin/users/', views.admin_users, name='admin_users'),
+    path('admin/users/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
+    path('admin/transactions/', views.admin_transactions, name='admin_transactions'),
+    path('admin/transactions/<int:transaction_id>/action/', views.admin_transaction_action, name='admin_transaction_action'),
+    path('admin/logout/', views.admin_logout, name='admin_logout'),
+    
+    # Realtime API URLs
+    path('api/wallet-data/', views.api_wallet_data, name='api_wallet_data'),
+    path('api/dashboard-data/', views.api_dashboard_data, name='api_dashboard_data'),
+    path('api/market-data/', views.api_market_data, name='api_market_data'),
+    path('api/admin-stats/', views.api_admin_stats, name='api_admin_stats'),
 ]

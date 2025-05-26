@@ -61,22 +61,8 @@ class Wallet(models.Model):
 
 # Mô hình tài khoản ngân hàng
 class BankAccount(models.Model):
-    # Lựa chọn ngân hàng
-    BANK_CHOICES = [
-        ('vietcombank', 'Vietcombank'),
-        ('techcombank', 'Techcombank'),
-        ('bidv', 'BIDV'),
-        ('vietinbank', 'Vietinbank'),
-        ('mbbank', 'MB Bank'),
-        ('tpbank', 'TPBank'),
-        ('acb', 'ACB'),
-        ('sacombank', 'Sacombank'),
-        ('vpbank', 'VPBank'),
-        ('other', 'Ngân hàng khác'),
-    ]
-    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bank_accounts')
-    bank_name = models.CharField(max_length=100, choices=BANK_CHOICES, verbose_name="Tên ngân hàng")
+    bank_name = models.CharField(max_length=100, verbose_name="Tên ngân hàng")
     account_name = models.CharField(max_length=255, verbose_name="Tên chủ tài khoản")
     account_number = models.CharField(max_length=50, verbose_name="Số tài khoản")
     branch = models.CharField(max_length=255, blank=True, null=True, verbose_name="Chi nhánh")
@@ -87,10 +73,14 @@ class BankAccount(models.Model):
     class Meta:
         verbose_name = "Tài khoản ngân hàng"
         verbose_name_plural = "Tài khoản ngân hàng"
+        unique_together = ('user', 'account_number', 'bank_name')
         indexes = [
             models.Index(fields=['user']),
             models.Index(fields=['account_number']),
         ]
+    def get_bank_name_display(self):
+        """Trả về tên ngân hàng"""
+        return dict(self.BANK_CHOICES).get(self.bank_name)
 
 
 class BankTransaction(models.Model):
@@ -297,6 +287,9 @@ class StockTransaction(models.Model):
     # def __str__(self):
     #     return f"{self.get_transaction_type_display()} {self.asset.symbol}"
 
+    def get_transaction_type_display(self):
+        """Trả về tên loại giao dịch"""
+        return dict(self.TYPE_CHOICES).get(self.transaction_type)
     # # Lưu giao dịch
     # def save(self, *args, **kwargs):
     #     # Tính tổng giá trị giao dịch

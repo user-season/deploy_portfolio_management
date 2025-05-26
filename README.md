@@ -88,33 +88,72 @@ Hệ thống quản lý danh mục đầu tư giúp người dùng theo dõi, mu
 
 ## Cài đặt
 **Yêu cầu:**
-PostgresSQL
-Python3 trở lên
+- PostgreSQL (phải cài đặt và chạy service)
+- Python 3.8 trở lên
+
+### Cấu hình môi trường (Tùy chọn)
+File `run.bat` đã được cấu hình để chạy với các giá trị mặc định. Tuy nhiên, bạn có thể tạo file `.env` để tùy chỉnh cấu hình:
+
+```env
+# Database Configuration
+DATABASE_NAME=portfolio_db
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres123
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+
+# Admin Account Configuration
+admin_username=admin
+admin_password=admin123
+```
+
+**Lưu ý quan trọng:**
+- Đảm bảo PostgreSQL đã được cài đặt và service đang chạy
+- Tài khoản PostgreSQL phải có quyền tạo database
+- Nếu không có file `.env`, script sẽ sử dụng cấu hình mặc định
 
 ### Local
-**Chú ý:** trong file `.env` khi chạy trên môi trường máy local thì mở file và đặt
-```
-DATABASE_HOST=localhost
-```
-- **Windows:** \
-    Chạy file `run.bat` bằng cách click vào file
-- **Linux/MacOS:** \
-    Cấp quyền thực với file `run.bat` bằng lệnh
-    ```bash
-    chmod +x run.sh
-    ``` 
-    Sau đó chạy file `run.sh` bằng cách chạy lệnh 
-    ```bash
-    bash run.sh
-    ```
-- **Truy cập trình duyệt ở địa chỉ: http://localhost:8000/**
+
+#### Windows:
+1. **Cài đặt PostgreSQL** (nếu chưa có):
+   - Tải và cài đặt từ https://www.postgresql.org/download/
+   - Đảm bảo PostgreSQL service đang chạy
+   - Ghi nhớ username/password của PostgreSQL
+
+2. **Chạy ứng dụng**:
+   - Click đúp vào file `run.bat` 
+   - Hoặc mở Command Prompt và chạy: `run.bat`
+
+3. **Truy cập ứng dụng**:
+   - URL: http://localhost:8000/
+   - Admin panel: http://localhost:8000/admin
+   - Tài khoản admin mặc định: `admin` / `admin123`
+
+#### Linux/MacOS:
+1. Cấp quyền thực thi cho file:
+   ```bash
+   chmod +x run.sh
+   ``` 
+2. Chạy script:
+   ```bash
+   bash run.sh
+   ```
+
 ### Docker
-**Chú ý:** trong file `.env` khi chạy trên môi trường máy docker-compose thì mở file và đặt
+**Chú ý:** Khi chạy với Docker, tạo file `.env` và đặt:
 ```
 DATABASE_HOST=db
 ```
 
-Chạy lệnh: `dos2unix entrypoint.sh` để chuyển định dạng file entrypoint.sh thành định dạng Unix \
-Chạy lệnh: `docker-compose up --build` để build các Image \
+Chạy lệnh:
+```bash
+dos2unix entrypoint.sh
+docker-compose up --build
+```
 
-- **Truy cập trình duyệt ở địa chỉ: http://localhost:8000/**
+**Truy cập:** http://localhost:8000/
+
+### Khắc phục sự cố
+- **Lỗi PostgreSQL**: Kiểm tra service PostgreSQL đang chạy và thông tin đăng nhập
+- **Lỗi Python**: Đảm bảo Python 3.8+ đã được cài đặt
+- **Lỗi quyền truy cập**: Chạy Command Prompt với quyền Administrator
