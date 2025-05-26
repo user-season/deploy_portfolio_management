@@ -467,53 +467,72 @@ class RealtimeManager {
 }
 
 // Initialize realtime manager
-window.realtimeManager = new RealtimeManager();
+// Only run when user is logged in
+function isUserLoggedIn() {
+    // Check for logged in user - look for common indicators
+    // 1. Check for user-specific elements
+    const userProfileElement = document.querySelector('.user-profile, #user-dropdown, .user-avatar');
+    // 2. Check for logout button
+    const logoutButton = document.querySelector('a[href*="logout"], button[data-action="logout"]');
+    // 3. Check for a cookie or localStorage indicator (common practice)
+    const hasAuthToken = document.cookie.includes('sessionid=') || 
+                         localStorage.getItem('isLoggedIn') === 'true';
+    
+    return !!(userProfileElement || logoutButton || hasAuthToken);
+}
 
-// Page-specific initialization
-document.addEventListener('DOMContentLoaded', function() {
-    const path = window.location.pathname;
+if (isUserLoggedIn()) {
+    console.log('User logged in - initializing real-time updates');
+    window.realtimeManager = new RealtimeManager();
     
-    // Dashboard updates (30 seconds)
-    if (path === '/' || path === '/dashboard/') {
-        window.realtimeManager.startUpdates('dashboard', window.realtimeManager.updateDashboard, 30000);
+    // Page-specific initialization
+    document.addEventListener('DOMContentLoaded', function() {
+        const path = window.location.pathname;
         
-        // Manual refresh button
-        const refreshBtn = document.querySelector('#manual-refresh-btn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                window.realtimeManager.manualRefresh('dashboard');
-            });
+        // Dashboard updates (30 seconds)
+        if (path === '/' || path === '/dashboard/') {
+            window.realtimeManager.startUpdates('dashboard', window.realtimeManager.updateDashboard, 30000);
+            
+            // Manual refresh button
+            const refreshBtn = document.querySelector('#manual-refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    window.realtimeManager.manualRefresh('dashboard');
+                });
+            }
         }
-    }
-    
-    // Wallet updates (20 seconds)
-    if (path === '/wallet/' || path.includes('/wallet')) {
-        window.realtimeManager.startUpdates('wallet', window.realtimeManager.updateWallet, 20000);
         
-        // Manual refresh button
-        const refreshBtn = document.querySelector('#wallet-refresh-btn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                window.realtimeManager.manualRefresh('wallet');
-            });
+        // Wallet updates (20 seconds)
+        if (path === '/wallet/' || path.includes('/wallet')) {
+            window.realtimeManager.startUpdates('wallet', window.realtimeManager.updateWallet, 20000);
+            
+            // Manual refresh button
+            const refreshBtn = document.querySelector('#wallet-refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    window.realtimeManager.manualRefresh('wallet');
+                });
+            }
         }
-    }
-    
-    // Admin updates (45 seconds)
-    if (path.includes('/admin/dashboard')) {
-        window.realtimeManager.startUpdates('admin', window.realtimeManager.updateAdminStats, 45000);
         
-        // Manual refresh button
-        const refreshBtn = document.querySelector('#admin-refresh-btn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                window.realtimeManager.manualRefresh('admin');
-            });
+        // Admin updates (45 seconds)
+        if (path.includes('/admin/dashboard')) {
+            window.realtimeManager.startUpdates('admin', window.realtimeManager.updateAdminStats, 45000);
+            
+            // Manual refresh button
+            const refreshBtn = document.querySelector('#admin-refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    window.realtimeManager.manualRefresh('admin');
+                });
+            }
         }
-    }
-    
-    // Market data updates (60 seconds) - for asset list and market pages
-    if (path.includes('/assets/') || path.includes('/market/')) {
-        window.realtimeManager.startUpdates('market', window.realtimeManager.updateMarketData, 60000);
-    }
-}); 
+        
+        // Market data updates (60 seconds) - for asset list and market pages
+        if (path.includes('/assets/') || path.includes('/market/')) {
+            window.realtimeManager.startUpdates('market', window.realtimeManager.updateMarketData, 60000);
+        }
+    });
+} else {
+    console.log('User not logged in - realtime updates disabled');
+}

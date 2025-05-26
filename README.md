@@ -9,7 +9,7 @@
 
 ### 1.1. Phân chia công việc
 
-Mỗi thành viên đảm nhận full-stack development (Backend + Frontend + Testing + Documentation) cho một module chức năng cụ thể:
+Mỗi thành viên đảm nhận full-stack development (Backend + Frontend + Testing) cho một module chức năng cụ thể:
 
 #### **Module 1: Authentication & Market Data**
 **Thành viên phụ trách**: _[Đào Tiến Sang]_
