@@ -19,14 +19,12 @@
                             <div class="col-lg-6 mb-4 mb-lg-0">
                                 <div class="d-flex align-items-center mb-3">
                                     <div class="avatar-container me-3">
-                                        {% if user.get_profile_picture %}
-                                        <img src="{{ user.get_profile_picture }}" alt="{{ user.username }}" 
-                                             class="rounded-circle" style="width: 54px; height: 54px; object-fit: cover; border: 3px solid #7e57c2;">
-                                        {% else %}
-                                        <div class="profile-avatar-circle">
-                                            <i class="fas fa-user"></i>
+                                        <img src="{% static 'portfolio/img/astrobot.jpg' %}" alt="AstroBot" 
+                                             class="rounded-circle" style="width: 54px; height: 54px; object-fit: cover; border: 3px solid #7e57c2;"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="profile-avatar-circle" style="display: none;">
+                                            <i class="fas fa-robot"></i>
                                         </div>
-                                        {% endif %}
                                     </div>
                                     <div>
                                         <span class="badge bg-primary-soft text-primary mb-2">Chào mừng trở lại</span>
@@ -48,7 +46,12 @@
                                 <div class="welcome-illustration">
                                     <div class="activity-chart">
                                         <div class="user-avatar-placeholder rounded-circle d-flex align-items-center justify-content-center" style="width: 200px; height: 200px; background: linear-gradient(135deg, var(--primary-light), var(--primary-color)); border: 5px solid var(--primary-color); box-shadow: 0 10px 25px rgba(126, 87, 194, 0.3);">
-                                            <span style="font-size: 72px; color: white;">N</span>
+                                            {% if user.get_profile_picture %}
+                                            <img src="{{ user.get_profile_picture }}" alt="{{ user.username }}" 
+                                                 class="rounded-circle" style="width: 180px; height: 180px; object-fit: cover;">
+                                            {% else %}
+                                            <i class="fas fa-user" style="font-size: 72px; color: white;"></i>
+                                            {% endif %}
                                         </div>
                                         <div class="profile-glow"></div>
                                     </div>

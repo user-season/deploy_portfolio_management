@@ -232,6 +232,22 @@
             color: var(--primary-color);
         }
         
+        /* Custom icon styles for navigation */
+        .nav-link img {
+            transition: all 0.35s ease;
+            filter: brightness(0) saturate(100%) invert(40%) sepia(10%) saturate(300%) hue-rotate(200deg) brightness(95%) contrast(90%);
+        }
+        
+        .nav-link:hover img,
+        .nav-link.active img {
+            transform: translateY(-2px);
+            filter: brightness(0) saturate(100%) invert(51%) sepia(88%) saturate(1570%) hue-rotate(261deg) brightness(91%) contrast(88%);
+        }
+        
+        .nav-link.active img {
+            filter: brightness(0) saturate(100%) invert(51%) sepia(88%) saturate(1570%) hue-rotate(261deg) brightness(91%) contrast(88%);
+        }
+        
         .navbar-toggler {
             border: none;
             padding: 0.75rem;
@@ -363,8 +379,17 @@
         }
         
         .icon-circle {
-            transition: all 0.35s ease;
-            box-shadow: 0 5px 15px rgba(126, 87, 194, 0.2);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            border: 2px solid var(--primary-color, #7e57c2);
+            background: linear-gradient(135deg, #7e57c2, #5e35b1);
+            color: white;
         }
         
         .navbar {
@@ -1195,26 +1220,256 @@
         .text-loss {
             color: #F44336 !important;
         }
+        
+        /* Enhanced Toast Notification System */
+        #notification-container {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 1060;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .notification-toast {
+            background: rgba(255, 255, 255, 0.98);
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transform: translateX(100%);
+            opacity: 0;
+            border-left: 4px solid transparent;
+        }
+        
+        .notification-toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        .notification-toast.removing {
+            transform: translateX(100%);
+            opacity: 0;
+            margin-bottom: 0;
+            padding: 0;
+            min-height: 0;
+        }
+        
+        .notification-toast.success {
+            border-left-color: var(--success-color);
+        }
+        
+        .notification-toast.error {
+            border-left-color: var(--danger-color);
+        }
+        
+        .notification-toast.warning {
+            border-left-color: var(--warning-color);
+        }
+        
+        .notification-toast.info {
+            border-left-color: var(--info-color);
+        }
+        
+        .notification-header {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px 12px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        
+        .notification-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .notification-icon::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .notification-toast.success .notification-icon {
+            background: linear-gradient(135deg, var(--success-color), #66bb6a);
+            color: white;
+        }
+        
+        .notification-toast.error .notification-icon {
+            background: linear-gradient(135deg, var(--danger-color), #ef5350);
+            color: white;
+        }
+        
+        .notification-toast.warning .notification-icon {
+            background: linear-gradient(135deg, var(--warning-color), #ffa726);
+            color: white;
+        }
+        
+        .notification-toast.info .notification-icon {
+            background: linear-gradient(135deg, var(--info-color), #42a5f5);
+            color: white;
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .notification-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+        
+        .notification-close:hover {
+            background: rgba(0, 0, 0, 0.08);
+            color: var(--text-primary);
+        }
+        
+        .notification-body {
+            padding: 12px 20px 16px 20px;
+        }
+        
+        .notification-message {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        
+        .notification-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.1);
+            transition: width 0.1s linear;
+        }
+        
+        .notification-toast.success .notification-progress {
+            background: var(--success-color);
+        }
+        
+        .notification-toast.error .notification-progress {
+            background: var(--danger-color);
+        }
+        
+        .notification-toast.warning .notification-progress {
+            background: var(--warning-color);
+        }
+        
+        .notification-toast.info .notification-progress {
+            background: var(--info-color);
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 576px) {
+            #notification-container {
+                top: 80px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+            
+            .notification-toast {
+                margin-bottom: 10px;
+            }
+            
+            .notification-header {
+                padding: 14px 16px 10px 16px;
+            }
+            
+            .notification-body {
+                padding: 10px 16px 14px 16px;
+            }
+        }
+        
+        /* Avatar fallback styles */
+        .profile-avatar-circle {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7e57c2, #5e35b1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            border: 3px solid #7e57c2;
+        }
+        
+        .avatar-container img {
+            transition: transform 0.3s ease;
+        }
+        
+        .avatar-container img:hover {
+            transform: scale(1.05);
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Alert message -->
+    <!-- Enhanced Notification Container -->
+    <div id="notification-container"></div>
+    
+    <!-- Process Django Messages into Toast Notifications -->
     {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} rounded-4 mb-4">
-                <div class="d-flex">
-                    <div class="me-3">
-                        <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} fa-2x"></i>
-                    </div>
-                    <div>
-                        <h6 class="alert-heading">Thông báo</h6>
-                        <p class="mb-0">{{ message|safe }}</p>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const messages = [
+                    {% for message in messages %}
+                    {
+                        type: '{% if message.tags == "error" %}error{% else %}{{ message.tags }}{% endif %}',
+                        message: `{{ message|safe|escapejs }}`,
+                        timestamp: new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ];
+                
+                messages.forEach((msg, index) => {
+                    setTimeout(() => {
+                        showNotification(msg.message, msg.type, msg.timestamp);
+                    }, index * 200);
+                });
+            });
+        </script>
     {% endif %}
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
@@ -1233,32 +1488,32 @@
                     {% if user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}" href="{% url 'dashboard' %}">
-                            <i class="fas fa-tachometer-alt me-1"></i> Bảng điều khiển
+                            <img src="{% static 'portfolio/img/icons/icon_dashboard.png' %}" alt="Dashboard" style="width: 18px; height: 18px; margin-right: 8px;"> Bảng điều khiển
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/portfolios/' in request.path %}active{% endif %}" href="{% url 'portfolio_list' %}">
-                            <i class="fas fa-folder me-1"></i> Danh mục
+                            <img src="{% static 'portfolio/img/icons/icon_portfolio.png' %}" alt="Portfolio" style="width: 18px; height: 18px; margin-right: 8px;"> Danh mục
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/assets/' in request.path %}active{% endif %}" href="{% url 'asset_list' %}">
-                            <i class="fas fa-chart-bar me-1"></i> Tài sản
+                            <img src="{% static 'portfolio/img/icons/icon_asset.png' %}" alt="Assets" style="width: 18px; height: 18px; margin-right: 8px;"> Tài sản
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/transactions/' in request.path %}active{% endif %}" href="{% url 'transaction_list' %}">
-                            <i class="fas fa-exchange-alt me-1"></i> Giao dịch
+                            <img src="{% static 'portfolio/img/icons/icon_transaction.png' %}" alt="Transactions" style="width: 18px; height: 18px; margin-right: 8px;"> Giao dịch
                         </a>
                     </li>
                     <li class="nav-item has-notification">
                         <a class="nav-link {% if '/wallet/' in request.path %}active{% endif %}" href="{% url 'wallet' %}">
-                            <i class="fas fa-wallet me-1"></i> Ví điện tử
+                            <img src="{% static 'portfolio/img/icons/icons_wallet.png' %}" alt="Wallet" style="width: 18px; height: 18px; margin-right: 8px;"> Ví điện tử
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/market/' in request.path %}active{% endif %}" href="{% url 'market' %}">
-                            <i class="fas fa-chart-line me-1"></i> Thị trường
+                            <img src="{% static 'portfolio/img/icons/icon_market.png' %}" alt="Market" style="width: 18px; height: 18px; margin-right: 8px;"> Thị trường
                         </a>
                     </li>
                     {% endif %}
@@ -1319,17 +1574,6 @@
                         ASTROLUX
                     </h5>
                     <p class="mb-3 pe-lg-4">Hệ thống quản lý danh mục đầu tư chứng khoán hiện đại giúp bạn theo dõi và tối ưu hóa tài sản đầu tư.</p>
-                    <div class="d-flex gap-3">
-                        <a href="#" class="btn btn-sm btn-outline-light rounded-circle p-2">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="btn btn-sm btn-outline-light rounded-circle p-2">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="btn btn-sm btn-outline-light rounded-circle p-2">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                    </div>
                 </div>
                 <div class="col-md-2 mb-4 mb-md-0">
                     <h6 class="mb-3">Liên kết</h6>
@@ -1462,32 +1706,167 @@
         </div>
     </div>
 
-    <!-- Toast Container for Notifications -->
-    <div id="toast-container" style="position: fixed; top: 100px; right: 20px; z-index: 1060;"></div>
-
     <script>
-        // Global function for realtime notifications
-        window.showRealtimeNotification = function(message, type = 'info') {
-            const toastContainer = document.getElementById('toast-container');
+        // Enhanced Notification System
+        function showNotification(message, type = 'info', timestamp = null) {
+            const container = document.getElementById('notification-container');
+            if (!container) return;
             
-            const toast = document.createElement('div');
-            toast.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
-            toast.style.cssText = 'margin-bottom: 10px; min-width: 300px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);';
+            // Generate timestamp if not provided
+            if (!timestamp) {
+                timestamp = new Date().toLocaleTimeString('vi-VN', {
+                    hour: '2-digit', 
+                    minute: '2-digit'
+                });
+            }
             
-            toast.innerHTML = `
-                <strong>${type === 'error' ? 'Lỗi' : type === 'warning' ? 'Cảnh báo' : 'Thông báo'}:</strong> ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification-toast ${type}`;
+            
+            // Set notification content
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <div class="notification-icon">
+                        <i class="fas fa-${getIconByType(type)}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <h6 class="notification-title">${getTitleByType(type)}</h6>
+                        <div class="notification-time">${timestamp}</div>
+                    </div>
+                    <button class="notification-close" onclick="removeNotification(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="notification-body">
+                    <p class="notification-message">${message}</p>
+                </div>
+                <div class="notification-progress" style="width: 100%;"></div>
             `;
             
-            toastContainer.appendChild(toast);
+            // Add to container
+            container.appendChild(notification);
             
-            // Auto remove after 5 seconds
+            // Trigger show animation
             setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 300);
+                notification.classList.add('show');
+            }, 100);
+            
+            // Auto dismiss after 6 seconds (unless it's an error)
+            if (type !== 'error') {
+                autoRemoveNotification(notification, 6000);
+            } else {
+                // Errors stay for 10 seconds
+                autoRemoveNotification(notification, 10000);
+            }
+            
+            return notification;
+        }
+        
+        function getIconByType(type) {
+            const icons = {
+                'success': 'check-circle',
+                'error': 'exclamation-circle', 
+                'warning': 'exclamation-triangle',
+                'info': 'info-circle'
+            };
+            return icons[type] || 'bell';
+        }
+        
+        function getTitleByType(type) {
+            const titles = {
+                'success': 'Thành công',
+                'error': 'Lỗi',
+                'warning': 'Cảnh báo', 
+                'info': 'Thông báo'
+            };
+            return titles[type] || 'Thông báo';
+        }
+        
+        function removeNotification(button) {
+            const notification = button.closest('.notification-toast');
+            if (notification) {
+                notification.classList.add('removing');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 400);
+            }
+        }
+        
+        function autoRemoveNotification(notification, delay) {
+            const progressBar = notification.querySelector('.notification-progress');
+            let width = 100;
+            const interval = 50;
+            const step = (interval / delay) * 100;
+            
+            const progressInterval = setInterval(() => {
+                width -= step;
+                if (progressBar) {
+                    progressBar.style.width = Math.max(0, width) + '%';
                 }
-            }, 5000);
+                
+                if (width <= 0) {
+                    clearInterval(progressInterval);
+                    if (notification.parentNode) {
+                        notification.classList.add('removing');
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.parentNode.removeChild(notification);
+                            }
+                        }, 400);
+                    }
+                }
+            }, interval);
+            
+            // Store interval ID for potential cancellation
+            notification.progressInterval = progressInterval;
+            
+            // Pause on hover
+            notification.addEventListener('mouseenter', () => {
+                clearInterval(progressInterval);
+            });
+            
+            // Resume on mouse leave
+            notification.addEventListener('mouseleave', () => {
+                autoRemoveNotification(notification, width * delay / 100);
+            });
+        }
+        
+        // Global function for backward compatibility and new features
+        window.showRealtimeNotification = function(message, type = 'info') {
+            return showNotification(message, type);
+        };
+        
+        // Enhanced notification with more options
+        window.showNotificationWithOptions = function(options) {
+            const {
+                message,
+                type = 'info',
+                title = null,
+                duration = 6000,
+                persistent = false
+            } = options;
+            
+            const notification = showNotification(message, type);
+            
+            if (title) {
+                const titleElement = notification.querySelector('.notification-title');
+                if (titleElement) {
+                    titleElement.textContent = title;
+                }
+            }
+            
+            if (persistent && notification.progressInterval) {
+                clearInterval(notification.progressInterval);
+                const progressBar = notification.querySelector('.notification-progress');
+                if (progressBar) {
+                    progressBar.style.display = 'none';
+                }
+            }
+            
+            return notification;
         };
 
         // Initialize chat bot positioning
@@ -1505,6 +1884,9 @@
             } else {
                 console.error('AstroBot chat button not found');
             }
+            
+            // Initialize notification system
+            console.log('Enhanced notification system initialized');
         });
     </script>
 </body>

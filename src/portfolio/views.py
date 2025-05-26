@@ -239,47 +239,91 @@ def home(request):
 @login_required
 def dashboard(request):
     user = request.user
-    # user = User.objects.get(pk=1)
     wallet = Wallet.objects.get(user=user)
     user_balance = wallet.balance
 
-    user_assets = Assets.objects.filter(user=user)
-    number_of_symbol = user_assets.count()
-    list_stock = list(user_assets.values_list('symbol', flat=True))
-
+    # Lấy tất cả cổ phiếu từ portfolios của user
     portfolios = Portfolio.objects.filter(user=user)
     number_of_portfolio = portfolios.count()
-    # print('='*100)
-    # print(portfolios)
+    
+    # Lấy tất cả PortfolioSymbol của user
+    portfolio_symbols = PortfolioSymbol.objects.filter(portfolio__user=user)
+    list_stock = list(portfolio_symbols.values_list('symbol', flat=True).distinct())
+    number_of_symbol = len(list_stock)
+    
+    # Cập nhật giá hiện tại cho các cổ phiếu
     if list_stock:
-        current_price_symbol = get_current_price(list_stock)
-        # current_price_symbol = get_current_price(list_stock).set_index('symbol')['ref_price'].to_dict()
-        total_stocks_value = 0  # Chỉ tính giá trị cổ phiếu, không bao gồm ví
-        total_profit_loss = 0
-        for portfolio in portfolios:
-            portfolio_symbol = PortfolioSymbol.objects.filter(portfolio=portfolio)
-            symbol_quantity_df = pd.DataFrame(portfolio_symbol.values_list('symbol', 'quantity', 'average_price'), columns=['symbol', 'quantity', 'average_price'])
-            current_price_df = current_price_symbol[current_price_symbol.symbol.isin(symbol_quantity_df['symbol'])]
-            total_df = pd.merge(symbol_quantity_df, current_price_df, on='symbol', how='inner')
-            # print(total_df)
-            
-            portfolio.portfolio_value = sum(total_df['quantity'] * total_df['ref_price'])
-            portfolio.profit_loss_percentage = sum((total_df['ref_price'] - total_df['average_price']) / total_df['average_price'] * 100)
-            total_stocks_value += portfolio.portfolio_value  # Cộng dồn giá trị cổ phiếu
-            total_profit_loss += ((total_df['ref_price'] - total_df['average_price']) * total_df['quantity']).sum()
-        total_profit_loss_percentage = round(total_profit_loss / total_stocks_value * 100, 2) if total_stocks_value != 0 else 0
-    else:
-        total_stocks_value = 0  # Không có cổ phiếu nào
-        total_profit_loss = 0
-        total_profit_loss_percentage = 0
+        try:
+            current_price_symbol = get_current_price(list_stock)
+            # Cập nhật current_price cho từng PortfolioSymbol
+            for ps in portfolio_symbols:
+                try:
+                    price_row = current_price_symbol[current_price_symbol.symbol == ps.symbol]
+                    if not price_row.empty:
+                        new_current_price = Decimal(str(float(price_row.iloc[0]['ref_price'])))
+                        ps.current_price = new_current_price
+                        ps.save(update_fields=['current_price'])
+                except Exception as e:
+                    print(f"Error updating price for {ps.symbol}: {e}")
+                    # Giữ nguyên giá cũ nếu không cập nhật được
+        except Exception as e:
+            print(f"Error getting current prices: {e}")
+    
+    # Tính tổng giá trị cổ phiếu đơn giản
+    total_stocks_value = 0
+    total_profit_loss = 0
+    
+    for ps in portfolio_symbols:
+        current_value = float(ps.quantity) * float(ps.current_price)
+        cost_value = float(ps.quantity) * float(ps.average_price)
+        
+        total_stocks_value += current_value
+        total_profit_loss += (current_value - cost_value)
+    
+    # Tính % lãi/lỗ tổng
+    total_profit_loss_percentage = 0
+    if total_stocks_value > 0:
+        cost_value = total_stocks_value - total_profit_loss
+        if cost_value > 0:
+            total_profit_loss_percentage = round((total_profit_loss / cost_value) * 100, 2)
+    
+    # Tính giá trị cho từng portfolio để hiển thị
+    for portfolio in portfolios:
+        portfolio_symbols_in_portfolio = PortfolioSymbol.objects.filter(portfolio=portfolio)
+        portfolio_value = 0
+        portfolio_cost = 0
+        
+        for ps in portfolio_symbols_in_portfolio:
+            portfolio_value += float(ps.quantity) * float(ps.current_price)
+            portfolio_cost += float(ps.quantity) * float(ps.average_price)
+        
+        portfolio.portfolio_value = portfolio_value
+        if portfolio_cost > 0:
+            portfolio.profit_loss_percentage = round(((portfolio_value - portfolio_cost) / portfolio_cost) * 100, 2)
+        else:
+            portfolio.profit_loss_percentage = 0
 
+    # Xử lý giao dịch gần đây
     recent_transactions = StockTransaction.objects.filter(user=user).order_by('-transaction_time')[:5]
     list_symbol_recent_transactions = list(recent_transactions.values_list('symbol', flat=True))
-    list_company_name_recent_transactions_df = get_company_name(list_symbol_recent_transactions)
-    for i, transaction in enumerate(recent_transactions):
-        transaction.total_value = transaction.quantity * transaction.price
-        # print(list_company_name_recent_transactions.isin([transaction.symbol])['organ_name'])
-        transaction.company_name = list_company_name_recent_transactions_df[list_company_name_recent_transactions_df.ticker.isin([transaction.symbol])].iloc[0, 1]
+    if list_symbol_recent_transactions:
+        try:
+            list_company_name_recent_transactions_df = get_company_name(list_symbol_recent_transactions)
+            for transaction in recent_transactions:
+                transaction.total_value = transaction.quantity * transaction.price
+                # Tìm tên công ty đúng cho symbol
+                matching_company = list_company_name_recent_transactions_df[
+                    list_company_name_recent_transactions_df.ticker == transaction.symbol
+                ]
+                if not matching_company.empty:
+                    transaction.company_name = matching_company.iloc[0]['organ_name']
+                else:
+                    transaction.company_name = f"Cổ phiếu {transaction.symbol}"
+        except Exception as e:
+            print(f"Error getting company names for transactions: {e}")
+            for transaction in recent_transactions:
+                transaction.total_value = transaction.quantity * transaction.price
+                transaction.company_name = f"Cổ phiếu {transaction.symbol}"
 
     context = {
         "total_assets_value": total_stocks_value,
@@ -364,12 +408,15 @@ def portfolio_detail(request, pk):
                             stock.current_price = stock.average_price
                             print(f"Warning: Could not find current price for {stock.symbol}, using average price")
                             
-                        # Tìm tên công ty
-                        name_row = company_name_df[company_name_df['ticker'] == stock.symbol]
-                        if not name_row.empty:
-                            stock.company_name = name_row.iloc[0, 1]
+                        # Tìm tên công ty đúng cho symbol
+                        if company_name_df is not None and not company_name_df.empty:
+                            matching_company = company_name_df[company_name_df['ticker'] == stock.symbol]
+                            if not matching_company.empty:
+                                stock.company_name = matching_company.iloc[0]['organ_name']
+                            else:
+                                stock.company_name = f"Cổ phiếu {stock.symbol}"
                         else:
-                            stock.company_name = "Unknown"
+                            stock.company_name = f"Cổ phiếu {stock.symbol}"
                             
                         # Tính toán các giá trị
                         quantity = stock.quantity
@@ -596,35 +643,50 @@ def portfolio_delete(request, pk):
 
 @login_required
 def asset_list(request):
-    # user = User.objects.get(pk=1)
     user = request.user
 
     assets = Assets.objects.filter(user=user)
-    # print(assets)
     list_stocks = list(assets.values_list('symbol', flat=True))
-    company_name_df = get_company_name(list_stocks)
-    for i, stock in enumerate(assets):
-        # print(stock.symbol)
-        current_price_stock_df = get_current_price(stock.symbol)
-        current_price_stock = Decimal(float(current_price_stock_df.iloc[0,1]))
-        Assets.objects.filter(user=user, symbol=stock.symbol).update(current_price=current_price_stock)
-        stock.company_name = company_name_df.iloc[i, 1]
-        # print('='*100)
-        # print(stock.company_name)
-        stock.total_buy_price_symbol = stock.quantity * stock.current_price
-        stock.profit_loss_percentage = (stock.current_price - stock.average_price)/stock.average_price * 100
-        # print(stock.current_price)
+    
+    if list_stocks:
+        try:
+            company_name_df = get_company_name(list_stocks)
+        except Exception as e:
+            print(f"Error getting company names: {e}")
+            company_name_df = None
+    
+    for stock in assets:
+        try:
+            current_price_stock_df = get_current_price(stock.symbol)
+            current_price_stock = Decimal(float(current_price_stock_df.iloc[0,1]))
+            Assets.objects.filter(user=user, symbol=stock.symbol).update(current_price=current_price_stock)
+        except Exception as e:
+            print(f"Error getting current price for {stock.symbol}: {e}")
+            current_price_stock = stock.average_price
+        
+        # Tìm tên công ty đúng cho từng symbol
+        if company_name_df is not None and not company_name_df.empty:
+            matching_company = company_name_df[company_name_df.ticker == stock.symbol]
+            if not matching_company.empty:
+                stock.company_name = matching_company.iloc[0]['organ_name']
+            else:
+                stock.company_name = f"Cổ phiếu {stock.symbol}"
+        else:
+            stock.company_name = f"Cổ phiếu {stock.symbol}"
+        
+        stock.total_buy_price_symbol = stock.quantity * current_price_stock
+        stock.profit_loss_percentage = (current_price_stock - stock.average_price)/stock.average_price * 100
+    
     total_assets = assets.aggregate(
         total=Sum(F('quantity') * F('current_price'))
     )['total'] or 0
-    # print(total_assets)
+    
     total_buy_price = assets.aggregate(total_buy=Sum(F('quantity') * F('average_price')))['total_buy'] or 0
     profit_loss = 0
     if total_buy_price!=0:
         profit_loss = ((total_assets - total_buy_price))
         profit_loss_percentage = round((profit_loss / total_buy_price) * 100, 2)
     else:
-        profit_loss_percentage=0
         profit_loss_percentage=0
     number_of_stock = assets.count()
 
@@ -2388,25 +2450,20 @@ def api_dashboard_data(request):
         except Wallet.DoesNotExist:
             wallet_balance = 0
             
-        # Lấy danh mục và tài sản
+        # Lấy danh mục và tài sản từ PortfolioSymbol (cổ phiếu đang nắm giữ)
         portfolios = Portfolio.objects.filter(user=user)
         
-        # Tính tổng giá trị cổ phiếu
+        # Tính tổng giá trị cổ phiếu dựa trên PortfolioSymbol
         total_stocks_value = 0
         total_profit_loss = 0
         
         if portfolios.exists():
-            # Lấy tất cả symbol từ các danh mục
             portfolio_symbols = PortfolioSymbol.objects.filter(portfolio__in=portfolios)
             
             if portfolio_symbols.exists():
-                # Lấy danh sách symbol
-                symbols = [ps.symbol for ps in portfolio_symbols]
-                
-                # Giả lập giá hiện tại (thực tế sẽ lấy từ API thị trường)
                 for ps in portfolio_symbols:
-                    current_price = 25000  # Giả lập giá
-                    current_value = ps.quantity * current_price
+                    # Sử dụng giá current_price từ database (đã được cập nhật từ API)
+                    current_value = ps.quantity * ps.current_price
                     cost_value = ps.quantity * ps.average_price
                     
                     total_stocks_value += current_value
@@ -2426,11 +2483,11 @@ def api_dashboard_data(request):
             'success': True,
             'data': {
                 'wallet_balance': wallet_balance,
-                'total_stocks_value': total_stocks_value,
-                'total_profit_loss': total_profit_loss,
+                'total_stocks_value': float(total_stocks_value),
+                'total_profit_loss': float(total_profit_loss),
                 'profit_loss_percentage': profit_loss_percentage,
                 'number_of_stocks': number_of_stocks,
-                'total_assets': total_stocks_value,  # Chỉ tính cổ phiếu
+                'total_assets': float(total_stocks_value),  # Chỉ tính cổ phiếu
                 'last_updated': timezone.now().strftime('%H:%M:%S %d/%m/%Y')
             }
         })
