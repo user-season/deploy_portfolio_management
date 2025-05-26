@@ -7,6 +7,8 @@
 - Nguyễn Chí Trung - trungtada123@gmail.com  
 - Nguyễn Trường Vương - tiger.data105@gmail.com
 
+**Link Video:** [http://localhost:8000](http://localhost:8000)
+
 ### 1.1. Phân chia công việc
 
 Mỗi thành viên đảm nhận full-stack development (Backend + Frontend + Testing) cho một module chức năng cụ thể:
@@ -433,6 +435,13 @@ Hệ thống cung cấp 15+ REST APIs:
 **B. Use Cases theo từng Actor**
 
 **🔵 USER USE CASES:**
+
+**Sơ Đồ Tổng Quan Cho User**
+![Use Case Diagram -For User](img_readme/Use_Case_Diagram.jpg)
+
+
+**Sơ Đồ Tổng Quan Cho Admin**
+![Use Case Diagram - For Admin](img_readme/admin_flow.jpg)
 
 **UC1. Quản lý tài khoản và xác thực**
 ```
