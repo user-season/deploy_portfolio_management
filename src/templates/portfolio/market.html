@@ -571,7 +571,7 @@
                             const floor = formatPrice(item.listing_floor) || 0;
                             const refPrice = formatPrice(item.listing_ref_price) || 0;
                             const matchPrice = (item.match_match_price) ? formatPrice(item.match_match_price) : "";
-                            const matchVol = (item.match_match_vol) ? formatPrice(item.match_match_vol) : "";
+                            const matchVol = (item.match_match_vol) ? (item.match_match_vol) : "";
                             
                             // console.log(symbol, matchPrice, refPrice, ceiling, floor, getPriceClass(matchPrice, refPrice, ceiling, floor));
                             tableHTML += `<tr title='Click để xem biểu đồ giá'>

@@ -14,8 +14,19 @@ echo "=== LOAD ENVIRONMENT VARIABLES ==="
 if [ -f .env ]; then
     export $(grep -v '^#' .env | grep -E '^[A-Za-z_][A-Za-z0-9_]*=.*$' | sed 's/[[:space:]]*$//' | xargs)
 else
-    echo "WARNING: .env file not found, relying on Docker environment variables"
+    echo "WARNING: .env file not found, using default Docker environment variables"
 fi
+
+# Force override with Docker environment variables (prioritize Docker values)
+export DATABASE_NAME=portfolio_management
+export DATABASE_USER=postgres
+export DATABASE_PASSWORD=postgres123
+export DATABASE_HOST=db
+export DATABASE_PORT=5432
+export admin_username=admin
+export admin_password=admin123
+
+echo "Database config: HOST=$DATABASE_HOST, PORT=$DATABASE_PORT, USER=$DATABASE_USER, DB=$DATABASE_NAME"
 echo "=== LOAD ENVIRONMENT VARIABLES COMPLETELY ==="
 
 echo "=== WAIT FOR DATABASE ==="
