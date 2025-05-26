@@ -7,7 +7,7 @@
 - Nguyễn Chí Trung - trungtada123@gmail.com  
 - Nguyễn Trường Vương - tiger.data105@gmail.com
 
-**Link Video:** [http://localhost:8000](http://localhost:8000)
+**Link Video:** [https://youtu.be/ThxjXBCELSM](https://youtu.be/ThxjXBCELSM)
 
 ### 1.1. Phân chia công việc
 
