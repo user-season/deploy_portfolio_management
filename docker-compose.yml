@@ -18,7 +18,6 @@ services:
       ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
     volumes:
       - ./src:/app/src
-      # - ./data:/app/data
       - static_volume:/app/src/staticfiles
       - media_volume:/app/src/media
     depends_on:
@@ -29,6 +28,11 @@ services:
   db:
     image: postgres:15
     environment:
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
       POSTGRES_DB: portfolio_management
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
